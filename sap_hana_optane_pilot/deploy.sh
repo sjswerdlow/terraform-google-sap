@@ -18,8 +18,14 @@
 # ------------------------------------------------------------------------
 
 ZONE="us-central1-f"
-IMAGEFAMILY="sles-15-sap"
-IMAGEPROJECT="suse-sap-cloud"
+
+if [[ -z ${imageName} ]]; then
+  imageName="sles-15-sap-v20180816"
+fi
+
+if [[ -z ${imageProject} ]]; then
+  imageName="suse-sap-cloud"
+fi
 
 echo "
 SAP HANA on GCE & Intel Optane Pilot - Deployment Script
@@ -81,8 +87,8 @@ fi
 ## Create VM - SC2140 not applicable
 echo "INFO - Creating VM ${instanceName} in ${ZONE} with ${aepsize}GB of Intel Optane DC"
 gcloud alpha compute instances create "${instanceName}" --machine-type="${instanceType}" --local-nvdimm size="${aepsize}" \
---zone=${ZONE} --subnet "${subnet}" --min-cpu-platform="Intel Skylake" --image-family=${IMAGEFAMILY} \
---image-project=${IMAGEPROJECT} --boot-disk-size "32" --boot-disk-type "pd-standard" \
+--zone=${ZONE} --subnet "${subnet}" --min-cpu-platform="Intel Skylake" --image=${imageName} \
+--image-project=${imageProject} --boot-disk-size "32" --boot-disk-type "pd-standard" \
 --metadata "sap_hana_deployment_bucket=${sap_hana_deployment_bucket},sap_hana_sid=${sap_hana_sid},sap_hana_instance_number=${sap_hana_instance_number},sap_hana_sidadm_password=${sap_hana_sidadm_password},sap_hana_system_password=${sap_hana_system_password},startup-script=curl https://storage.googleapis.com/BUILD.SH_URL/sap_hana_optane_pilot/startup.sh | bash -x" \
 --scopes "https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/trace.append","https://www.googleapis.com/auth/devstorage.read_write" \
 --verbosity=error --no-user-output-enabled
