@@ -38,9 +38,12 @@ main::set_boot_parameters() {
   fi
 
 	## Configure cstates and huge pages
-if ! grep -q cstate /etc/default/grub ; then
+	if ! grep -q cstate /etc/default/grub ; then
 		main::errhandle_log_info "--- Update grub"
-		echo GRUBLINE_LINUX_DEFAULT=\"transparent_hugepage=never intel_idle.max_cstate=1 processor.max_cstate=1\" >>/etc/default/grub
+		cmdline=$(grep GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub | head -1 | sed 's/GRUB_CMDLINE_LINUX_DEFAULT=//g' | sed 's/\"//g')
+		cp /etc/default/grub /etc/default/grub.bak
+		grep -v GRUBLINE_LINUX_DEFAULT /etc/default/grub.bak >/etc/default/grub			
+		echo "GRUB_CMDLINE_LINUX_DEFAULT=\"${cmdline} transparent_hugepage=never intel_idle.max_cstate=1 processor.max_cstate=1\"" >>/etc/default/grub
 		grub2-mkconfig -o /boot/grub2/grub.cfg
 		echo "${HOSTNAME}" >/etc/hostname
 		main::errhandle_log_info '--- Parameters updated. Rebooting'
