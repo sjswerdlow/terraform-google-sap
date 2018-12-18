@@ -39,7 +39,7 @@ deploy() {
   done
   gsutil -q rm gs://"${deploy_url}"/build.sh
   wait
-  echo "Resetting cache on gs://${bucket}/dm-templates"
+  echo "Resetting cache on gs://${deploy_url}"
   gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${deploy_url}/*" >/dev/null
   echo "BUILD COMPLETE"
 }

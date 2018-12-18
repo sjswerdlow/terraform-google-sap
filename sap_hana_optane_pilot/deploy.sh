@@ -19,14 +19,6 @@
 
 ZONE="us-central1-f"
 
-if [[ -z ${imageName} ]]; then
-  imageName="sles-15-sap-v20180816"
-fi
-
-if [[ -z ${imageProject} ]]; then
-  imageName="suse-sap-cloud"
-fi
-
 echo "
 SAP HANA on GCE & Intel Optane Pilot - Deployment Script
 ---------------------------------------------------------
@@ -36,6 +28,20 @@ with a Google Cloud Deployment Manager template.
 
 DEPLOYMENT LOG:
 --------------"
+
+#pre check on images
+if [[ -z "${imageName}" ]]; then
+  imageName="sles-15-sap-v20180816"
+fi
+
+if [[ -z "${imageProject}" ]]; then
+  imageName="suse-sap-cloud"
+fi
+
+if ! gcloud compute images describe "${imageName}" --project="${imageProject}" &>/dev/null; then
+  echo "ERROR - Unable to find image:${imageName} in project ${imageProject}"
+  return 1 2> /dev/null || exit 1
+fi 
 
 # Check key variables are filled in correctly
 if [[ -z "${instanceName}" ]] || [[ -z "${subnet}" ]]; then 
@@ -93,7 +99,7 @@ gcloud alpha compute instances create "${instanceName}" --machine-type="${instan
 --scopes "https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/trace.append","https://www.googleapis.com/auth/devstorage.read_write" \
 --verbosity=error --no-user-output-enabled
 
-## Command is too   long so ignoring SC2181
+## Command is too long so ignoring SC2181
 if [[ "$?" -ne 0 ]]; then
   echo "ERROR - Failed to create VM. Aborting"
   return 1 2> /dev/null || exit 1
