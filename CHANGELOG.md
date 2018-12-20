@@ -17,6 +17,12 @@ Current Templates:
 - Two node empty SuSE pacemaker cluster (sap_emptyha)
 - Two node NFS cluster using DRBD (sap_nfs)
 
+## [4.2] 2018-12-20
+### Fixed
+- Added support for SLES12SP4
+- Added initial NVM library and support for Optane DC Pilot
+- Minor bug fixes
+
 ## [4.1] 2018-11-30
 ### Fixed
 - Fixed sapsys GID for SAP HANA in sap_hana_ha template
