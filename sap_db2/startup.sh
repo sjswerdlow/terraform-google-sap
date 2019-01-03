@@ -17,7 +17,7 @@
 # Build Date:   BUILD.SH_DATE
 # ------------------------------------------------------------------------
 
-## Check to see if a custom script path was provieded by the template
+## Check to see if a custom script path was provided by the template
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
