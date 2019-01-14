@@ -35,7 +35,7 @@ if [[ -z "${imageName}" ]]; then
 fi
 
 if [[ -z "${imageProject}" ]]; then
-  imageName="suse-sap-cloud"
+  imageProject="suse-sap-cloud"
 fi
 
 if ! gcloud compute images describe "${imageName}" --project="${imageProject}" &>/dev/null; then
@@ -56,13 +56,13 @@ case "${instanceType}" in
     backupsize=7248
     aepsize=3000
     ;;
-  "n1-megamem-96")
+  "n1-megamem-96-aep")
     datasize=12000
     backupsize=13866
     aepsize=5500
     ;;
   *)
-    echo "ERROR - instanceType must be either n1-highmem-96 or n1-megamem-96"
+    echo "ERROR - instanceType must be either n1-highmem-96 or n1-megamem-96-aep"
     return 1 2> /dev/null || exit 1
     ;;
 esac

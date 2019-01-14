@@ -64,6 +64,7 @@ main () {
       ;;
 
     prod)
+      echo "I hope you have updated your CHANGELOG.MD?"
       echo -n "**** WARNING **** You are attempting to deploy to production. To continue, please type the color of the sky (if you're not in London or Seattle) in capital letters: "
       read -r verify
       if [[ "${verify}" = "BLUE" ]]; then
