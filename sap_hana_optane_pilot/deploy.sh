@@ -54,7 +54,7 @@ case "${instanceType}" in
   "n1-highmem-96")
     datasize=7000
     backupsize=7248
-    aepsize=3000
+    aepsize=2988
     ;;
   "n1-megamem-96-aep")
     datasize=12000
