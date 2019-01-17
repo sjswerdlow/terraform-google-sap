@@ -217,40 +217,51 @@ ha::check_cluster(){
 }
 
 
-ha::config_corosync(){
-  main::errhandle_log_info "--- Creating /etc/corosync/corosync.conf"
-  cat <<EOF > /etc/corosync/corosync.conf
+ha::config_pacemaker_primary() {
+  main::errhandle_log_info "Creating cluster on primary node"
+
+  main::errhandle_log_info "--- Creating corosync-keygen"
+  corosync-keygen
+
+  if [ "${LINUX_DISTRO}" = "SLES" ]; then
+    main::errhandle_log_info "--- Starting csync2"
+    script -q -c 'ha-cluster-init -y csync2' > /dev/null 2>&1 &
+    main::errhandle_log_info "--- Creating /etc/corosync/corosync.conf"
+    cat <<EOF > /etc/corosync/corosync.conf
     totem {
-      version: 2
-      secauth: off
-      crypto_hash: sha1
-      crypto_cipher: aes256
+      version:	2
+      secauth:	off
+      crypto_hash:	sha1
+      crypto_cipher:	aes256
       cluster_name:	hacluster
       clear_node_high_bit: yes
-      token: 5000
-      token_retransmits_before_loss_const: 6
-      join: 60
-      consensus: 7500
+
+      token:		5000
+      token_retransmits_before_loss_const: 10
+      join:		60
+      consensus:	6000
       max_messages:	20
-      transport: udpu
+
       interface {
         ringnumber:	0
-        bindnetaddr: ${1}
-        mcastport: 5405
-        ttl: 1
+        bindnetaddr: ${PRIMARY_NODE_IP}
+        mcastport:	5405
+        ttl:		1
       }
+
+      transport: udpu
     }
     logging {
       fileline:	off
-      to_stderr: no
-      to_logfile: no
-      logfile: /var/log/cluster/corosync.log
-      to_syslog: yes
-      debug: off
-      timestamp: on
+      to_stderr:	no
+      to_logfile:	no
+      logfile:	/var/log/cluster/corosync.log
+      to_syslog:	yes
+      debug:		off
+      timestamp:	on
       logger_subsys {
-        subsys: QUORUM
-        debug: off
+        subsys:	QUORUM
+        debug:	off
       }
     }
     nodelist {
@@ -258,32 +269,19 @@ ha::config_corosync(){
         ring0_addr: ${VM_METADATA[sap_primary_instance]}
         nodeid: 1
       }
-      node {
-        ring0_addr: ${VM_METADATA[sap_secondary_instance]}
-        nodeid: 2
-      }
     }
     quorum {
+      # Enable and configure quorum subsystem (default: off)
+      # see also corosync.conf.5 and votequorum.5
       provider: corosync_votequorum
-      expected_votes: 2
-      two_node: 1
+      expected_votes: 1
+      two_node: 0
     }
 EOF
-}
-
-
-ha::config_pacemaker_primary() {
-  main::errhandle_log_info "Creating cluster on primary node"
-  main::errhandle_log_info "--- Creating corosync-keygen"
-  corosync-keygen
-  if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    main::errhandle_log_info "--- Starting csync2"
-    script -q -c 'ha-cluster-init -y csync2' > /dev/null 2>&1 &
-    ha::config_corosync "${PRIMARY_NODE_IP}"
     main::errhandle_log_info "--- Starting cluster"
     sleep 5s
-    systemctl enable pacemaker
-    systemctl start pacemaker
+    script -q -c 'ha-cluster-init -y cluster' > /dev/null 2>&1 &
+    wait
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     main::errhandle_log_info "--- Creating /etc/corosync/corosync.conf"
     pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" --force
@@ -298,22 +296,12 @@ ha::config_pacemaker_primary() {
 }
 
 
-ha::pacemaker_maintenance() {
-  local mode="${1}"
-
-  main::errhandle_log_info "Setting cluster maintenance mode to ${mode}"
-  crm configure property maintenance-mode="${mode}"
-}
-
-
 ha::config_pacemaker_secondary() {
   main::errhandle_log_info "Joining ${VM_METADATA[sap_secondary_instance]} to cluster"
 
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    ha::config_corosync "${SECONDARY_NODE_IP}"
     bash -c "ha-cluster-join -y -c ${VM_METADATA[sap_primary_instance]} csync2"
-    systemctl enable pacemaker
-    systemctl start pacemaker    
+    bash -c "ha-cluster-join -y -c ${VM_METADATA[sap_primary_instance]} cluster"
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     corosync-keygen
     pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" --force
@@ -344,11 +332,11 @@ ha::pacemaker_add_vip() {
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       crm configure primitive rsc_vip_int IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
       if [[ -n "${VM_METADATA[sap_vip_secondary_range]}" ]]; then
-        crm configure primitive rsc_vip_gcp ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
+        crm configure primitive rsc_vip_gcp ocf:gcp:alias op monitor interval="60s" timeout="15s" op start interval="0" timeout="300s" op stop interval="0" timeout="15s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
       else
-        crm configure primitive rsc_vip_gcp ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
+        crm configure primitive rsc_vip_gcp ocf:gcp:alias op monitor interval="60s" timeout="15s" op start interval="0" timeout="300s" op stop interval="0" timeout="15s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
       fi
-      crm configure group g-primary rsc_vip_int rsc_vip_gcp
+      crm configure group g-vip rsc_vip_int rsc_vip_gcp
     fi
   else
     main::errhandle_log_warning "- VIP is already associated with another VM. The cluster setup will continue but the floating/virtual IP address will not be added"
@@ -361,7 +349,7 @@ ha::pacemaker_config_bootstrap_hdb() {
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     crm configure property no-quorum-policy="ignore"
     crm configure property startup-fencing="true"
-    crm configure property stonith-timeout="300s"
+    crm configure property stonith-timeout="150s"
     crm configure property stonith-enabled="true"
     crm configure rsc_defaults resource-stickiness="1000"
     crm configure rsc_defaults migration-threshold="5000"
@@ -369,7 +357,7 @@ ha::pacemaker_config_bootstrap_hdb() {
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     pcs property set no-quorum-policy="ignore"
     pcs property set startup-fencing="true"
-    pcs property set stonith-timeout="300s"
+    pcs property set stonith-timeout="150s"
     pcs property set stonith-enabled="true"
     pcs resource defaults default-resource-stickness=1000
     pcs resource defaults default-migration-threshold=5000
@@ -383,7 +371,7 @@ ha::pacemaker_config_bootstrap_nfs() {
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     crm configure property no-quorum-policy="ignore"
     crm configure property startup-fencing="true"
-    crm configure property stonith-timeout="300s"
+    crm configure property stonith-timeout="150s"
     crm configure property stonith-enabled="true"
     crm configure rsc_defaults resource-stickiness="100"
     crm configure rsc_defaults migration-threshold="5000"
@@ -391,7 +379,7 @@ ha::pacemaker_config_bootstrap_nfs() {
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     pcs property set no-quorum-policy="ignore"
     pcs property set startup-fencing="true"
-    pcs property set stonith-timeout="300s"
+    pcs property set stonith-timeout="150s"
     pcs property set stonith-enabled="true"
     pcs resource defaults default-resource-stickness=1000
     pcs resource defaults default-migration-threshold=5000
@@ -425,7 +413,7 @@ EOF
         op stop interval="0" timeout="3600" \
         op promote interval="0" timeout="3600" \
         op monitor interval="10" role="Master" timeout="700" \
-        op monitor interval="11" role="Slave" timeout="700" \
+        op monitor interval="15" role="Slave" timeout="700" \
         params SID="${VM_METADATA[sap_hana_sid]}" InstanceNumber="${VM_METADATA[sap_hana_instance_number]}" PREFER_SITE_TAKEOVER="true" \
         DUPLICATE_PRIMARY_TIMEOUT="7200" AUTOMATED_REGISTER="true"
 
@@ -433,9 +421,9 @@ EOF
         meta is-managed="true" notify="true" clone-max="2" clone-node-max="1" \
         target-role="Started" interleave="true"
 
-    colocation col_saphana_ip_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} 4000: g-primary:Started \
+    colocation col_saphana_ip_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} 2000: g-vip:Started \
         msl_SAPHana_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]}:Master
-    order ord_SAPHana_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} Optional: cln_SAPHanaTopology_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} \
+    order ord_SAPHana_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} 2000: cln_SAPHanaTopology_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} \
         msl_SAPHana_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]}
 EOF
 
