@@ -70,6 +70,7 @@ ha::pacemaker_add_stonith
 ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
 ha::pacemaker_add_hana
+ha::check_hdb_replication
 ha::pacemaker_maintenance false
 
 ## Post deployment & installation cleanup
