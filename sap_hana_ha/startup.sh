@@ -65,12 +65,11 @@ ha::enable_hsr
 ha::ready
 ha::config_pacemaker_primary
 ha::check_cluster
-ha::pacemaker_maintenance true
 ha::pacemaker_add_stonith
 ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
 ha::pacemaker_add_hana
-ha::pacemaker_maintenance false
+ha::check_hdb_replication
 
 ## Post deployment & installation cleanup
 main::complete
