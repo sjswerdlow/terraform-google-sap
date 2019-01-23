@@ -472,6 +472,11 @@ hdb::stop_nowait(){
 }
 
 
+hdb::restart_nowait(){
+    /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function RestartInstance
+}
+
+
 hdb::start() {
   main::errhandle_log_info "Starting SAP HANA"
   su - "${VM_METADATA[sap_hana_sid],,}"adm -c "HDB start"

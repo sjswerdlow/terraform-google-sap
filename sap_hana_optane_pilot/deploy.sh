@@ -59,7 +59,7 @@ case "${instanceType}" in
   "n1-megamem-96-aep")
     datasize=12000
     backupsize=13866
-    aepsize=5500
+    aepsize=4500
     ;;
   *)
     echo "ERROR - instanceType must be either n1-highmem-96 or n1-megamem-96-aep"

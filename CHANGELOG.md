@@ -17,6 +17,12 @@ Current Templates:
 - Two node empty SuSE pacemaker cluster (sap_emptyha)
 - Two node NFS cluster using DRBD (sap_nfs)
 
+## [4.3] 2019-01-25
+### Changed
+- Increased timeouts on HA primitives to increse stability and reduce failover time
+- Changed default VIP names to better identify the primary node
+- Add some additional HANA helper functions
+
 ## [4.2] 2018-12-20
 ### Fixed
 - Added support for SLES12SP4

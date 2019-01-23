@@ -43,9 +43,11 @@ ha::download_scripts
 ha::ready
 ha::config_pacemaker_primary
 ha::check_cluster
+ha::pacemaker_maintenance true
 ha::pacemaker_add_stonith
 ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
+ha::pacemaker_maintenance false
 
 ## Clean up
 main::complete

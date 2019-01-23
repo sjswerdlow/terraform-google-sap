@@ -118,10 +118,7 @@ nfs::configure_ha_nfs(){
   crm configure primitive nfsserver systemd:nfs-server op monitor interval="30s"
   crm configure clone cl-nfsserver nfsserver
   crm configure primitive rsc_fs_nfs ocf:heartbeat:Filesystem params device=/dev/drbd1 directory=/nfs fstype=xfs op monitor interval="10s"
-  crm configure group g-master rsc_fs_nfs
-  crm configure order o-drbd_before_nfs inf: ms-drbd_nfs:promote g-master:start
-  crm configure colocation col-nfs_on_drbd inf: g-master ms-drbd_nfs:Master
-  crm configure delete g-vip
-  crm configure modgroup g-master add rsc_vip_int
-  crm configure modgroup g-master add rsc_vip_gcp
+  crm configure order o-drbd_before_nfs inf: ms-drbd_nfs:promote g-primary:start
+  crm configure colocation col-nfs_on_drbd inf: g-primary:Started ms-drbd_nfs:Master
+  crm configure modgroup g-primiary add rsc_fs_nfs
 }

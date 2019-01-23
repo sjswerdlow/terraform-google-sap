@@ -49,12 +49,15 @@ ha::download_scripts
 ha::config_pacemaker_primary
 ha::ready
 ha::check_cluster
-ha::pacemaker_add_vip
+ha::pacemaker_maintenance true
 ha::pacemaker_add_stonith
+ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_nfs
+
 
 ## add NFS to HA Setup
 nfs::configure_ha_nfs
+ha::pacemaker_maintenance false
 
 ## close out
 main::complete

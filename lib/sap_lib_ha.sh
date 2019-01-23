@@ -342,13 +342,13 @@ ha::pacemaker_add_vip() {
   main::errhandle_log_info "Cluster: Adding virtual IP"
   if ! ping -c 1 -W 1 "${VM_METADATA[sap_vip]}"; then 
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
-      crm configure primitive rsc_vip_int IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
+      crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
       if [[ -n "${VM_METADATA[sap_vip_secondary_range]}" ]]; then
-        crm configure primitive rsc_vip_gcp ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
+        crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
       else
-        crm configure primitive rsc_vip_gcp ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
+        crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
       fi
-      crm configure group g-primary rsc_vip_int rsc_vip_gcp
+      crm configure group g-primary rsc_vip_int-primary rsc_vip_gcp-primary
     fi
   else
     main::errhandle_log_warning "- VIP is already associated with another VM. The cluster setup will continue but the floating/virtual IP address will not be added"
