@@ -313,7 +313,9 @@ ha::config_pacemaker_secondary() {
     ha::config_corosync "${SECONDARY_NODE_IP}"
     bash -c "ha-cluster-join -y -c ${VM_METADATA[sap_primary_instance]} csync2"
     systemctl enable pacemaker
-    systemctl start pacemaker    
+    systemctl start pacemaker
+    systemctl enable hawk
+    systemctl start hawk    
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     corosync-keygen
     pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" --force
