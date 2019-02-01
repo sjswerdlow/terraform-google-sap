@@ -35,7 +35,7 @@ zypper up -y --auto-agree-with-licenses
 ## Base GCP and OS Configuration
 main::get_os_version
 main::install_gsdk /usr/local
-main::set_boot_parameters
+nvm::set_boot_parameters
 main::install_packages
 main::config_ssh
 main::get_settings
