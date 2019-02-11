@@ -52,7 +52,7 @@ nvm::set_boot_parameters() {
     echo -n "${cmdline}" >>/etc/default/grub
     echo -n ' transparent_hugepage=never intel_idle.max_cstate=1 processor.max_cstate=1 intel_iommu=off' >>/etc/default/grub
     if [[ ${VM_INSTTYPE} = "n1-megamem-96-aep" ]]; then
-      echo -n ' memmap=32M\$0x13da0000000,0x23280000000!0x0000013da2000000,0x23280000000!0x37022000000' >>/etc/default/grub      
+      echo -n ' memmap=32M\$1300992M,2750G!1301024M,2750G!4117024M' >>/etc/default/grub      
     elif [[ ${VM_INSTTYPE} = "n1-highmem-96" ]]; then
       echo -n ' memmap=1494G!640000M,1494G!2169856M' >>/etc/default/grub      
     fi 
