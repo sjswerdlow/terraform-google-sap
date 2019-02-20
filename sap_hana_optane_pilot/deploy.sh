@@ -101,6 +101,7 @@ gcloud alpha compute instances create "${instanceName}" --machine-type="${instan
 
 ## If Cascadelake fails, try Skylake
 if [[ "$?" -ne 0 ]]; then
+  echo "INFO - Retrying creation of VM ${instanceName} in ${ZONE} with ${aepsize}GB of Intel Optane DC"
   gcloud alpha compute instances create "${instanceName}" --machine-type="${instanceType}" --local-nvdimm size="${aepsize}" \
   --zone=${ZONE} --subnet "${subnet}" --min-cpu-platform="Intel Skylake" --image=${imageName} \
   --image-project=${imageProject} --boot-disk-size "32" --boot-disk-type "pd-standard" \
