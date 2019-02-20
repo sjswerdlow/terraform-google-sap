@@ -90,18 +90,28 @@ if ! gcloud compute disks create "${instanceName}"-backup --size="${backupsize}"
   return 1 2> /dev/null || exit 1
 fi 
 
-## Create VM - SC2140 not applicable
+## Create VM using Cascadelake
 echo "INFO - Creating VM ${instanceName} in ${ZONE} with ${aepsize}GB of Intel Optane DC"
 gcloud alpha compute instances create "${instanceName}" --machine-type="${instanceType}" --local-nvdimm size="${aepsize}" \
---zone=${ZONE} --subnet "${subnet}" --min-cpu-platform="Intel Skylake" --image=${imageName} \
+--zone=${ZONE} --subnet "${subnet}" --min-cpu-platform="Intel Cascadelake" --image=${imageName} \
 --image-project=${imageProject} --boot-disk-size "32" --boot-disk-type "pd-standard" \
 --metadata "sap_hana_deployment_bucket=${sap_hana_deployment_bucket},sap_hana_sid=${sap_hana_sid},sap_hana_instance_number=${sap_hana_instance_number},sap_hana_sidadm_password=${sap_hana_sidadm_password},sap_hana_system_password=${sap_hana_system_password},startup-script=curl https://storage.googleapis.com/BUILD.SH_URL/sap_hana_optane_pilot/startup.sh | bash -x" \
 --scopes "https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/trace.append","https://www.googleapis.com/auth/devstorage.read_write" \
 --verbosity=error --no-user-output-enabled
 
-## Command is too long so ignoring SC2181
+## If Cascadelake fails, try Skylake
 if [[ "$?" -ne 0 ]]; then
-  echo "ERROR - Failed to create VM. Aborting"
+  gcloud alpha compute instances create "${instanceName}" --machine-type="${instanceType}" --local-nvdimm size="${aepsize}" \
+  --zone=${ZONE} --subnet "${subnet}" --min-cpu-platform="Intel Skylake" --image=${imageName} \
+  --image-project=${imageProject} --boot-disk-size "32" --boot-disk-type "pd-standard" \
+  --metadata "sap_hana_deployment_bucket=${sap_hana_deployment_bucket},sap_hana_sid=${sap_hana_sid},sap_hana_instance_number=${sap_hana_instance_number},sap_hana_sidadm_password=${sap_hana_sidadm_password},sap_hana_system_password=${sap_hana_system_password},startup-script=curl https://storage.googleapis.com/BUILD.SH_URL/sap_hana_optane_pilot/startup.sh | bash -x" \
+  --scopes "https://www.googleapis.com/auth/compute","https://www.googleapis.com/auth/servicecontrol","https://www.googleapis.com/auth/service.management.readonly","https://www.googleapis.com/auth/logging.write","https://www.googleapis.com/auth/monitoring.write","https://www.googleapis.com/auth/trace.append","https://www.googleapis.com/auth/devstorage.read_write" \
+  --verbosity=error --no-user-output-enabled
+fi
+
+## If Skylake fails, the project probably isn't whitelisted. Command is too long so ignoring SC2181
+if [[ "$?" -ne 0 ]]; then
+  echo "ERROR - Failed to create VM. Is your project whitelisted for the Optane DC pilot? Aborting deployment"
   return 1 2> /dev/null || exit 1
 fi
  
