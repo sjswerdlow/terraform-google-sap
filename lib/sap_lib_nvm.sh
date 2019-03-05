@@ -104,6 +104,8 @@ nvm::config_hana() {
   done
 
   hdb::set_parameters global.ini persistence basepath_persistent_memory_volumes "${pmem_dev_list}"
+  hdb::set_parameters global.ini memorymanager persistent_memory_disable_linux_numa_mapping true
+
   hdb::stop
   hdb::start
 }
