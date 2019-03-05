@@ -110,7 +110,6 @@ hdb::set_kernel_parameters(){
   main::errhandle_log_info "Setting kernel paramaters"
   {
     echo "vm.pagecache_limit_mb = 0"
-    echo "vm.pagecache_limit_ignore_dirty=0"
     echo "net.ipv4.tcp_slow_start_after_idle=0"
     echo "kernel.numa_balancing = 0"
     echo "net.ipv4.tcp_slow_start_after_idle=0"
@@ -127,10 +126,8 @@ hdb::set_kernel_parameters(){
   main::errhandle_log_info "Preparing tuned/saptune"
 
   if [[ "${LINUX_DISTRO}" = "SLES" ]]; then 
-    systemctl start tuned
-    systemctl enable tuned
-    saptune daemon start
     saptune solution apply HANA
+    saptune daemon start
   else
     mkdir -p /etc/tuned/sap-hana/
     cp /usr/lib/tuned/sap-hana/tuned.conf /etc/tuned/sap-hana/
