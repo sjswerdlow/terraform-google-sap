@@ -132,10 +132,10 @@ main::install_packages() {
     ## check if SuSE repos are registered
 		while [[ $(find /etc/zypp/repos.d/ -maxdepth 1 | wc -l) -lt 2 ]]; do
 			main::errhandle_log_info "--- SuSE repositories are not registered. Waiting 10 seconds before trying again"
-			sleep 10s
+			sleep 60s
 			count=$((count +1))
-			if [ ${count} -gt 60 ]; then
-				main::errhandle_log_error "SuSE repositories didn't register within an acceptable time."
+			if [ ${count} -gt 30 ]; then
+				main::errhandle_log_error "SuSE repositories didn't register within an acceptable time. If you cecg"
 			fi
 		done
 		sleep 10s
