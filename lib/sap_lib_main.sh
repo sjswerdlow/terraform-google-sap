@@ -135,7 +135,7 @@ main::install_packages() {
 			sleep 60s
 			count=$((count +1))
 			if [ ${count} -gt 30 ]; then
-				main::errhandle_log_error "SuSE repositories didn't register within an acceptable time. If you cecg"
+				main::errhandle_log_error "SuSE repositories didn't register within an acceptable time. If you are using BYOS, ensure you login to the system and apply the SuSE license within 30 minutes after deployment."
 			fi
 		done
 		sleep 10s
