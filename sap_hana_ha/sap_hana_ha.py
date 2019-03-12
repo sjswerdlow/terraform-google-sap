@@ -110,6 +110,12 @@ def GenerateConfig(context):
   elif context.properties['instanceType'] == 'n1-ultramem-160':
       mem_size=3844
       cpu_platform="Automatic"
+  elif context.properties['instanceType'] == 'm2-ultramem-208':
+      mem_size=5916
+      cpu_platform="Intel Cascadelake"
+  elif context.properties['instanceType'] == 'm2-ultramem-416':
+      mem_size=11832
+      cpu_platform="Intel Cascadelake"
   else:
       mem_size=256
       cpu_platform="Automatic"

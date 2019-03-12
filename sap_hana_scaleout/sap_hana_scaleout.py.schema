@@ -47,7 +47,7 @@ properties:
   instanceType:
     description: Instance type to deploy for SAP HANA
     type: string
-    pattern: "(n1-highmem-32|n1-highmem-64|n1-highmem-96|n1-megamem-96|n1-ultramem-40||n1-ultramem-80||n1-ultramem-160)"
+    pattern: "(n1-highmem-32|n1-highmem-64|n1-highmem-96|n1-megamem-96|n1-ultramem-40||n1-ultramem-80||n1-ultramem-160|m2-ultramem-208|m2-ultramem-416)"
 
   subnetwork:
     description: The sub network to deploy the instance in.
