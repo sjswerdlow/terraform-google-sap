@@ -142,6 +142,9 @@ hdb::download_media() {
 	main::errhandle_log_info "Downloading HANA media from ${VM_METADATA[sap_hana_deployment_bucket]}"
 	mkdir -p /hana/shared/media
 
+  # Set the media number, so we know
+  VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]} | grep _part1.exe | awk -F"/" '{print $NF}' | sed 's/_part1.exe//')"
+
   ## download unrar from GCS. Fix for RHEL missing unrar and SAP packaging change which stoppped unar working.
   curl "${DEPLOY_URL}"/third_party/unrar/unrar -o /root/.deploy/unrar
   chmod a=wrx /root/.deploy/unrar
@@ -201,7 +204,7 @@ hdb::extract_media() {
 
   ## Workaround requried due to unar not working with SAP HANA 2.0 SP3. TODO - Remove once no longer required
   if [[ -f /root/.deploy/unrar ]]; then
-    if ! /root/.deploy/unrar -o+ x "*part1.exe" >/dev/null; then
+    if ! /root/.deploy/unrar -o+ x "${VM_METADATA[sap_hana_media_number]}*part1.exe" >/dev/null; then
       main::errhandle_log_error "HANA media extraction failed. Please ensure the correct media is uploaded to your GCS bucket"
     fi
   elif [ "${LINUX_DISTRO}" = "SLES" ]; then
@@ -221,7 +224,7 @@ hdb::extract_media() {
 
 hdb::install() {
 	main::errhandle_log_info 'Installing SAP HANA'
-	if ! /hana/shared/media/51*/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
+	if ! /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
 		main::errhandle_log_error "HANA Installation Failed. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required"
 	fi
 }
