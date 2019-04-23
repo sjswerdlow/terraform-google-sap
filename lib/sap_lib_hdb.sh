@@ -145,6 +145,11 @@ hdb::download_media() {
   # Set the media number, so we know
   VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]} | grep _part1.exe | awk -F"/" '{print $NF}' | sed 's/_part1.exe//')"
 
+  # If SP4 of above, get the media number from the .ZIP
+  if [[ -z ${VM_METADATA[sap_hana_media_number]} ]]; then
+    VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]}/51* | grep -i .ZIP | awk -F"/" '{print $NF}' | sed 's/.ZIP//I')"
+  fi 
+
   ## download unrar from GCS. Fix for RHEL missing unrar and SAP packaging change which stoppped unar working.
   curl "${DEPLOY_URL}"/third_party/unrar/unrar -o /root/.deploy/unrar
   chmod a=wrx /root/.deploy/unrar
@@ -198,27 +203,34 @@ hdb::create_install_cfg() {
 
 
 hdb::extract_media() {
-
   main::errhandle_log_info "Extracting SAP HANA media"
   cd /hana/shared/media/ || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
 
-  ## Workaround requried due to unar not working with SAP HANA 2.0 SP3. TODO - Remove once no longer required
-  if [[ -f /root/.deploy/unrar ]]; then
-    if ! /root/.deploy/unrar -o+ x "${VM_METADATA[sap_hana_media_number]}*part1.exe" >/dev/null; then
-      main::errhandle_log_error "HANA media extraction failed. Please ensure the correct media is uploaded to your GCS bucket"
-    fi
-  elif [ "${LINUX_DISTRO}" = "SLES" ]; then
-    if ! unrar -o+ x "*part1.exe" >/dev/null; then
-      main::errhandle_log_error "HANA media extraction failed. Please ensure the correct media is uploaded to your GCS bucket"
-    fi
-  elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    local file
-    for file in *.exe; do
-      if ! unar -f "${file}" >/dev/null; then
+  if [[ -n $(find /hana/shared/media -maxdepth 1 -iname "${VM_METADATA[sap_hana_media_number]}*.ZIP") ]]; then
+    mkdir -p /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
+    mv /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}".ZIP /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
+    unzip -o /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/"${VM_METADATA[sap_hana_media_number]}".ZIP -d /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
+  elif [[ -n $(find /hana/shared/media -maxdepth 1 -iname "${VM_METADATA[sap_hana_media_number]}*part1.exe") ]]; then
+    ## Workaround requried due to unar not working with SAP HANA 2.0 SP3. TODO - Remove once no longer required
+    if [[ -f /root/.deploy/unrar ]]; then
+      if ! /root/.deploy/unrar -o+ x "${VM_METADATA[sap_hana_media_number]}*part1.exe" >/dev/null; then
         main::errhandle_log_error "HANA media extraction failed. Please ensure the correct media is uploaded to your GCS bucket"
       fi
-    done
-  fi
+    elif [ "${LINUX_DISTRO}" = "SLES" ]; then
+      if ! unrar -o+ x "*part1.exe" >/dev/null; then
+        main::errhandle_log_error "HANA media extraction failed. Please ensure the correct media is uploaded to your GCS bucket"
+      fi
+    elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+      local file
+      for file in *.exe; do
+        if ! unar -f "${file}" >/dev/null; then
+          main::errhandle_log_error "HANA media extraction failed. Please ensure the correct media is uploaded to your GCS bucket"
+        fi
+      done
+    fi
+  else
+    main::errhandle_log_error "Unable to found SAP HANA media. Please ensure the media is uploaded to your GCS bucket in the correct format"
+  fi 
 }
 
 
@@ -311,9 +323,9 @@ hdb::check_settings() {
   fi
 
   ## check you have access to the bucket
-  if ! ${GSUTIL} ls gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/*.exe; then
+  if ! ${GSUTIL} ls gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/; then
     unset "VM_METADATA[sap_hana_deployment_bucket]"
-    main::errhandle_log_info "SAP HANA media not found in bucket. Ensure that you have uploaded the full SAP HANA package which consists of 1 .exe file and multiple .rar files. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
+    main::errhandle_log_info "SAP HANA media not found in bucket. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
   fi
 
   ## Remove passwords from metadata

@@ -145,20 +145,10 @@ main::install_packages() {
   		errhandle_log_info "--- zypper is still running. Waiting 10 seconds before continuing"
   		sleep 10s
   	done
-
-		## Temporary fix fro SLES15 incompatible boto version
-		if [[ "${LINUX_VERSION}" = "15" ]]; then 
-    	cat <<EOF > /etc/default/instance_configs.cfg.template
-InstanceSetup]
-set_boto_config = false
-EOF
-			rm -f /etc/boto.cfg
-		fi
 	fi
 
   ## packages to install
-	## TODO - Add above API packages to RHEL
-	local sles_packages="libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl" #python-oauth2client python-oauth2client-gce python-httplib2 python-requests python-google-api-python-client"
+	local sles_packages="libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python-requests python-google-api-python-client libatomic1"
 	local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 joe resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl"
 
 	## install packages
