@@ -120,7 +120,7 @@ hdbso::mount_nfs_vols() {
 hdbso::gcestorageclient_download() {
   main::errhandle_log_info "Downloading gceStorageClient"
   mkdir -p /hana/shared/gceStorageClient
-  curl https://storage.googleapis.com/sapdeploy/gceStorageClient/gceStorageClient.py -o /hana/shared/gceStorageClient/gceStorageClient.py
+  curl https://storage.googleapis.com/GCESTORAGECLIENT_URL/gceStorageClient.py -o /hana/shared/gceStorageClient/gceStorageClient.py
 
   if [[ ! -f /hana/shared/gceStorageClient/gceStorageClient.py ]]; then
     main::errhandle_log_error "Unable to download gceStorageClient"
