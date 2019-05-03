@@ -17,6 +17,10 @@ Current Templates:
 - Two node empty SuSE pacemaker cluster (sap_emptyha)
 - Two node NFS cluster using DRBD (sap_nfs)
 
+## [4.4] 2019-05-03
+### Fixed
+- SAP HANA 2.0 SP4 failed to deploy due to a change in SAP packaging method.
+
 ## [4.3] 2019-01-25
 ### Changed
 - Increased timeouts on HA primitives to increse stability and reduce failover time
