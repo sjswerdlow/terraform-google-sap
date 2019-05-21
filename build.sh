@@ -6,8 +6,6 @@ readonly PROD="sapdeploy"
 stage() {
   local bucket="${1}"
 
-  local deploy_url="${bucket}\\/dm-templates"
-
   echo "Staging deployment in /tmp/build.sh_${bucket}"
 
   ## clean out previously deployment folder if it exists
@@ -24,7 +22,8 @@ stage() {
   grep -rl BUILD.SH_DATE . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_DATE/${datetoday}/g"
 
   ## Add correct deployment URL to files
-  grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_URL/${deploy_url}/g"
+  grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
+  grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i '' "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
 }
 
 deploy() {
