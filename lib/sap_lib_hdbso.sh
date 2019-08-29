@@ -69,6 +69,8 @@ hdbso::create_data_log_volumes() {
 
     ## Unupdate permissions then unmount - mounts are now under the control of gceStorageClient
     main::errhandle_log_info '--- Unmounting and deactivating file systems'
+    mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
+    chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /home/.config/gcloud/
     chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /hana/log /hana/data
     chmod -R 750 /hana/data /hana/log
     umount /hana/log
@@ -84,7 +86,7 @@ hdbso::mount_nfs_vols() {
   main::errhandle_log_info "Mounting NFS volumes /hana/shared & /hanabackup"
 
   local nfs_version
-  nfs_version=$(timeout -k 10 2 rpcinfo -p "${VM_METADATA[sap_hana_shared_nfs]%:*}" | grep -w nfs | awk '{ print $2 }' | sort -r | head -1)
+  nfs_version=$(timeout -k 10 2 rpcinfo "${VM_METADATA[sap_hana_shared_nfs]%:*}" | grep -w nfs | awk '{ print $2 }' | sort -r | head -1)
 
   main::errhandle_log_info "--- Creating automount for /hana/shared to ${VM_METADATA[sap_hana_shared_nfs]}"
   main::errhandle_log_info "--- Creating automount for /hanabackup to ${VM_METADATA[sap_hana_backup_nfs]}"
@@ -170,7 +172,7 @@ EOF
 
 hdbso::update_sudoers() {
   main::errhandle_log_info "Updating /etc/sudoers"
-  echo "${VM_METADATA[sap_hana_sid],,}adm ALL=NOPASSWD: /sbin/multipath,/sbin/multipathd,/etc/init.d/multipathd,/usr/bin/sg_persist,/bin/mount,/bin/umount,/bin/kill,/usr/bin/lsof,/usr/bin/systemctl,/usr/sbin/lsof,/usr/sbin/xfs_repair,/usr/bin/mkdir,/sbin/vgscan,/sbin/pvscan,/sbin/lvscan,/sbin/vgchange,/sbin/lvdisplay" >>/etc/sudoers
+  echo "${VM_METADATA[sap_hana_sid],,}adm ALL=NOPASSWD: /sbin/multipath,/sbin/multipathd,/etc/init.d/multipathd,/usr/bin/sg_persist,/bin/mount,/bin/umount,/bin/kill,/usr/bin/lsof,/usr/bin/systemctl,/usr/sbin/lsof,/usr/sbin/xfs_repair,/usr/bin/mkdir,/sbin/vgscan,/sbin/pvscan,/sbin/lvscan,/sbin/vgchange,/sbin/lvdisplay,/usr/bin/gcloud" >>/etc/sudoers
   echo "" >> /etc/sudoers
 }
 
@@ -227,6 +229,15 @@ hdbso::install_scaleout_nodes() {
     fi
   fi
 
+  sed -i -e 's/Autostart=0/Autostart=1/g' /usr/sap/MP4/"${VM_METADATA[sap_hana_sid]}"/profile/*
   hdb::set_parameters global.ini storage partition_*_*__fencing enabled
   main::complete
+}
+
+
+hdbso::restart() {
+  main::errhandle_log_info "Restarting SAP HANA"
+  /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function StartSystem HDB
+  /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function WaitforStopped 400 2 HDB
+  /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function Startystem HDB
 }
