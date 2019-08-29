@@ -58,5 +58,8 @@ hdb::upgrade
 hdb::config_backup
 hdbso::install_scaleout_nodes
 
+## Restart SAP HANA
+hdbso::restart
+
 ## Post deployment & installation cleanup
 main::complete
