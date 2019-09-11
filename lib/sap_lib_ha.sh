@@ -361,7 +361,7 @@ ha::pacemaker_add_vip() {
 ha::pacemaker_config_bootstrap_hdb() {
   main::errhandle_log_info "Cluster: Configuring bootstrap for SAP HANA"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    crm configure property no-quorum-policy="ignore"
+    crm configure property no-quorum-policy="stop"
     crm configure property startup-fencing="true"
     crm configure property stonith-timeout="300s"
     crm configure property stonith-enabled="true"
@@ -369,7 +369,7 @@ ha::pacemaker_config_bootstrap_hdb() {
     crm configure rsc_defaults migration-threshold="5000"
     crm configure op_defaults timeout="600"
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    pcs property set no-quorum-policy="ignore"
+    pcs property set no-quorum-policy="stop"
     pcs property set startup-fencing="true"
     pcs property set stonith-timeout="300s"
     pcs property set stonith-enabled="true"
@@ -383,7 +383,7 @@ ha::pacemaker_config_bootstrap_hdb() {
 ha::pacemaker_config_bootstrap_nfs() {
   main::errhandle_log_info "Cluster: Configuring bootstrap for NFS"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    crm configure property no-quorum-policy="stop"
+    crm configure property no-quorum-policy="ignore"
     crm configure property startup-fencing="true"
     crm configure property stonith-timeout="300s"
     crm configure property stonith-enabled="true"
@@ -391,7 +391,7 @@ ha::pacemaker_config_bootstrap_nfs() {
     crm configure rsc_defaults migration-threshold="5000"
     crm configure op_defaults timeout="600"
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    pcs property set no-quorum-policy="stop"
+    pcs property set no-quorum-policy="ignore"
     pcs property set startup-fencing="true"
     pcs property set stonith-timeout="300s"
     pcs property set stonith-enabled="true"
