@@ -70,7 +70,7 @@ hdbso::create_data_log_volumes() {
     ## Unupdate permissions then unmount - mounts are now under the control of gceStorageClient
     main::errhandle_log_info '--- Unmounting and deactivating file systems'
     mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
-    chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /home/.config/gcloud/
+    chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
     chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /hana/log /hana/data
     chmod -R 750 /hana/data /hana/log
     umount /hana/log
