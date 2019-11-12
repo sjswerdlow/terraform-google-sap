@@ -230,7 +230,7 @@ hdbso::install_scaleout_nodes() {
     fi
   fi
 
-  sed -i -e 's/Autostart=0/Autostart=1/g' /usr/sap/"${VM_METADATA[sap_hana_sid]}"/profile/*
+  sed -i -e 's/Autostart=0/Autostart=1/g' /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/profile/*
   hdbso::restart
   hdb::set_parameters global.ini storage partition_*_*__fencing enabled
   main::complete
