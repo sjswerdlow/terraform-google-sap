@@ -23,8 +23,8 @@ hdbso::calculate_volume_sizes() {
     main::errhandle_log_info "Calculating disk volume sizes"
 
     hana_log_size=$((VM_MEMSIZE/2))
-    hana_log_size=$((128*(1+(hana_log_size/128))))
-    if [[ ${hana_log_size} -ge 512 ]]; then
+
+    if [[ ${hana_log_size} -gt 512 ]]; then
       hana_log_size=512
     fi
 

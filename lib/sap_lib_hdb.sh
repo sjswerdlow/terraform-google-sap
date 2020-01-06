@@ -18,28 +18,33 @@
 # ------------------------------------------------------------------------
 
 hdb::calculate_volume_sizes() {
-  local hana_node_type=${1}
-
   main::errhandle_log_info "Calculating disk volume sizes"
 
   hana_log_size=$((VM_MEMSIZE/2))
-  hana_log_size=$((128*(1+(hana_log_size/128))))
-  if [[ ${hana_log_size} -ge 512 ]]; then
+
+  if [[ ${hana_log_size} -gt 512 ]]; then
     hana_log_size=512
   fi
 
   hana_data_size=$(((VM_MEMSIZE*15)/10))
-
-  if [[ ${VM_METADATA[sap_hana_scaleout_nodes]} -eq 0 ]]; then
-    hana_shared_size=${VM_MEMSIZE}
-  else
-    hana_shared_size=$((VM_MEMSIZE*((VM_METADATA[sap_hana_scaleout_nodes]+3)/4)))
-  fi
-
-  ## if worker node, set the hana_shared_size to 0
-  if [[ "${hana_node_type}" = "secondary" ]]; then
+  
+  # check if node is a standby or not
+  if [[ "${VM_METADATA[hana_node_type]}" = "secondary" ]]; then
     hana_shared_size=0
-  fi
+  else
+    # determine hana shared size based on memory size
+    hana_shared_size=${VM_MEMSIZE}
+
+    if [[ ${hana_shared_size} -gt 1024 ]]; then
+        hana_shared_size=1024
+    fi   
+
+    # increase shared size if there are more than 3 nodes
+    if [[ ${VM_METADATA[sap_hana_scaleout_nodes]} -gt 3 ]]; then
+      hana_shared_size_multi=$(/usr/bin/python -c "print (int(round(${VM_METADATA[sap_hana_scaleout_nodes]} /4 + 0.5)))")
+      hana_shared_size=$((hana_shared_size * hana_shared_size_multi))
+    fi
+  fi 
 
   ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
   hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE /dev/sdb)/1024/1024/1024))
@@ -55,7 +60,6 @@ hdb::calculate_volume_sizes() {
     main::errhandle_log_info "--- Determined shared volume requirement to be ${hana_shared_size}"
   fi
 }
-
 
 hdb::create_sap_data_log_volumes() {
 

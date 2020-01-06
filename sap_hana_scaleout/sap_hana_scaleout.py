@@ -134,19 +134,21 @@ def GenerateConfig(context):
       mem_size=256
       cpu_platform="Automatic"
 
-  # determine disk sizes
-  hana_log_size = mem_size / 2
-  hana_log_size = min(512,128*(1+(hana_log_size/128)))
-  hana_data_size = mem_size * 15 / 10
-  hana_data_size = 32 * (1 + ( hana_data_size / 32 ) )
-  pdhdd_size = 2 * mem_size * (sap_hana_worker_nodes + 1)
+  # init variables
+  pdssd_size = 0
 
-  # double required disk space if specified
+  # determine default log/data/shared sizes
+  hana_log_size = max(64, mem_size / 2)
+  hana_log_size = min(512, hana_log_size)
+  hana_data_size = mem_size * 15 / 10
+
+  # double volume size if specified in template
   if (sap_hana_double_volume_size == "True" and mem_size != 208) :
     hana_log_size = hana_log_size * 2
     hana_data_size = hana_data_size * 2
-
-  pdssd_size = max(1700, hana_log_size + hana_data_size)
+    
+  # ensure pd-ssd meets minimum size/performance
+  pdssd_size = max(834, hana_log_size + hana_data_size)
 
   # compile complete json
   hana_nodes = []
