@@ -104,7 +104,7 @@ main::get_os_version() {
 
 
 main::config_ssh() {
-	ssh-keygen -q -N "" < /dev/zero
+	ssh-keygen -m PEM -q -N "" < /dev/zero
 	sed -ie 's/PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config
 	service sshd restart
 	cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
