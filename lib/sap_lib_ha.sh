@@ -230,7 +230,7 @@ ha::config_corosync(){
       token: 20000
       token_retransmits_before_loss_const: 10
       join: 60
-      consensus: 22000
+      consensus: 24000
       max_messages:	20
       transport: udpu
       interface {

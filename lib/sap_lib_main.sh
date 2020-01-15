@@ -56,9 +56,9 @@ main::set_boot_parameters() {
 main::errhandle_log_info() {
   local log_entry=${1}
 
-	echo "INFO - ${log_entry}"
+  echo "INFO - ${log_entry}"
   if [[ -n "${GCLOUD}" ]]; then
-	   ${GCLOUD} --quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"${log_entry}\"" --severity=INFO
+	   timeout 10 ${GCLOUD} --quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"${log_entry}\"" --severity=INFO
   fi
 }
 
