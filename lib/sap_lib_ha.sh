@@ -227,10 +227,10 @@ ha::config_corosync(){
       crypto_cipher: aes256
       cluster_name:	hacluster
       clear_node_high_bit: yes
-      token: 5000
-      token_retransmits_before_loss_const: 6
+      token: 20000
+      token_retransmits_before_loss_const: 10
       join: 60
-      consensus: 7500
+      consensus: 22000
       max_messages:	20
       transport: udpu
       interface {
