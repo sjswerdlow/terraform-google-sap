@@ -38,8 +38,8 @@ ha::download_scripts() {
   mkdir -p /usr/lib/ocf/resource.d/gcp
   mkdir -p /usr/lib64/stonith/plugins/external
   curl "${DEPLOY_URL//dm-templates}pacemaker-gcp/alias" -o /usr/lib/ocf/resource.d/gcp/alias
-  curl "${DEPLOY_URL//dm-templates}route" -o /usr/lib/ocf/resource.d/gcp/route
-  curl "${DEPLOY_URL//dm-templates}gcpstonith" -o /usr/lib64/stonith/plugins/external/gcpstonith
+  curl "${DEPLOY_URL//dm-templates}pacemaker-gcp/route" -o /usr/lib/ocf/resource.d/gcp/route
+  curl "${DEPLOY_URL//dm-templates}pacemaker-gcp/gcpstonith" -o /usr/lib64/stonith/plugins/external/gcpstonith
   chmod +x /usr/lib/ocf/resource.d/gcp/alias
   chmod +x /usr/lib/ocf/resource.d/gcp/route
   chmod +x /usr/lib64/stonith/plugins/external/gcpstonith
