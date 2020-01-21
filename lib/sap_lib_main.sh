@@ -297,7 +297,7 @@ main::get_settings() {
 	readonly VM_CPUCOUNT=$(grep -c processor /proc/cpuinfo)
 	main::errhandle_log_info "--- Instance determined to have ${VM_CPUCOUNT} cores"
 
-  readonly VM_MEMSIZE=$(free -g | grep Mem | awk '{ print $2 }')
+	readonly VM_MEMSIZE=$(free -g | grep Mem | awk '{ print $2 }')
 	main::errhandle_log_info "--- Instance determined to have ${VM_MEMSIZE}GB of memory"
 
 	## get network settings
@@ -336,6 +336,12 @@ main::get_settings() {
 	if [[ -n "${VM_METADATA[startup-script]}" ]]; then
 		main::remove_metadata startup-script
 	fi
+
+	## if the startup script has previously completed, abort execution.
+	if [[ -n "${VM_METADATA[status]}" ]]; then
+		main::errhandle_log_info "Startup script has previously been run. Aborting execution."
+		exit 0
+	fi	
 }
 
 
@@ -408,6 +414,7 @@ main::complete() {
 
   if [[ -z "${on_error}" ]]; then
   	main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
+	${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "status=completed" --zone "${CLOUDSDK_COMPUTE_ZONE}"
   fi
 
   ## prepare advanced logs
@@ -418,7 +425,7 @@ main::complete() {
     grep startup /var/log/messages > /root/.deploy/"${HOSTNAME}"_debug_startup_script_output.log
     tar -czvf /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz -C /root/.deploy/ .
     main::errhandle_log_info "--- Debug logs stored in /root/.deploy/"
-		## Upload logs to GCS bucket & display complete message
+	## Upload logs to GCS bucket & display complete message
     if [ -n "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
       main::errhandle_log_info "--- Uploading logs to Google Cloud Storage bucket"
       ${GSUTIL} cp /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz  gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/logs/
@@ -427,7 +434,7 @@ main::complete() {
 
 	## Run custom post deployment script
 	if [[ -n "${VM_METADATA[post_deployment_script]}" ]]; then
-    main::errhandle_log_info "--- Running custom post deployment script - ${VM_METADATA[post_deployment_script]}"
+    	main::errhandle_log_info "--- Running custom post deployment script - ${VM_METADATA[post_deployment_script]}"
 		if [[ "${VM_METADATA[post_deployment_script]:0:8}" = "https://" ]] || [[ "${VM_METADATA[post_deployment_script]:0:7}" = "http://" ]]; then
 			source /dev/stdin <<< "$(curl -s "${VM_METADATA[post_deployment_script]}")"
 		elif [[ "${VM_METADATA[post_deployment_script]:0:5}" = "gs://" ]]; then
@@ -445,9 +452,8 @@ main::complete() {
 
 	## exit sending right error code
 	if [[ -z "${on_error}" ]]; then
-  	exit 0
-  else
+  		exit 0
+  	else
 		exit 1
 	fi
-
 }
