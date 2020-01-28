@@ -264,7 +264,7 @@ main::format_mount() {
 			mkfs -t "${filesystem}" "${device}"
 			mkdir -p "${mount_point}"
 			if [[ ! "${options}" = "tmp" ]]; then 
-				echo "${device} ${mount_point} ${filesystem} defaults,nofail 0 2" >>/etc/fstab
+				echo "${device} ${mount_point} ${filesystem} defaults,nofail,logbsize=256k 0 2" >>/etc/fstab
 				mount -a
 			else
 				mount -t "${filesystem}" "${device}" "${mount_point}"
