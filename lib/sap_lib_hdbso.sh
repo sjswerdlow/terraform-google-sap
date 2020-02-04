@@ -64,20 +64,22 @@ hdbso::create_data_log_volumes() {
     main::format_mount /hana/data /dev/vg_hana/data xfs tmp
     main::format_mount /hana/log /dev/vg_hana/log xfs tmp
 
-    ## create sid folder inside of mount
+    ## create sid folder inside of mounted file system
     mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
 
-    ## Unupdate permissions then unmount - mounts are now under the control of gceStorageClient
+    ## Update permissions then unmount - mounts are now under the control of gceStorageClient
     main::errhandle_log_info '--- Unmounting and deactivating file systems'
-    mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
-    chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
     chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /hana/log /hana/data
     chmod -R 750 /hana/data /hana/log
-    umount /hana/log
-    umount /hana/data
-    /sbin/vgchange -an vg_hana
+    /usr/bin/sync
+    /usr/bin/umount /hana/log
+    /usr/bin/umount /hana/data
+
+    ## disable volume group
+    /sbin/vgchange -a n vg_hana
   fi
   
+  ## create base SID directory to avoid hdblcm failing on worker/standby nodes
   mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
 }
 
@@ -115,19 +117,28 @@ hdbso::mount_nfs_vols() {
   main::check_mount /hanabackup warning
 
   ## set permissions correctly. Workaround for some NFS servers
-  chmod -R 775 /hana/shared
+  chmod 775 /hana/shared
 }
 
 
 hdbso::gcestorageclient_download() {
+  ## install python module requirements for gceStorageClientv1
+  pip install --upgrade pyasn1-modules
+
   main::errhandle_log_info "Downloading gceStorageClient"
   mkdir -p /hana/shared/gceStorageClient
-  pip install --upgrade pyasn1-modules
   curl https://storage.googleapis.com/GCESTORAGECLIENT_URL/gceStorageClient.py -o /hana/shared/gceStorageClient/gceStorageClient.py
 
   if [[ ! -f /hana/shared/gceStorageClient/gceStorageClient.py ]]; then
     main::errhandle_log_error "Unable to download gceStorageClient"
   fi
+}
+
+
+hdbso::gcestorageclient_gcloud_config() {
+	# Configuring gcloud to work under target SAP HANA sidadm account
+  mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
+  chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/  
 }
 
 
@@ -161,8 +172,8 @@ EOF
   cat <<EOF >> /hana/shared/gceStorageClient/global.ini
 partition_*_data__dev = /dev/vg_hana/data
 partition_*_log__dev = /dev/vg_hana/log
-partition_*_data__mountOptions = -t xfs
-partition_*_log__mountOptions = -t xfs -o nobarrier
+partition_*_data__mountOptions = -t xfs -o logbsize=256k
+partition_*_log__mountOptions = -t xfs -o nobarrier,logbsize=256k
 partition_*_*__fencing = disabled
 
 [trace]
@@ -222,20 +233,23 @@ hdbso::install_scaleout_nodes() {
     done
   fi
 
-  if [[ ! ${VM_METADATA[sap_hana_standby_nodes]} = "0" ]]; then
-    main::errhandle_log_info "Updating SAP HANA configured roles"
-    echo "call SYS.UPDATE_LANDSCAPE_CONFIGURATION('deploy','{\"HOSTS\":{\"${HOSTNAME}w1\":{\"WORKER_CONFIG_GROUPS\":\"default\",\"FAILOVER_CONFIG_GROUP\":\"default\",\"INDEXSERVER_CONFIG_ROLE\":\"WORKER\",\"NAMESERVER_CONFIG_ROLE\":\"MASTER 2\"},\"${HOSTNAME}w$((VM_METADATA[sap_hana_worker_nodes]+1))\":{\"WORKER_CONFIG_GROUPS\":\"default\",\"FAILOVER_CONFIG_GROUP\":\"default\",\"INDEXSERVER_CONFIG_ROLE\":\"STANDBY\",\"NAMESERVER_CONFIG_ROLE\":\"MASTER 3\"}}}')" > /root/.deploy/hdbconfig.sql
-    if ! bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -d SYSTEMDB -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"; then
-      bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
-    fi
-  fi
-
+  # Ensure HANA is set to autostart
   sed -i -e 's/Autostart=0/Autostart=1/g' /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/profile/*
+
+  ## restart SAP HANA
   hdbso::restart
+
+  ## configure masters
+  main::errhandle_log_info "Updating SAP HANA configured roles"
+  echo "call SYS.UPDATE_LANDSCAPE_CONFIGURATION('deploy','{\"HOSTS\":{\"${HOSTNAME}w1\":{\"WORKER_CONFIG_GROUPS\":\"default\",\"FAILOVER_CONFIG_GROUP\":\"default\",\"INDEXSERVER_CONFIG_ROLE\":\"WORKER\",\"NAMESERVER_CONFIG_ROLE\":\"MASTER 2\"},\"${HOSTNAME}w$((VM_METADATA[sap_hana_worker_nodes]+1))\":{\"WORKER_CONFIG_GROUPS\":\"default\",\"FAILOVER_CONFIG_GROUP\":\"default\",\"INDEXSERVER_CONFIG_ROLE\":\"STANDBY\",\"NAMESERVER_CONFIG_ROLE\":\"MASTER 3\"}}}')" > /root/.deploy/hdbconfig.sql
+  bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -d SYSTEMDB -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
+  bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
+
+  ## enable fencing
   hdb::set_parameters global.ini storage partition_*_*__fencing enabled
+
   main::complete
 }
-
 
 hdbso::restart() {
   main::errhandle_log_info "Restarting SAP HANA"
