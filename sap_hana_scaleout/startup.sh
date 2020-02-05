@@ -45,6 +45,7 @@ hdbso::mount_nfs_vols
 hdbso::calculate_volume_sizes
 hdbso::create_data_log_volumes
 hdbso::gcestorageclient_download
+hdbso::gcestorageclient_gcloud_config
 hdb::install_worker_sshkeys
 
 ## Install SAP HANA
@@ -57,9 +58,6 @@ hdb::install
 hdb::upgrade
 hdb::config_backup
 hdbso::install_scaleout_nodes
-
-## Restart SAP HANA
-hdbso::restart
 
 ## Post deployment & installation cleanup
 main::complete

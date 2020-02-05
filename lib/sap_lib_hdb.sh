@@ -239,10 +239,15 @@ hdb::extract_media() {
 
 
 hdb::install() {
-	main::errhandle_log_info 'Installing SAP HANA'
+  main::errhandle_log_info 'Installing SAP HANA'
 	if ! /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
 		main::errhandle_log_error "HANA Installation Failed. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required"
 	fi
+
+  # workaround for backup/log directory missing bug in HANA 2.0 SP4 Rev40
+  mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/HDB"${VM_METADATA[sap_hana_instance_number]}"/backup/log
+  mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/HDB"${VM_METADATA[sap_hana_instance_number]}"/backup/data
+  mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/HDB"${VM_METADATA[sap_hana_instance_number]}"/backup/sec
 }
 
 
