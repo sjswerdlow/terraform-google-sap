@@ -37,7 +37,6 @@ def GenerateConfig(context):
         helpers.ZonalComputeUrl(project, secondary_zone, 'machineTypes',
                                 context.properties['instanceType'])
 
-    region = context.properties['primaryZone'][:context.properties['primaryZone'].rfind('-')]
     linux_image_project = context.properties['linuxImageProject']
     linux_image = helpers.GlobalComputeUrl(linux_image_project, 'images',
                                            context.properties['linuxImage'])

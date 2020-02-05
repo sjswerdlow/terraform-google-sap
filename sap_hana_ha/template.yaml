@@ -69,6 +69,15 @@ resources:
     # sap_deployment_debug: [No | Yes]
     #    Debug mode. Do not enable debug mode unless you are asked by support to turn it on.
     #
+    # labels:
+    #    [mylabel]: [mylabelvalue]
+    #    Labels to apply to this instance. These can be later modified by the setLabels method.
+    #
+    # dependsOn:
+    #   -[DEPENDENCY_1]
+    #   -[DEPENDENCY_2]
+    #   The list of the resources that must be created before this template is applied.
+    #
     # --- Developer Options ---
     # post_deployment_script: [SCRIPT_URL]
     #    Specifies the location of a script to run after the deployment is complete.

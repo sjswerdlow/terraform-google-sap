@@ -41,7 +41,8 @@ def RegionalComputeUrl(project, region, collection, name):
 
 def CalculateHanaDefaults(properties, project, hana_helpers):
 
-    region = properties['zone'][:properties['zone'].rfind('-')]
+    zone = properties.get('zone', properties.get('primaryZone'))
+    region = zone[:zone.rfind('-')]
 
     calc = {}
 
@@ -172,29 +173,28 @@ def GetBaseLabels(calc):
 
 
 def GetHALabels(calc):
-    Baselabels = (GetBaseLabels(calc) /
-                  + [{
-                        'key': 'sap_hana_sidadm_password',
-                        'value': calc['sap_hana_sidadm_password']
-                    },
-                    {
-                        'key': 'sap_hana_system_password',
-                        'value': calc['sap_hana_system_password']
-                    },
-                    {
-                        'key': 'sap_hana_sidadm_uid',
-                        'value': calc['sap_hana_sidadm_uid']
-                    },
-                    {
-                        'key': 'sap_hana_sapsys_gid',
-                        'value': calc['sap_hana_sapsys_gid']
-                    },
-                    {
-                        'key': 'sap_vip',
-                        'value': calc['sap_vip']
-                    },
-                    {
-                        'key': 'sap_vip_secondary_range',
-                        'value': calc['sap_vip_secondary_range']
-                    }])
-    return Baselabels
+    HAlabels = ([{
+                    'key': 'sap_hana_sidadm_password',
+                    'value': calc['sap_hana_sid_adm_password']
+                },
+                {
+                    'key': 'sap_hana_system_password',
+                    'value': calc['sap_hana_system_adm_password']
+                },
+                {
+                    'key': 'sap_hana_sidadm_uid',
+                    'value': calc['sap_hana_sidadm_uid']
+                },
+                {
+                    'key': 'sap_hana_sapsys_gid',
+                    'value': calc['sap_hana_sapsys_gid']
+                },
+                {
+                    'key': 'sap_vip',
+                    'value': calc['sap_vip']
+                },
+                {
+                    'key': 'sap_vip_secondary_range',
+                    'value': calc['sap_vip_secondary_range']
+                }] + GetBaseLabels(calc))
+    return HAlabels
