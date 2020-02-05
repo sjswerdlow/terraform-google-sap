@@ -45,6 +45,7 @@ hdbso::mount_nfs_vols
 hdbso::calculate_volume_sizes
 hdbso::create_data_log_volumes
 hdbso::update_sudoers
+hdbso::gcestorageclient_gcloud_config
 
 ## Post deployment & installation cleanup
 main::complete
