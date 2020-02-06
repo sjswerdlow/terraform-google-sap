@@ -34,18 +34,6 @@ def GenerateConfig(context):
     linux_image = helpers.GlobalComputeUrl(
         linux_image_project, 'images', context.properties['linuxImage'])
 
-    deployment_script_location = str(context.properties.get(
-        'deployment_script_location',
-        'https://storage.googleapis.com/BUILD.SH_URL'))
-
-    primary_startup_url = ("curl " + deployment_script_location
-                           + "/sap_hana/startup.sh | bash -s "
-                           + deployment_script_location)
-
-    secondary_startup_url = ("curl " + deployment_script_location
-                             + "/sap_hana/startup_secondary.sh | bash -s "
-                             + deployment_script_location)
-
     service_account = str(
         context.properties.get('serviceAccount', context.env['project_number']
                                + '-compute@developer.gserviceaccount.com'))
@@ -94,7 +82,7 @@ def GenerateConfig(context):
                     'dependsOn': context.properties.get('dependsOn', []),
                     'items': helpers.GetBaseLabels(calc) + [{
                         'key': 'startup-script',
-                        'value': primary_startup_url
+                        'value': calc['primary_startup_url']
                     },
                         {
                         'key': 'sap_hana_sidadm_password',
@@ -187,7 +175,7 @@ def GenerateConfig(context):
                                 context.properties.get('dependsOn', []),
                             'items': helpers.GetBaseLabels(calc) + [{
                                 'key': 'startup-script',
-                                'value': secondary_startup_url
+                                'value': calc['secondary_startup_url']
                             },
                                 {
                                 'key': 'sap_hana_scaleout_nodes',

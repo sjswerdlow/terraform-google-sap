@@ -74,6 +74,18 @@ def CalculateHanaDefaults(properties, project, hana_helpers):
         str(properties.get('sap_vip_secondary_range', ''))
     calc['sap_vip'] = str(properties.get('sap_vip', ''))
 
+    deployment_script_location = str(properties.get(
+        'deployment_script_location',
+        'https://storage.googleapis.com/BUILD.SH_URL'))
+
+    calc['primary_startup_url'] = ("curl " + deployment_script_location
+                                   + "/sap_hana/startup.sh | bash -s "
+                                   + deployment_script_location)
+
+    calc['secondary_startup_url'] = ("curl " + deployment_script_location
+                                     + "/sap_hana/startup_secondary.sh | bash -s "
+                                     + deployment_script_location)
+
     # Subnetwork: with SharedVPC support
     if "/" in properties['subnetwork']:
         sharedvpc = properties['subnetwork'].split("/")
