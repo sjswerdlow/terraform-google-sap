@@ -59,7 +59,7 @@ def CalculateHanaDefaults(properties, project, hana_helpers):
     calc['sap_hana_sapsys_gid'] = \
         str(properties.get('sap_hana_sapsys_gid', '79'))
     calc['sap_hana_scaleout_nodes'] = \
-        int(properties.get('sap_hana_scaleout_nodes', ''))
+        int(properties.get('sap_hana_scaleout_nodes', '0'))
     calc['sap_hana_deployment_bucket'] = \
         str(properties.get('sap_hana_deployment_bucket', ''))
     calc['sap_hana_double_volume_size'] = \
@@ -73,6 +73,18 @@ def CalculateHanaDefaults(properties, project, hana_helpers):
     calc['sap_vip_secondary_range'] = \
         str(properties.get('sap_vip_secondary_range', ''))
     calc['sap_vip'] = str(properties.get('sap_vip', ''))
+
+    deployment_script_location = str(properties.get(
+        'deployment_script_location',
+        'https://storage.googleapis.com/BUILD.SH_URL'))
+
+    calc['primary_startup_url'] = ("curl " + deployment_script_location
+                                   + "/sap_hana/startup.sh | bash -s "
+                                   + deployment_script_location)
+
+    calc['secondary_startup_url'] = ("curl " + deployment_script_location
+                                     + "/sap_hana/startup_secondary.sh | bash -s "
+                                     + deployment_script_location)
 
     # Subnetwork: with SharedVPC support
     if "/" in properties['subnetwork']:
