@@ -59,7 +59,7 @@ def CalculateHanaDefaults(properties, project, hana_helpers):
     calc['sap_hana_sapsys_gid'] = \
         str(properties.get('sap_hana_sapsys_gid', '79'))
     calc['sap_hana_scaleout_nodes'] = \
-        int(properties.get('sap_hana_scaleout_nodes', ''))
+        int(properties.get('sap_hana_scaleout_nodes', '0'))
     calc['sap_hana_deployment_bucket'] = \
         str(properties.get('sap_hana_deployment_bucket', ''))
     calc['sap_hana_double_volume_size'] = \
