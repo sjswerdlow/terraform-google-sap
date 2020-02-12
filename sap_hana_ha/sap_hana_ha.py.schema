@@ -20,12 +20,6 @@ info:
   title: SAP HANA HA deployment template
   description: Creates two scale-up instances with automatic failover
 
-imports:
-    - path: ../lib/hana_helpers.yaml
-      name: hana_helpers.yaml
-    - path: ../lib/helpers.py
-      name: helpers.py
-
 required:
 - primaryInstanceName
 - secondaryInstanceName
@@ -149,18 +143,3 @@ properties:
   serviceAccount:
     description: OPTIONAL - Ability to define a custom service account instead of using the default project service account
     type: string
-          
-  dependsOn:
-    type: array
-    description: |
-      The list of the resources that must be created before this template is applied.
-    items:
-      type: string
-      description: The resource name.
-      
-  labels:
-    type: object
-    description: |
-        Labels to apply to this instance. These can be later modified by the setLabels method.
-        
-        An object containing a list of "key": value pairs. Example: { "name": "wrench", "mass": "1.3kg", "count": "3" }.

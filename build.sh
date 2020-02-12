@@ -34,7 +34,7 @@ deploy() {
   echo "Deploying to gs://${deploy_url}"
   ## silly work around for MacOSX bug. Takes a little longer but it works X-platform so keeping it in. 
   for entry in $(find . -maxdepth 1 | grep -v Icon | grep -v OWNERS); do
-    gsutil -q -m cp -r -c "${entry}" gs://"${deploy_url}"/ &>/dev/null
+    gsutil -q -m cp -r -c "${entry}" gs://"${deploy_url}"/
   done
   gsutil -q rm gs://"${deploy_url}"/build.sh
   wait
