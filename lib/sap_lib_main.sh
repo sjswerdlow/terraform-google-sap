@@ -361,25 +361,25 @@ main::remove_metadata() {
 main::install_gsdk() {
 	local install_location=${1}
 
-	if [[ ! -d "${install_location}/google-cloud-sdk" ]]; then
+	if [[ -e /usr/bin/gsutil ]]; then
+		# if SDK is installed, link to the standard location for backwards compatibility
+		mkdir -p /usr/local/google-cloud-sdk/bin
+		ln -s /usr/bin/gsutil /usr/local/google-cloud-sdk/bin/gsutil
+		ln -s /usr/bin/gcloud /usr/local/google-cloud-sdk/bin/gcloud
+	elif [[ ! -d "${install_location}/google-cloud-sdk" ]]; then
 		bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir="${install_location}" >/dev/null
-		## run an instances list just to ensure the software is up to date
-		"${install_location}"/google-cloud-sdk/bin/gcloud --quiet beta compute instances list >/dev/null
 		if [[ "$LINUX_DISTRO" = "SLES" ]]; then
 			update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
 			update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
 		fi
+		main::errhandle_log_info "Installed Google SDK in ${install_location}"
 	fi
 
-	if [[ -f /usr/local/google-cloud-sdk/bin/gcloud ]]; then
-		readonly GCLOUD="/usr/local/google-cloud-sdk/bin/gcloud"
-		readonly GSUTIL="/usr/local/google-cloud-sdk/bin/gsutil"
-		readonly BQ="/usr/local/google-cloud-sdk/bin/bq"
-	elif [[ -f /usr/bin/gcloud ]]; then
-		readonly GCLOUD="/usr/bin/gloud"
-		readonly GSUTIL="/usr/bin/gsutil"
-	fi
-  main::errhandle_log_info "Installed Google SDK in ${install_location}"
+	readonly GCLOUD="/usr/bin/gloud"
+	readonly GSUTIL="/usr/bin/gsutil"
+
+	## run an instances list to ensure the software is up to date
+	${GCLOUD} --quiet beta compute instances list >/dev/null
 }
 
 

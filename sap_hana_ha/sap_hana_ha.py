@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   Mon  3 Feb 2020 10:27:01 GMT
+# Build Date:   BUILD.SH_DATE
 # ------------------------------------------------------------------------
 
 """Creates a Compute Instance with the provided metadata."""
@@ -46,7 +46,7 @@ def GenerateConfig(context):
   region = context.properties['primaryZone'][:context.properties['primaryZone'].rfind('-')]
   linux_image_project = context.properties['linuxImageProject']
   linux_image = GlobalComputeUrl(linux_image_project, 'images', context.properties['linuxImage'])
-  deployment_script_location = str(context.properties.get('deployment_script_location', 'https://storage.googleapis.com/sapdeploy/dm-templates'))
+  deployment_script_location = str(context.properties.get('deployment_script_location', 'https://storage.googleapis.com/BUILD.SH_URL'))
   primary_startup_url = "curl " + deployment_script_location + "/sap_hana_ha/startup.sh | bash -s " + deployment_script_location
   secondary_startup_url = "curl " + deployment_script_location + "/sap_hana_ha/startup_secondary.sh | bash -s " + deployment_script_location
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
