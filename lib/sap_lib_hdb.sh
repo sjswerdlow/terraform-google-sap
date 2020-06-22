@@ -172,8 +172,12 @@ hdb::create_install_cfg() {
   main::errhandle_log_info "Creating HANA installation configuration file /root/.deploy/${HOSTNAME}_hana_install.cfg"
 
   ## check parameters
-  if [ -z "${VM_METADATA[sap_hana_deployment_bucket]}" ] || [ -z "${VM_METADATA[sap_hana_system_password]}" ] || [ -z "${VM_METADATA[sap_hana_sidadm_password]}" ] || [ -z "${VM_METADATA[sap_hana_sid]}" ] || [ -z "${VM_METADATA[sap_hana_sidadm_uid]}" ]; then
-    main::errhandle_log_warning "SAP HANA variables were missing or incomplete in the deployment manager template. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually"
+  if [ -z "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
+    main::errhandle_log_warning "SAP HANA deployement bucket is missing or incorrect in the deployment manager template. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually"
+    main::complete
+  fi
+  if [ -z "${VM_METADATA[sap_hana_system_password]}" ] || [ -z "${VM_METADATA[sap_hana_sidadm_password]}" ] || [ -z "${VM_METADATA[sap_hana_sid]}" ] || [ -z "${VM_METADATA[sap_hana_sidadm_uid]}" ]; then
+    main::errhandle_log_warning "SAP HANA parameters were missing or incomplete in the deployment manager template. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually"
     main::complete
   fi
 
