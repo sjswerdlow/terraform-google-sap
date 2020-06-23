@@ -375,7 +375,7 @@ main::install_gsdk() {
 		main::errhandle_log_info "Installed Google SDK in ${install_location}"
 	fi
 
-	readonly GCLOUD="/usr/bin/gloud"
+	readonly GCLOUD="/usr/bin/gcloud"
 	readonly GSUTIL="/usr/bin/gsutil"
 
 	## run an instances list to ensure the software is up to date
