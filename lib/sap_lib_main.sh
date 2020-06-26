@@ -378,6 +378,11 @@ main::install_gsdk() {
 	readonly GCLOUD="/usr/bin/gcloud"
 	readonly GSUTIL="/usr/bin/gsutil"
 
+	## set default python version for Cloud SDK in SLES, move from 3.4 to 2.7
+	if [[ "$LINUX_DISTRO" = "SLES" ]]; then
+		export CLOUDSDK_PYTHON=/usr/bin/python
+	fi
+
 	## run an instances list to ensure the software is up to date
 	${GCLOUD} --quiet beta compute instances list >/dev/null
 }
