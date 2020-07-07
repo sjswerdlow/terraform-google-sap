@@ -24,6 +24,7 @@ stage() {
   ## Add correct deployment URL to files
   grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
   grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i '' "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
+  grep -rl GCEPACEMAKER_URL . | grep -v build.sh | xargs sed -i '' "s/GCEPACEMAKER_URL/${bucket}\/pacemaker-gcp/g"
 }
 
 deploy() {
