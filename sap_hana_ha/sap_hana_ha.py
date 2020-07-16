@@ -91,46 +91,58 @@ def GenerateConfig(context):
   ## determine disk sizes to add
   if context.properties['instanceType'] == 'n1-highmem-32':
       mem_size=208
-      cpu_platform="Intel Broadwell"
+      cpu_platform = "Intel Broadwell"
   elif context.properties['instanceType'] == 'n1-highmem-64':
       mem_size=416
-      cpu_platform="Intel Broadwell"
+      cpu_platform = "Intel Broadwell"
   elif context.properties['instanceType'] == 'n1-highmem-96':
       mem_size=624
-      cpu_platform="Intel Skylake"
+      cpu_platform = "Intel Skylake"
   elif context.properties['instanceType'] == 'n1-megamem-96':
       mem_size=1433
-      cpu_platform="Intel Skylake"
+      cpu_platform = "Intel Skylake"
+  elif context.properties['instanceType'] == 'n2-highmem-32':
+      mem_size=256
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'n2-highmem-48':
+      mem_size=386
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'n2-highmem-64':
+      mem_size=512
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'n2-highmem-80':
+      mem_size=640
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'n1-ultramem-40':
       mem_size=961
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'n1-ultramem-80':
       mem_size=1922
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'n1-ultramem-160':
       mem_size=3844
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'm1-megamem-96':
       mem_size=1433
-      cpu_platform="Intel Skylake"
+      cpu_platform = "Intel Skylake"
   elif context.properties['instanceType'] == 'm1-ultramem-40':
       mem_size=961
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'm1-ultramem-80':
       mem_size=1922
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'm1-ultramem-160':
       mem_size=3844
-      cpu_platform="Automatic"         
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'm2-ultramem-208':
       mem_size=5916
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'm2-ultramem-416':
       mem_size=11832
-      cpu_platform="Automatic"
+      cpu_platform = "Automatic"
   else:
-      mem_size=256
-      cpu_platform="Automatic"
+      mem_size=640
+      cpu_platform = "Automatic"
 
   # init variables
   pdssd_size = 0
