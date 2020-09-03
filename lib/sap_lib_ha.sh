@@ -25,7 +25,7 @@ ha::check_settings() {
 
   ## check required parameters are present
   if [ -z "${VM_METADATA[sap_vip]}" ] || [ -z "${VM_METADATA[sap_primary_instance]}" ] || [ -z "${PRIMARY_NODE_IP}" ] || [ -z "${VM_METADATA[sap_primary_zone]}" ] || [ -z "${VM_METADATA[sap_secondary_instance]}" ] || [ -z "${SECONDARY_NODE_IP}" ]; then
-    main::errhandle_log_warning "High Availability variables were missing or incomplete. Both SAP HANA VM's will be installed and configured but HA will need to be manually setup "
+    main::errhandle_log_warning "High Availability variables were missing or incomplete. Both SAP HANA VMs will be installed and configured but HA will need to be manually setup "
     main::complete
   fi
 
@@ -186,9 +186,9 @@ ha::check_hdb_replication(){
   main::errhandle_log_info "Checking SAP HANA replication status"
   # check status
   bash -c "source /usr/sap/*/home/.sapenv.sh && /usr/sap/${VM_METADATA[sap_hana_sid]}/HDB${VM_METADATA[sap_hana_instance_number]}/exe/hdbsql -o /root/.deploy/hdbsql.out -a -U ${hana_user_store_key} 'select distinct REPLICATION_STATUS from SYS.M_SERVICE_REPLICATION'"
-  
+
   local count=0
-    
+
   while ! grep -q \"ACTIVE\" /root/.deploy/hdbsql.out; do
     main::errhandle_log_info "--- Replication is still in progressing. Waiting 60 seconds then trying again"
     bash -c "source /usr/sap/*/home/.sapenv.sh && /usr/sap/${VM_METADATA[sap_hana_sid]}/HDB${VM_METADATA[sap_hana_instance_number]}/exe/hdbsql -o /root/.deploy/hdbsql.out -a -U ${hana_user_store_key} 'select distinct REPLICATION_STATUS from SYS.M_SERVICE_REPLICATION'"
@@ -203,7 +203,7 @@ ha::check_hdb_replication(){
 
 ha::check_cluster(){
   main::errhandle_log_info "Checking cluster status"
-  
+
   local count=0
 
   while ! crm_mon -s | grep -q "2 nodes online"; do
@@ -286,7 +286,7 @@ ha::config_pacemaker_primary() {
     systemctl start pacemaker
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     main::errhandle_log_info "--- Creating /etc/corosync/corosync.conf"
-    pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" --force
+    pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]}" "${VM_METADATA[sap_secondary_instance]}" --force
     main::errhandle_log_info "--- Starting cluster services & enabling on startup"
     service pacemaker start
     service pscd start
@@ -315,10 +315,14 @@ ha::config_pacemaker_secondary() {
     systemctl enable pacemaker
     systemctl start pacemaker
     systemctl enable hawk
-    systemctl start hawk    
+    systemctl start hawk
+    if [ "${VM_METADATA[sap_vip_solution]}" = "ILB" ]; then
+      main::errhandle_log_info "Using an ILB for the VIP"
+      zypper in -y socat || main::errhandle_log_warning "- socat could not be installed. Manual configuration will be needed"
+    fi
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     corosync-keygen
-    pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" --force
+    pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]}" "${VM_METADATA[sap_secondary_instance]}" --force
     service pacemaker start
     service pscd start
     systemctl enable pcsd.service
@@ -342,18 +346,32 @@ ha::pacemaker_add_stonith() {
 
 ha::pacemaker_add_vip() {
   main::errhandle_log_info "Cluster: Adding virtual IP"
-  if ! ping -c 1 -W 1 "${VM_METADATA[sap_vip]}"; then 
+  main::errhandle_log_info "ILB settings" "${VM_METADATA[sap_vip_solution]}" "${VM_METADATA[sap_hc_port]}"
+  if [ "${VM_METADATA[sap_vip_solution]}" = "ILB" ]; then
+    main::errhandle_log_info "Using an ILB for the VIP"
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
-      crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
-      if [[ -n "${VM_METADATA[sap_vip_secondary_range]}" ]]; then
-        crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
+      if zypper in -y socat; then
+        crm configure primitive rsc_vip_hc-primary anything params binfile="/usr/bin/socat" cmdline_options="-U TCP-LISTEN:"${VM_METADATA[sap_hc_port]}",backlog=10,fork,reuseaddr /dev/null" op monitor timeout=20s interval=10 op_params depth=0
+        crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
+        crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary
       else
-        crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
+        main::errhandle_log_warning "- socat could not be installed, attempting to continue with rest of configuration. Manual configuration will be needed"
       fi
-      crm configure group g-primary rsc_vip_int-primary rsc_vip_gcp-primary
     fi
   else
-    main::errhandle_log_warning "- VIP is already associated with another VM. The cluster setup will continue but the floating/virtual IP address will not be added"
+    if ! ping -c 1 -W 1 "${VM_METADATA[sap_vip]}"; then
+      if [ "${LINUX_DISTRO}" = "SLES" ]; then
+        crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
+        if [[ -n "${VM_METADATA[sap_vip_secondary_range]}" ]]; then
+          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
+        else
+          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
+        fi
+        crm configure group g-primary rsc_vip_int-primary rsc_vip_gcp-primary
+      fi
+    else
+      main::errhandle_log_warning "VIP is already associated with another VM. The cluster setup will continue but the floating/virtual IP address will not be added"
+    fi
   fi
 }
 
