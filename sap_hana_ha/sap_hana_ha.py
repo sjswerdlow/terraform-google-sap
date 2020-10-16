@@ -20,17 +20,21 @@
 
 COMPUTE_URL_BASE = 'https://www.googleapis.com/compute/v1/'
 
+
 def GlobalComputeUrl(project, collection, name):
   return ''.join([COMPUTE_URL_BASE, 'projects/', project,
                   '/global/', collection, '/', name])
+
 
 def ZonalComputeUrl(project, zone, collection, name):
   return ''.join([COMPUTE_URL_BASE, 'projects/', project,
                   '/zones/', zone, '/', collection, '/', name])
 
+
 def RegionalComputeUrl(project, region, collection, name):
   return ''.join([COMPUTE_URL_BASE, 'projects/', project,
                   '/regions/', region, '/', collection, '/', name])
+
 
 def GenerateConfig(context):
   """Generate configuration."""
@@ -51,6 +55,8 @@ def GenerateConfig(context):
   secondary_startup_url = "curl " + deployment_script_location + "/sap_hana_ha/startup_secondary.sh | bash -s " + deployment_script_location
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
+  subnetwork = context.properties['subnetwork']
+  network = str(context.properties.get('network', ''))
 
   ## Get deployment template specific variables from context
   sap_hana_sid = str(context.properties.get('sap_hana_sid', ''))
@@ -62,17 +68,56 @@ def GenerateConfig(context):
   sap_vip = str(context.properties.get('sap_vip', ''))
   sap_vip_secondary_range = str(context.properties.get('sap_vip_secondary_range', ''))
   sap_hana_deployment_bucket =  str(context.properties.get('sap_hana_deployment_bucket', ''))
-  sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False')) 
+  sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False'))
   sap_hana_backup_size = int(context.properties.get('sap_hana_backup_size', '0'))
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
-  # Subnetwork: with SharedVPC support
-  if "/" in context.properties['subnetwork']:
-      sharedvpc = context.properties['subnetwork'].split("/")
-      subnetwork = RegionalComputeUrl(sharedvpc[0], region, 'subnetworks', sharedvpc[1])
+  # Determine if ILB should be used for the VIP
+  use_ilb_for_vip = str(context.properties.get(
+      'use_ilb_vip', 'False'))
+  sap_vip_solution = ''
+  sap_hc_port = 0
+  if use_ilb_for_vip == 'True':
+    sap_vip_solution = 'ILB'
+    sap_hc_port = int(60000 + int(sap_hana_instance_number))
+    # Read ILB related input parameters from template
+    primary_instance_group_name = str(context.properties.get(
+        'primaryInstanceGroupName', ''))
+    secondary_instance_group_name = str(context.properties.get(
+        'secondaryInstanceGroupName', ''))
+    loadbalancer_name = str(context.properties.get(
+        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-ilb'
+    loadbalancer_address_name = str(context.properties.get(
+        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-address'
+    loadbalancer_address = str(context.properties.get(
+        'loadBalancerAddress', sap_vip))
+    healthcheck_name = str(context.properties.get(
+        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-hc'
+    forwardingrule_name = str(context.properties.get(
+        'loadBalancerName', 'lb' + sap_hana_sid)) + '-fwr'
+    network_tags['items'].append('sap-' + healthcheck_name + '-port')
+
+    # Network: with Shared VPC option with ILB
+    is_shared_vpc = 'False'
+    if not network:
+      network = GlobalComputeUrl(context.env['project'], 'networks', 'default')
+    elif '/' in network:
+      sharedvpcnet = network.split('/')
+      network = GlobalComputeUrl(sharedvpcnet[0], 'networks', sharedvpcnet[1])
+      is_shared_vpc = 'True'
+    else:
+      network = GlobalComputeUrl(context.env['project'], 'networks',
+                                 context.properties['network'])
+
+  # Subnetwork: with Shared VPC support
+  if '/' in subnetwork:
+    sharedvpc = context.properties['subnetwork'].split('/')
+    subnetwork = RegionalComputeUrl(sharedvpc[0], region,
+                                    'subnetworks', sharedvpc[1])
   else:
-      subnetwork = RegionalComputeUrl(project, region, 'subnetworks', context.properties['subnetwork'])
+    subnetwork = RegionalComputeUrl(project, region, 'subnetworks',
+                                    context.properties['subnetwork'])
 
   # Public IP
   if str(context.properties['publicIP']) == "False":
@@ -86,7 +131,7 @@ def GenerateConfig(context):
   # set startup URL
   if sap_deployment_debug == "True":
       primary_startup_url = primary_startup_url.replace(" -s ", " -x -s ")
-      secondary_startup_url = secondary_startup_url.replace(" -s "," -x -s ")      
+      secondary_startup_url = secondary_startup_url.replace(" -s "," -x -s ")
 
   ## determine disk sizes to add
   if context.properties['instanceType'] == 'n1-highmem-32':
@@ -217,7 +262,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                  
+                  },
                   {
                       'key': 'sap_hana_sid',
                       'value': sap_hana_sid
@@ -261,6 +306,14 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_vip',
                       'value': sap_vip
+                  },
+                  {
+                      'key': 'sap_vip_solution',
+                      'value': sap_vip_solution
+                  },
+                  {
+                      'key': 'sap_hc_port',
+                      'value': sap_hc_port
                   },
                   {
                       'key': 'sap_vip_secondary_range',
@@ -306,14 +359,14 @@ def GenerateConfig(context):
                   }],
               'networkInterfaces': [{
                   'accessConfigs': networking,
-                    'subnetwork': subnetwork
+                  'subnetwork': subnetwork
                   }]
               }
 
           })
 
   ## create secondary node
-  instance_name=context.properties['secondaryInstanceName']
+  instance_name = context.properties['secondaryInstanceName']
 
   hana_nodes.append({
           'name': instance_name + '-pdssd',
@@ -358,7 +411,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                  
+                  },
                   {
                       'key': 'sap_primary_instance',
                       'value': primary_instance_name
@@ -402,6 +455,14 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_vip',
                       'value': sap_vip
+                  },
+                  {
+                      'key': 'sap_vip_solution',
+                      'value': sap_vip_solution
+                  },
+                  {
+                      'key': 'sap_hc_port',
+                      'value': sap_hc_port
                   },
                   {
                       'key': 'sap_vip_secondary_range',
@@ -451,5 +512,145 @@ def GenerateConfig(context):
                   }]
           }
     })
+
+   # Check condition for ILB usage and create related resource entries
+
+  if (use_ilb_for_vip == 'True'):
+    # Instance groups
+    hana_nodes.append({
+        'name': primary_instance_group_name,
+        'type': 'compute.v1.instanceGroup',
+        'properties': {
+            'network': network,
+            'subnetwork': subnetwork,
+            'zone': primary_zone
+        }
+    })
+
+    hana_nodes.append({
+        'name': secondary_instance_group_name,
+        'type': 'compute.v1.instanceGroup',
+        'properties': {
+            'network': network,
+            'subnetwork': subnetwork,
+            'zone': secondary_zone
+        }
+    })
+
+    # Instance group members
+    hana_nodes.append({
+        'name': primary_instance_group_name + '-members',
+        'action': 'gcp-types/compute-v1:compute.instanceGroups.addInstances',
+        'properties': {
+            'instanceGroup': primary_instance_group_name,
+            'instances': [{
+                'instance': '$(ref.' +
+                            context.properties['primaryInstanceName'] +
+                            '.selfLink)'
+                }],
+            'zone': primary_zone
+        }
+    })
+
+    hana_nodes.append({
+        'name': secondary_instance_group_name + '-members',
+        'action': 'gcp-types/compute-v1:compute.instanceGroups.addInstances',
+        'properties': {
+            'instanceGroup': secondary_instance_group_name,
+            'instances': [{
+                'instance': '$(ref.' +
+                            context.properties['secondaryInstanceName'] +
+                            '.selfLink)'
+                }],
+            'zone': secondary_zone
+        }
+    })
+
+    # Backend definition
+    hana_nodes.append({
+        'name': loadbalancer_name,
+        'type': 'compute.v1.regionBackendService',
+        'properties': {
+            'region': region,
+            'network': network,
+            'healthChecks': ['$(ref.' + healthcheck_name + '.selfLink)'],
+            'backends': [
+                {
+                    'group': '$(ref.' + primary_instance_group_name + \
+                    '.selfLink)'
+                },
+                {
+                    'group': '$(ref.' + secondary_instance_group_name + \
+                    '.selfLink)',
+                    'failover': True
+                }],
+            'protocol': 'TCP',
+            'loadBalancingScheme': 'INTERNAL',
+            'failoverPolicy': {
+                'failoverRatio': 1.0,
+                'dropTrafficIfUnhealthy': True,
+                'disableConnectionDrainOnFailover': True
+            }
+        }
+    })
+
+    # TCP health check
+    hana_nodes.append({
+        'name': healthcheck_name,
+        'type': 'compute.v1.healthCheck',
+        'properties': {
+            'type': 'TCP',
+            'tcpHealthCheck': {
+                # Port range 60000> to avoid conflicts comply with IANA ranges
+                'port': int(60000 + int(sap_hana_instance_number))
+            },
+            'checkIntervalSec': 10,
+            'healthyThreshold': 2,
+            'timeoutSec': 10,
+            'unhealthyThreshold': 2
+        }
+    })
+
+    # Reserve IP address
+    hana_nodes.append({
+        'name': loadbalancer_address_name,
+        'type': 'compute.v1.address',
+        'properties': {
+            'addressType': 'INTERNAL',
+            'subnetwork': subnetwork,
+            'region': region,
+            'address': loadbalancer_address,
+        }
+    })
+
+    # Forwarding rule as front-end definition
+    hana_nodes.append({
+        'name': forwardingrule_name,
+        'type': 'compute.v1.forwardingRule',
+        'properties': {
+            'allPorts': True,
+            'network': network,
+            'subnetwork': subnetwork,
+            'region': region,
+            'backendService': '$(ref.' + loadbalancer_name + '.selfLink)',
+            'loadBalancingScheme': 'INTERNAL',
+            'IPAddress': '$(ref.' + loadbalancer_address_name + '.selfLink)',
+        }
+    })
+
+    if (is_shared_vpc == 'False'):
+      hana_nodes.append({
+          'name': healthcheck_name + '-allow-firewall-rule',
+          'type': 'compute.v1.firewall',
+          'properties': {
+              'network': network,
+              'sourceRanges': ['130.211.0.0/22', '35.191.0.0/16'],
+              'targetTags': ['sap-' + healthcheck_name + '-port'],
+              'allowed': [{
+                  'IPProtocol': 'tcp',
+                  'ports': [int(60000 + int(sap_hana_instance_number))]
+              }]
+          }
+      })
 
   return {'resources': hana_nodes}

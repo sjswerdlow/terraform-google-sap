@@ -1,4 +1,5 @@
 #!/bin/bash
+readonly SBOX="deploysandbox"
 readonly ALPHA="deployalpha"
 readonly BETA="deploybeta"
 readonly PROD="sapdeploy"
@@ -9,7 +10,7 @@ stage() {
   echo "Staging deployment in /tmp/build.sh_${bucket}"
 
   ## clean out previously deployment folder if it exists
-  if [[ -d /tmp/build.sh_${bucket} ]]; then 
+  if [[ -d /tmp/build.sh_${bucket} ]]; then
     rm -rf /tmp/build.sh_"${bucket}"
   fi
 
@@ -19,12 +20,22 @@ stage() {
 
   ## Add build date to files
   datetoday=$(date)
-  grep -rl BUILD.SH_DATE . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_DATE/${datetoday}/g"
+  ## Add MacOS check
+  if [[ $(uname -s) == "Darwin" ]]; then
+    grep -rl BUILD.SH_DATE . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_DATE/${datetoday}/g"
 
-  ## Add correct deployment URL to files
-  grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
-  grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i '' "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
-  grep -rl GCEPACEMAKER_URL . | grep -v build.sh | xargs sed -i '' "s/GCEPACEMAKER_URL/${bucket}\/pacemaker-gcp/g"
+    ## Add correct deployment URL to files
+    grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
+    grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i '' "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
+    grep -rl GCEPACEMAKER_URL . | grep -v build.sh | xargs sed -i '' "s/GCEPACEMAKER_URL/${bucket}\/pacemaker-gcp/g"
+  else
+    grep -rl BUILD.SH_DATE . | grep -v build.sh | xargs sed -i "s/BUILD.SH_DATE/${datetoday}/g"
+
+    ## Add correct deployment URL to files
+    grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
+    grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
+    grep -rl GCEPACEMAKER_URL . | grep -v build.sh | xargs sed -i "s/GCEPACEMAKER_URL/${bucket}\/pacemaker-gcp/g"
+  fi
 }
 
 deploy() {
@@ -33,7 +44,7 @@ deploy() {
   echo "Removing current deployments in gs://${deploy_url}"
   gsutil -m rm -r gs://"${deploy_url}" &>/dev/null
   echo "Deploying to gs://${deploy_url}"
-  ## silly work around for MacOSX bug. Takes a little longer but it works X-platform so keeping it in. 
+  ## silly work around for MacOSX bug. Takes a little longer but it works X-platform so keeping it in.
   for entry in $(find . -maxdepth 1 | grep -v Icon | grep -v OWNERS); do
     gsutil -q -m cp -r -c "${entry}" gs://"${deploy_url}"/
   done
@@ -50,9 +61,14 @@ main () {
   if [[ ! "$(dirname "$0")" = "." ]]; then
     echo "Error: build.sh must be executed from the root of the package"
     exit 1
-  fi 
+  fi
 
   case "${destination}" in
+    sandbox)
+      stage ${SBOX}
+      deploy ${SBOX}
+      ;;
+
     alpha)
       stage ${ALPHA}
       deploy ${ALPHA}
@@ -77,7 +93,7 @@ main () {
 
     *)
         echo "Error: Unknown destination"
-  esac  
+  esac
 }
 
 main "${1}"

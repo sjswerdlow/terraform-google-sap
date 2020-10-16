@@ -19,10 +19,19 @@ resources:
     sap_hana_sidadm_password: [PASSWORD]
     sap_hana_system_password: [PASSWORD]
     sap_vip: [VIRTUAL_IP]
+    # Use the Internal Load Balancer as your VIP (recommended)
+    use_ilb_vip: Yes  # [No | Yes]
+    primaryInstanceGroupName: [INSTANCE_GROUP_1]
+    secondaryInstanceGroupName: [INSTANCE_GROUP_2]
+    loadBalancerName: [ILB_NAME]
     #
     # --- Advanced Options ---
     # The following advanced options are not usually needed. To use an advanced option, remove
     # the comment indicator, #, before the parameter name and specify an appropriate value.
+    #
+    # network: [ NETWORK_NAME ]
+    #    This option is only needed for when us_ilb_vip = true and Shared VPC is used. Specify the
+    #    host network name here.
     #
     # networkTag: [TAG]
     #    Adds network tags to your instance. This is useful if you do routing or define
