@@ -17,6 +17,10 @@ Current Templates:
 - Two node empty SuSE pacemaker cluster (sap_emptyha)
 - Two node NFS cluster using DRBD (sap_nfs)
 
+## [4.6] 2020-10-23
+### Changed
+- Added libsss_autofs for RHEL installs
+
 ## [4.5] 2020-02-08
 ### Changed
 - SAP HANA HA template to include ILB
