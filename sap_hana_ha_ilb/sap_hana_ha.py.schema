@@ -158,7 +158,7 @@ properties:
     type: string
 
   network:
-    description: Network in which the ILB resides. This must be specified if a Shared VPC is used
+    description: Network in which the ILB resides including resources like firewall rules.
     type: string
 
   loadBalancerName:

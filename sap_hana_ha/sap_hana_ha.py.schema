@@ -93,8 +93,8 @@ properties:
     minLength: 8
     pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])"
 
-  sap_hana_vip:
-    description: OPTIONAL - The virtual IP address of the route pointing towards the active SAP HANA instance. For a route based solution this IP must sit outside of any defined networks.
+  sap_vip:
+    description: OPTIONAL - The virtual IP address of the alias/route pointing towards the active SAP HANA instance. For a route based solution this IP must sit outside of any defined networks.
     type: string
 
   sap_hana_backup_size:
@@ -157,7 +157,7 @@ properties:
     type: string
 
   network:
-    description: OPTIONAL - Network in which the ILB resides. This only needs to be specified if a Shared VPC is used
+    description: OPTIONAL - Network in which the ILB resides including resources like firewall rules.
     type: string
 
   loadBalancerName:

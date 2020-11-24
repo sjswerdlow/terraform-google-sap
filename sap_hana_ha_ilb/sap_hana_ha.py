@@ -56,7 +56,7 @@ def GenerateConfig(context):
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   subnetwork = context.properties['subnetwork']
-  network = str(context.properties.get('network', ''))
+  network = str(context.properties.get('network', 'default'))
 
   ## Get deployment template specific variables from context
   sap_hana_sid = str(context.properties.get('sap_hana_sid', ''))
@@ -87,15 +87,15 @@ def GenerateConfig(context):
     secondary_instance_group_name = str(context.properties.get(
         'secondaryInstanceGroupName', 'ig-' + secondary_instance_name))
     loadbalancer_name = str(context.properties.get(
-        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-ilb'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-ilb'
     loadbalancer_address_name = str(context.properties.get(
-        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-address'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-address'
     loadbalancer_address = str(context.properties.get(
         'loadBalancerAddress', sap_vip))
     healthcheck_name = str(context.properties.get(
-        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-hc'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-hc'
     forwardingrule_name = str(context.properties.get(
-        'loadBalancerName', 'lb' + sap_hana_sid)) + '-fwr'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-fwr'
     network_tags['items'].append('sap-' + healthcheck_name + '-port')
 
     # Network: with Shared VPC option with ILB

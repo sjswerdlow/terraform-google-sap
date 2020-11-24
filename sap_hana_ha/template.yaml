@@ -30,8 +30,8 @@ resources:
     # the comment indicator, #, before the parameter name and specify an appropriate value.
     #
     # network: [ NETWORK_NAME ]
-    #    This option is only needed for when us_ilb_vip = true and Shared VPC is used. Specify the
-    #    host network name here.
+    #    This option is only needed for when us_ilb_vip = true. Specify the
+    #    host network name here in the case of a Shared VPC.
     #
     # networkTag: [TAG]
     #    Adds network tags to your instance. This is useful if you do routing or define

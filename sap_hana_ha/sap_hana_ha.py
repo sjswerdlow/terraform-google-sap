@@ -83,19 +83,19 @@ def GenerateConfig(context):
     sap_hc_port = int(60000 + int(sap_hana_instance_number))
     # Read ILB related input parameters from template
     primary_instance_group_name = str(context.properties.get(
-        'primaryInstanceGroupName', ''))
+        'primaryInstanceGroupName', 'ig-' + primary_instance_name))
     secondary_instance_group_name = str(context.properties.get(
-        'secondaryInstanceGroupName', ''))
+        'secondaryInstanceGroupName', 'ig-' + secondary_instance_name))
     loadbalancer_name = str(context.properties.get(
-        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-ilb'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-ilb'
     loadbalancer_address_name = str(context.properties.get(
-        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-address'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-address'
     loadbalancer_address = str(context.properties.get(
         'loadBalancerAddress', sap_vip))
     healthcheck_name = str(context.properties.get(
-        'loadBalancerName', 'lb-' + sap_hana_sid)) + '-hc'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-hc'
     forwardingrule_name = str(context.properties.get(
-        'loadBalancerName', 'lb' + sap_hana_sid)) + '-fwr'
+        'loadBalancerName', 'lb-' + sap_hana_sid.lower())) + '-fwr'
     network_tags['items'].append('sap-' + healthcheck_name + '-port')
 
     # Network: with Shared VPC option with ILB
@@ -601,7 +601,7 @@ def GenerateConfig(context):
         'properties': {
             'type': 'TCP',
             'tcpHealthCheck': {
-                # Port range 60000> to avoid conflicts comply with IANA ranges
+                # Port range 60000> to avoid conflicts, comply with IANA ranges
                 'port': int(60000 + int(sap_hana_instance_number))
             },
             'checkIntervalSec': 10,

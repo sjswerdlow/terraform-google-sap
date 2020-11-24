@@ -1,26 +1,27 @@
 imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_hana_ha/sap_hana_ha.py
+- path: https://storage.googleapis.com/BUILD.SH_URL/sap_hana_ha_ilb/sap_hana_ha.py
 
 resources:
 - name: sap_hana_ha
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_hana_ha/sap_hana_ha.py
+  type: https://storage.googleapis.com/BUILD.SH_URL/sap_hana_ha_ilb/sap_hana_ha.py
   properties:
     primaryInstanceName: [VM_NAME_1]
     secondaryInstanceName: [VM_NAME_2]
     primaryZone: [ZONE]
     secondaryZone: [ZONE]
     instanceType: [MACHINE_TYPE]
+    network: [NETWORK_NAME]
     subnetwork: [SUBNETWORK_NAME]
     linuxImage: [IMAGE_FAMILY]
     linuxImageProject: [IMAGE_PROJECT]
+    # SAP HANA parameters
     sap_hana_deployment_bucket: [MEDIA_BUCKET]
     sap_hana_sid: [SID]
     sap_hana_instance_number: [INSTANCE_NUMBER]
     sap_hana_sidadm_password: [PASSWORD]
     sap_hana_system_password: [PASSWORD]
+    # VIP parameters
     sap_vip: [VIRTUAL_IP]
-    # Use the Internal Load Balancer as your VIP (recommended)
-    use_ilb_vip: Yes  # [No | Yes]
     primaryInstanceGroupName: [INSTANCE_GROUP_1]
     secondaryInstanceGroupName: [INSTANCE_GROUP_2]
     loadBalancerName: [ILB_NAME]
@@ -28,10 +29,6 @@ resources:
     # --- Advanced Options ---
     # The following advanced options are not usually needed. To use an advanced option, remove
     # the comment indicator, #, before the parameter name and specify an appropriate value.
-    #
-    # network: [ NETWORK_NAME ]
-    #    This option is only needed for when us_ilb_vip = true and Shared VPC is used. Specify the
-    #    host network name here.
     #
     # networkTag: [TAG]
     #    Adds network tags to your instance. This is useful if you do routing or define
