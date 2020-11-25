@@ -149,9 +149,9 @@ def GenerateConfig(context):
   if (sap_hana_double_volume_size == "True" and mem_size != 208) :
     hana_log_size = hana_log_size * 2
     hana_data_size = hana_data_size * 2
-    
+
   # ensure pd-ssd meets minimum size/performance
-  pdssd_size = max(834, hana_log_size + hana_data_size)
+  pdssd_size = int(max(834, hana_log_size + hana_data_size + 1))
 
   # compile complete json
   hana_nodes = []
