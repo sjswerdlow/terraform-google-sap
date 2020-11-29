@@ -27,7 +27,7 @@ hdb::calculate_volume_sizes() {
   fi
 
   hana_data_size=$(((VM_MEMSIZE*15)/10))
-  
+
   # check if node is a standby or not
   if [[ "${VM_METADATA[hana_node_type]}" = "secondary" ]]; then
     hana_shared_size=0
@@ -37,14 +37,14 @@ hdb::calculate_volume_sizes() {
 
     if [[ ${hana_shared_size} -gt 1024 ]]; then
         hana_shared_size=1024
-    fi   
+    fi
 
     # increase shared size if there are more than 3 nodes
     if [[ ${VM_METADATA[sap_hana_scaleout_nodes]} -gt 3 ]]; then
       hana_shared_size_multi=$(/usr/bin/python -c "print (int(round(${VM_METADATA[sap_hana_scaleout_nodes]} /4 + 0.5)))")
       hana_shared_size=$((hana_shared_size * hana_shared_size_multi))
     fi
-  fi 
+  fi
 
   ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
   hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE /dev/sdb)/1024/1024/1024))
@@ -68,13 +68,13 @@ hdb::create_sap_data_log_volumes() {
   ## create volume group
   main::create_vg /dev/sdb vg_hana
 
-	## create logical volumes
-	main::errhandle_log_info '--- Creating logical volumes'
-	lvcreate -L 32G -n sap vg_hana
-	lvcreate -L ${hana_log_size}G -n log vg_hana
-	lvcreate -l 100%FREE -n data vg_hana
+  ## create logical volumes
+  main::errhandle_log_info '--- Creating logical volumes'
+  lvcreate -L 32G -n sap vg_hana
+  lvcreate -L ${hana_log_size}G -n log vg_hana
+  lvcreate -l 100%FREE -n data vg_hana
 
-	## format file systems
+  ## format file systems
   main::format_mount /usr/sap /dev/vg_hana/sap xfs
   main::format_mount /hana/data /dev/vg_hana/data xfs
   main::format_mount /hana/log /dev/vg_hana/log xfs
@@ -88,7 +88,7 @@ hdb::create_sap_data_log_volumes() {
 hdb::create_shared_volume() {
 
   main::create_vg /dev/sdb vg_hana
-	lvcreate -L ${hana_shared_size}G -n shared vg_hana
+  lvcreate -L ${hana_shared_size}G -n shared vg_hana
 
   ## format and mount
   main::format_mount /hana/shared /dev/vg_hana/shared xfs
@@ -129,7 +129,7 @@ hdb::set_kernel_parameters(){
 
   main::errhandle_log_info "Preparing tuned/saptune"
 
-  if [[ "${LINUX_DISTRO}" = "SLES" ]]; then 
+  if [[ "${LINUX_DISTRO}" = "SLES" ]]; then
     saptune solution apply HANA
     saptune daemon start
   else
@@ -143,8 +143,8 @@ hdb::set_kernel_parameters(){
 
 
 hdb::download_media() {
-	main::errhandle_log_info "Downloading HANA media from ${VM_METADATA[sap_hana_deployment_bucket]}"
-	mkdir -p /hana/shared/media
+  main::errhandle_log_info "Downloading HANA media from ${VM_METADATA[sap_hana_deployment_bucket]}"
+  mkdir -p /hana/shared/media
 
   # Set the media number, so we know
   VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]} | grep _part1.exe | awk -F"/" '{print $NF}' | sed 's/_part1.exe//')"
@@ -152,7 +152,7 @@ hdb::download_media() {
   # If SP4 of above, get the media number from the .ZIP
   if [[ -z ${VM_METADATA[sap_hana_media_number]} ]]; then
     VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]}/51* | grep -i .ZIP | awk -F"/" '{print $NF}' | sed 's/.ZIP//I')"
-  fi 
+  fi
 
   ## download unrar from GCS. Fix for RHEL missing unrar and SAP packaging change which stoppped unar working.
   curl "${DEPLOY_URL}"/third_party/unrar/unrar -o /root/.deploy/unrar
@@ -162,7 +162,7 @@ hdb::download_media() {
   if ! ${GSUTIL} rsync -x ".part*$|IMDB_SERVER*.SAR$" gs://"${VM_METADATA[sap_hana_deployment_bucket]}" /hana/shared/media/ ; then
     main::errhandle_log_warning "HANA Media Download Failed. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually"
     main::complete
-	fi
+  fi
 }
 
 
@@ -238,15 +238,15 @@ hdb::extract_media() {
     fi
   else
     main::errhandle_log_error "Unable to found SAP HANA media. Please ensure the media is uploaded to your GCS bucket in the correct format"
-  fi 
+  fi
 }
 
 
 hdb::install() {
   main::errhandle_log_info 'Installing SAP HANA'
-	if ! /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
-		main::errhandle_log_error "HANA Installation Failed. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required"
-	fi
+  if ! /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
+    main::errhandle_log_error "HANA Installation Failed. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required"
+  fi
 
   # workaround for backup/log directory missing bug in HANA 2.0 SP4 Rev40
   mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/HDB"${VM_METADATA[sap_hana_instance_number]}"/backup/log
@@ -256,17 +256,17 @@ hdb::install() {
 
 
 hdb::upgrade(){
-	if [ "$(ls /hana/shared/media/IMDB_SERVER*.SAR)" ]; then
-	  main::errhandle_log_info "An SAP HANA update was found in GCS. Performing the upgrade:"
-	  main::errhandle_log_info "--- Extracting HANA upgrade media"
-		cd /hana/shared/media || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
-		/usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/SAPCAR -xvf "IMDB_SERVER*.SAR"
-		cd SAP_HANA_DATABASE || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
-	  main::errhandle_log_info "--- Upgrading Database"
-		if ! ./hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg --action=update --ignore=check_signature_file --update_execution_mode=optimized --batch; then
-		    main::errhandle_log_warning "SAP HANA Database revision upgrade failed to install."
-		fi
-	fi
+  if [ "$(ls /hana/shared/media/IMDB_SERVER*.SAR)" ]; then
+    main::errhandle_log_info "An SAP HANA update was found in GCS. Performing the upgrade:"
+    main::errhandle_log_info "--- Extracting HANA upgrade media"
+    cd /hana/shared/media || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
+    /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/SAPCAR -xvf "IMDB_SERVER*.SAR"
+    cd SAP_HANA_DATABASE || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
+    main::errhandle_log_info "--- Upgrading Database"
+    if ! ./hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg --action=update --ignore=check_signature_file --update_execution_mode=optimized --batch; then
+        main::errhandle_log_warning "SAP HANA Database revision upgrade failed to install."
+    fi
+  fi
 }
 
 
@@ -310,6 +310,7 @@ hdb::config_backup() {
   chmod -R g=wrx /hanabackup
   hdb::set_parameters global.ini persistence basepath_databackup /hanabackup/data/"${VM_METADATA[sap_hana_sid]}"
   hdb::set_parameters global.ini persistence basepath_logbackup /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
+  hdb::set_parameters global.ini persistence basepath_catalogbackup /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
 }
 
 
@@ -352,45 +353,45 @@ hdb::config_nfs() {
 
     main::errhandle_log_info "Configuring NFS for scale-out"
 
-		## turn off NFS4 support
-		sed -ie 's/NFS4_SUPPORT="yes"/NFS4_SUPPORT="no"/g' /etc/sysconfig/nfs
+    ## turn off NFS4 support
+    sed -ie 's/NFS4_SUPPORT="yes"/NFS4_SUPPORT="no"/g' /etc/sysconfig/nfs
 
-		main::errhandle_log_info "--- Starting NFS server"
-		if [ "${LINUX_DISTRO}" = "SLES" ]; then
-			systemctl start nfsserver
-		elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-			systemctl start nfs
-		fi
+    main::errhandle_log_info "--- Starting NFS server"
+    if [ "${LINUX_DISTRO}" = "SLES" ]; then
+      systemctl start nfsserver
+    elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+      systemctl start nfs
+    fi
 
-		## Check NFS has started - Fix for bug which occasionally causes a delay in the NFS start-up
-		while [ "$(pgrep -c nfs)" -le 3 ]; do
-			main::errhandle_log_info "--- NFS server not running. Waiting 10 seconds then trying again"
-			sleep 10s
-			if [ "${LINUX_DISTRO}" = "SLES" ]; then
-				systemctl start nfsserver
-			elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-				systemctl start nfs
-			fi
-		done
+    ## Check NFS has started - Fix for bug which occasionally causes a delay in the NFS start-up
+    while [ "$(pgrep -c nfs)" -le 3 ]; do
+      main::errhandle_log_info "--- NFS server not running. Waiting 10 seconds then trying again"
+      sleep 10s
+      if [ "${LINUX_DISTRO}" = "SLES" ]; then
+        systemctl start nfsserver
+      elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+        systemctl start nfs
+      fi
+    done
 
-		## Enable & start NFS service
-		main::errhandle_log_info "--- Enabling NFS server at boot up"
-		if [ "${LINUX_DISTRO}" = "SLES" ]; then
-			systemctl enable nfsserver
-		elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-			systemctl enable nfs
-		fi
+    ## Enable & start NFS service
+    main::errhandle_log_info "--- Enabling NFS server at boot up"
+    if [ "${LINUX_DISTRO}" = "SLES" ]; then
+      systemctl enable nfsserver
+    elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+      systemctl enable nfs
+    fi
 
-		## Adding file system to NFS exports file systems
+    ## Adding file system to NFS exports file systems
     local worker
-		for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
-		  echo "/hana/shared ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
-		  echo "/hanabackup ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
-		done
+    for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
+      echo "/hana/shared ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
+      echo "/hanabackup ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
+    done
 
-		## manually exporting file systems
-		exportfs -rav
-	fi
+    ## manually exporting file systems
+    exportfs -rav
+  fi
 }
 
 
@@ -403,28 +404,28 @@ hdb::install_scaleout_nodes() {
 
     ## Check each host is online and ssh'able before contining
     local worker
-		local count=0
+    local count=0
 
-		for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
-			while ! ssh -o StrictHostKeyChecking=no "${HOSTNAME}"w"${worker}" "echo 1"; do
-				count=$((count +1))
-				main::errhandle_log_info "--- ${HOSTNAME}w${worker} is not accessible via SSH - sleeping for 10 seconds and trying again"
-				sleep 10
-				if [ $count -gt 60 ]; then
-					main::errhandle_log_error "Unable to add additional HANA hosts. Couldn't connect to additional ${HOSTNAME}w${worker} via SSH"
-				fi
-			done
-		done
+    for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
+      while ! ssh -o StrictHostKeyChecking=no "${HOSTNAME}"w"${worker}" "echo 1"; do
+        count=$((count +1))
+        main::errhandle_log_info "--- ${HOSTNAME}w${worker} is not accessible via SSH - sleeping for 10 seconds and trying again"
+        sleep 10
+        if [ $count -gt 60 ]; then
+          main::errhandle_log_error "Unable to add additional HANA hosts. Couldn't connect to additional ${HOSTNAME}w${worker} via SSH"
+        fi
+      done
+    done
 
-		## get passwords from install file
-		local hana_xml="<?xml version=\"1.0\" encoding=\"UTF-8\"?><Passwords>"
-		hana_xml+="<password><![CDATA[$(grep password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | grep -v sapadm | grep -v system | cut -d"=" -f2 | head -1)]]></password>"
-		hana_xml+="<sapadm_password><![CDATA[$(grep sapadm_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2)]]></sapadm_password>"
-		hana_xml+="<system_user_password><![CDATA[$(grep system_user_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2 | head -1)]]></system_user_password></Passwords>"
+    ## get passwords from install file
+    local hana_xml="<?xml version=\"1.0\" encoding=\"UTF-8\"?><Passwords>"
+    hana_xml+="<password><![CDATA[$(grep password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | grep -v sapadm | grep -v system | cut -d"=" -f2 | head -1)]]></password>"
+    hana_xml+="<sapadm_password><![CDATA[$(grep sapadm_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2)]]></sapadm_password>"
+    hana_xml+="<system_user_password><![CDATA[$(grep system_user_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2 | head -1)]]></system_user_password></Passwords>"
 
     cd /hana/shared/"${VM_METADATA[sap_hana_sid]}"/hdblcm || main::errhandle_log_info "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
 
-		for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
+    for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       main::errhandle_log_info "--- Adding node ${HOSTNAME}w${worker}"
       if ! echo "$hana_xml" | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b; then
         main::errhandle_log_error "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
@@ -439,11 +440,11 @@ hdb::install_scaleout_nodes() {
 
 hdb::mount_nfs() {
   main::errhandle_log_info 'Mounting NFS volumes /hana/shared & /hanabackup'
-  echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hana/shared /hana/shared nfs	nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
-  echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hanabackup /hanabackup nfs	nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
+  echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hana/shared /hana/shared nfs  nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
+  echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hanabackup /hanabackup nfs  nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
 
   mkdir -p /hana/shared /hanabackup
-  
+
   ## mount file systems
   mount -a
 
@@ -474,15 +475,15 @@ hdb::backup() {
 
 
 hdb::execute_sql() {
-    local host="${0}"
-    local instance_number="${0}"
-    local sid="${0}"
-    local user="${1}"
-    local password="${2}"
-    local tenant="${3}"
-    local statement="${4}"
+  local host="${0}"
+  local instance_number="${0}"
+  local sid="${0}"
+  local user="${1}"
+  local password="${2}"
+  local tenant="${3}"
+  local statement="${4}"
 
-    /usr/sap/"${sid}"/HDB"${instance_number}"/exe/hdbsql -d "${tenant}" -n "${host}" -i "${instance_number}" -u "${user}" -p "${password}" "${statement}"
+  /usr/sap/"${sid}"/HDB"${instance_number}"/exe/hdbsql -d "${tenant}" -n "${host}" -i "${instance_number}" -u "${user}" -p "${password}" "${statement}"
 }
 
 
@@ -493,11 +494,11 @@ hdb::stop() {
 
 
 hdb::stop_nowait(){
-    /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function Stop
+  /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function Stop
 }
 
 hdb::restart_nowait(){
-    /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function RestartInstance
+  /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function RestartInstance
 }
 
 hdb::start() {
@@ -507,13 +508,13 @@ hdb::start() {
 
 
 hdb::start_nowait(){
-    /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function Start
+  /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/sapcontrol -prot NI_HTTP -nr "${VM_METADATA[sap_hana_instance_number]}" -function Start
 }
 
 
 hdb::install_backint() {
-    main::errhandle_log_info "Installing SAP HANA Backint for Google Cloud Storage"
-    su - "${VM_METADATA[sap_hana_sid],,}"adm -c "curl https://storage.googleapis.com/sapdeploy/backint-gcs/install.sh | bash"
+  main::errhandle_log_info "Installing SAP HANA Backint for Google Cloud Storage"
+  su - "${VM_METADATA[sap_hana_sid],,}"adm -c "curl https://storage.googleapis.com/sapdeploy/backint-gcs/install.sh | bash"
 }
 
 
@@ -572,11 +573,11 @@ hdb::install_worker_sshkeys() {
     main::errhandle_log_info "Installing SSH keys"
     local worker
     local count=0
-  	for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
+    for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       while ! ${GCLOUD} --quiet compute instances add-metadata "${hana_master_node}"w"${worker}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)"; do
           ## if gcloud returns an error, keep trying.
           main::errhandle_log_info "--- Unable to add keys to ${hana_master_node}w${worker}. Waiting 10 seconds then trying again"
-    			sleep 10s
+          sleep 10s
           ## if more than 60 failures, give up
           if [ $count -gt 60 ]; then
             main::errhandle_log_error "Unable to add SSH keys to all scale-out worker hosts"
