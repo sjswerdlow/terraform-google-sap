@@ -149,7 +149,7 @@ def GenerateConfig(context):
   # init variables
   pdssd_size = 0
   pdssd_size_worker = 0
-  pdhdd_size = 2 * mem_size
+  pdhdd_size = int(2 * mem_size)
 
   # determine default log/data/shared sizes
   hana_log_size = max(64, mem_size / 2)
@@ -165,13 +165,13 @@ def GenerateConfig(context):
   # adjust hana shared and backup sizes for scale-out systems
   if sap_hana_scaleout_nodes > 0:
       hana_shared_size = hana_shared_size * round(sap_hana_scaleout_nodes /4 + 0.5)
-      pdhdd_size = 2 * mem_size * (sap_hana_scaleout_nodes + 1)
+      pdhdd_size = int(2 * mem_size * (sap_hana_scaleout_nodes + 1))
 
   # ensure pd-ssd meets minimum size/performance
-  pdssd_size = max(834, hana_log_size + hana_data_size + hana_shared_size + 32)
+  pdssd_size = int(max(834, hana_log_size + hana_data_size + hana_shared_size + 32 + 1))
 
   # ensure pd-hdd for backup is smaller than the maximum pd size
-  pdssd_size_worker = max(834, hana_log_size + hana_data_size + 32)
+  pdssd_size_worker = int(max(834, hana_log_size + hana_data_size + 32 + 1))
 
   # change PD-HDD size if a custom backup size has been set
   if (sap_hana_backup_size > 0):
