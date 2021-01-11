@@ -38,8 +38,8 @@ main::get_settings
 main::create_static_ip
 
 ## Prepare for NetWeaver
-nw::install_agent
 nw::create_filesystems
+nw::install_agent
 
 ## Clean up
 main::complete

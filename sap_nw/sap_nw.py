@@ -169,7 +169,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                       
+                  },
                   {
                       'key': 'sap_deployment_debug',
                       'value': sap_deployment_debug
@@ -184,7 +184,7 @@ def GenerateConfig(context):
                       'https://www.googleapis.com/auth/servicecontrol',
                       'https://www.googleapis.com/auth/service.management.readonly',
                       'https://www.googleapis.com/auth/logging.write',
-                      'https://www.googleapis.com/auth/monitoring.write',
+                      'https://www.googleapis.com/auth/monitoring',
                       'https://www.googleapis.com/auth/trace.append',
                       'https://www.googleapis.com/auth/devstorage.read_write'
                       ]

@@ -213,7 +213,9 @@ main::create_filesystem() {
 		vgcreate vg_"${device}" /dev/disk/by-id/google-"${HOSTNAME}"-"${device}"
 		lvcreate -l 100%FREE -n vol vg_"${device}"
     main::format_mount "${mount_point}" /dev/vg_"${device}"/vol "${filesystem}"
-		main::check_mount "${mount_point}"
+    if [[ "${mount_point}" != "swap" ]]; then
+		  main::check_mount "${mount_point}"
+    fi
 	else
 		main::errhandle_log_error "Unable to access ${device}"
 	fi
