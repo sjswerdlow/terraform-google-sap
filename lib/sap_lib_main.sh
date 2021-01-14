@@ -302,6 +302,9 @@ main::get_settings() {
 	readonly VM_MEMSIZE=$(free -g | grep Mem | awk '{ print $2 }')
 	main::errhandle_log_info "--- Instance determined to have ${VM_MEMSIZE}GB of memory"
 
+	readonly VM_PROJECT=$(main::get_metadata "http://169.254.169.254/computeMetadata/v1/project/project-id")
+	main::errhandle_log_info "--- VM is in project ${VM_PROJECT}"
+
 	## get network settings
 	readonly VM_NETWORK=$(main::get_metadata http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/network | cut -d'/' -f4)
 	main::errhandle_log_info "--- Instance is determined to be part of network ${VM_NETWORK}"
@@ -348,8 +351,14 @@ main::get_settings() {
 
 
 main::create_static_ip() {
-	main::errhandle_log_info "Creating static IP address ${VM_IP} in subnetwork ${VM_SUBNET}"
-	${GCLOUD} --quiet compute --project "${VM_NETWORK_PROJECT}" addresses create "${HOSTNAME}" --addresses "${VM_IP}" --region "${VM_REGION}" --subnet "${VM_SUBNET}"
+	## attempt to reserve the current IP address as static
+	if [[ "$VM_NETWORK_PROJECT" == "${VM_PROJECT}" ]]; then
+		main::errhandle_log_info "Creating static IP address ${VM_IP} in subnetwork ${VM_SUBNET}"
+		${GCLOUD} --quiet compute --project "${VM_NETWORK_PROJECT}" addresses create "${HOSTNAME}" --addresses "${VM_IP}" --region "${VM_REGION}" --subnet "${VM_SUBNET}"
+	else
+		main::errhandle_log_info "Creating static IP address ${VM_IP} in shared VPC ${VM_NETWORK_PROJECT}"
+		${GCLOUD} --quiet compute --project "${VM_PROJECT}" addresses create "${HOSTNAME}" --addresses "${VM_IP}" --region "${VM_REGION}" --subnet "${VM_NETWORK_FULL}"
+	fi
 }
 
 
@@ -408,9 +417,9 @@ main::get_metadata() {
 	local value
 
 	if [[ ${key} = *"169.254.169.254/computeMetadata"* ]]; then
-  	value=$(curl --fail -sH'Metadata-Flavor: Google' "${key}")
+  	  value=$(curl --fail -sH'Metadata-Flavor: Google' "${key}")
 	else
-		value=$(curl --fail -sH'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/attributes/"${key}")
+	  value=$(curl --fail -sH'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/attributes/"${key}")
 	fi
 	echo "${value}"
 }
