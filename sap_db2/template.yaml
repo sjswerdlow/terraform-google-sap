@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_db2/sap_db2.py
-
 resources:
 - name: sap_db2
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_db2/sap_db2.py
+  type: BUILD.SH_URL/sap_db2/sap_db2.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

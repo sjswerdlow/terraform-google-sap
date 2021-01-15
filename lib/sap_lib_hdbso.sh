@@ -1,21 +1,3 @@
-#!/bin/bash
-# ------------------------------------------------------------------------
-# Copyright 2018 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   BUILD.SH_DATE
-# ------------------------------------------------------------------------
 
 hdbso::calculate_volume_sizes() {
 
@@ -78,7 +60,7 @@ hdbso::create_data_log_volumes() {
     ## disable volume group
     /sbin/vgchange -a n vg_hana
   fi
-  
+
   ## create base SID directory to avoid hdblcm failing on worker/standby nodes
   mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
 }
@@ -121,16 +103,37 @@ hdbso::mount_nfs_vols() {
 }
 
 
-hdbso::gcestorageclient_download() {
-  ## install python module requirements for gceStorageClientv1
+hdbso::gcestorageclient_install() {
+  ## install python module requirements for gceStorageClient
   pip install --upgrade pyasn1-modules
 
-  main::errhandle_log_info "Downloading gceStorageClient"
+  main::errhandle_log_info "Installing gceStorageClient"
+  if [[ ${LINUX_DISTRO} = "SLES" ]]; then
+    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-sapgcestorageclient-sles$(grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"' | cut -f1 -d.)-\$basearchGCE_STORAGE_REPO_SUFFIX google-sapgcestorageclientGCE_STORAGE_REPO_SUFFIX
+    zypper --no-gpg-checks install -y google-sapgcestorageclient
+  else
+    # RHEL
+    RHEL_VERSION=`rpm -q --queryformat '%{VERSION}' redhat-release-server | cut -f1 -d. | cut -c1-1`
+    if [[ "${RHEL_VERSION}" == "p" ]]; then
+      RHEL_VERSION=`rpm -q --queryformat '%{VERSION}' redhat-release | cut -f1 -d. | cut -c1-1`
+    fi
+    tee /etc/yum.repos.d/google-sapgcestorageclientGCE_STORAGE_REPO_SUFFIX.repo << EOM
+[google-sapgcestorageclientGCE_STORAGE_REPO_SUFFIX]
+name=Google SAP GCE Storage Client
+baseurl=https://packages.cloud.google.com/yum/repos/google-sapgcestorageclient-el${RHEL_VERSION}-\$basearchGCE_STORAGE_REPO_SUFFIX
+enabled=1
+gpgcheck=0
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
+EOM
+    # RHEL 8 does not like repo gpg check on when
+    # installing from the startup script
+    yum --nogpgcheck -y install google-sapgcestorageclient
+  fi
   mkdir -p /hana/shared/gceStorageClient
-  curl https://storage.googleapis.com/GCESTORAGECLIENT_URL/gceStorageClient.py -o /hana/shared/gceStorageClient/gceStorageClient.py
-
+  cp /usr/sap/google-sapgcestorageclient/gceStorageClient.py /hana/shared/gceStorageClient/
   if [[ ! -f /hana/shared/gceStorageClient/gceStorageClient.py ]]; then
-    main::errhandle_log_error "Unable to download gceStorageClient"
+    main::errhandle_log_error "Unable to install gceStorageClient"
   fi
 }
 
@@ -138,7 +141,7 @@ hdbso::gcestorageclient_download() {
 hdbso::gcestorageclient_gcloud_config() {
 	# Configuring gcloud to work under target SAP HANA sidadm account
   mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
-  chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/  
+  chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
 }
 
 

@@ -1,21 +1,3 @@
-#!/bin/bash
-# ------------------------------------------------------------------------
-# Copyright 2018 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   BUILD.SH_DATE
-# ------------------------------------------------------------------------
 
 ha::check_settings() {
 
@@ -37,9 +19,9 @@ ha::download_scripts() {
   main::errhandle_log_info "Downloading pacemaker-gcp"
   mkdir -p /usr/lib/ocf/resource.d/gcp
   mkdir -p /usr/lib64/stonith/plugins/external
-  curl "https://storage.googleapis.com/GCEPACEMAKER_URL/alias" -o /usr/lib/ocf/resource.d/gcp/alias
-  curl "https://storage.googleapis.com/GCEPACEMAKER_URL/route" -o /usr/lib/ocf/resource.d/gcp/route
-  curl "https://storage.googleapis.com/GCEPACEMAKER_URL/gcpstonith" -o /usr/lib64/stonith/plugins/external/gcpstonith
+  PACEMAKER_ALIAS_COPY /usr/lib/ocf/resource.d/gcp/alias
+  PACEMAKER_ROUTE_COPY /usr/lib/ocf/resource.d/gcp/route
+  PACEMAKER_STONITH_COPY /usr/lib64/stonith/plugins/external/gcpstonith
   chmod +x /usr/lib/ocf/resource.d/gcp/alias
   chmod +x /usr/lib/ocf/resource.d/gcp/route
   chmod +x /usr/lib64/stonith/plugins/external/gcpstonith

@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_db2/sap_db2.py
-
 resources:
 - name: sap_db2_primary
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_db2/sap_db2.py
+  type: BUILD.SH_URL/sap_db2/sap_db2.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]
@@ -60,7 +57,7 @@ resources:
     #    instance you will need to add a check at the top of your script.
     #
 - name: sap_db2_secondary
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_db2/sap_db2.py
+  type: BUILD.SH_URL/sap_db2/sap_db2.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

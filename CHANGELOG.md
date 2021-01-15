@@ -17,6 +17,11 @@ Current Templates:
 - Two node empty SuSE pacemaker cluster (sap_emptyha)
 - Two node NFS cluster using DRBD (sap_nfs)
 
+## [4.7] 2020-11-13
+### Changed
+- Build refactoring to allow for gs:// and http:// resources
+- Added python27-python-pip for RHEL packages
+
 ## [4.6] 2020-10-23
 ### Changed
 - Added libsss_autofs for RHEL installs

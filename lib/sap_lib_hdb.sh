@@ -1,21 +1,3 @@
-#!/bin/bash
-# ------------------------------------------------------------------------
-# Copyright 2018 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   BUILD.SH_DATE
-# ------------------------------------------------------------------------
 
 hdb::calculate_volume_sizes() {
   main::errhandle_log_info "Calculating disk volume sizes"
@@ -155,7 +137,11 @@ hdb::download_media() {
   fi
 
   ## download unrar from GCS. Fix for RHEL missing unrar and SAP packaging change which stoppped unar working.
-  curl "${DEPLOY_URL}"/third_party/unrar/unrar -o /root/.deploy/unrar
+  if [[ ${DEPLOY_URL} = gs* ]]; then
+    ${GSUTIL} cp "${DEPLOY_URL}"/third_party/unrar/unrar /root/.deploy/unrar
+  else
+    curl "${DEPLOY_URL}"/third_party/unrar/unrar -o /root/.deploy/unrar
+  fi
   chmod a=wrx /root/.deploy/unrar
 
   ## download SAP HANA media
@@ -202,7 +188,7 @@ hdb::create_install_cfg() {
     echo "autostart=y" >>/root/.deploy/"${HOSTNAME}"_hana_install.cfg
   fi
 
-  ## If scale-out then add gceStorageClient
+  ## If scale-out then add the GCE Storage Connector
   if [ -n "${VM_METADATA[sap_hana_standby_nodes]}" ]; then
     echo "storage_cfg=/hana/shared/gceStorageClient" >>/root/.deploy/"${HOSTNAME}"_hana_install.cfg
   fi

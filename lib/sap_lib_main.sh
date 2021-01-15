@@ -1,21 +1,3 @@
-#!/bin/bash
-# ------------------------------------------------------------------------
-# Copyright 2018 Google Inc.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-# Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   BUILD.SH_DATE
-# ------------------------------------------------------------------------
 
 set +e
 
@@ -42,7 +24,7 @@ main::set_boot_parameters() {
 		main::errhandle_log_info "--- Update grub"
 		cmdline=$(grep GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub | head -1 | sed 's/GRUB_CMDLINE_LINUX_DEFAULT=//g' | sed 's/\"//g')
 		cp /etc/default/grub /etc/default/grub.bak
-		grep -v GRUBLINE_LINUX_DEFAULT /etc/default/grub.bak >/etc/default/grub			
+		grep -v GRUBLINE_LINUX_DEFAULT /etc/default/grub.bak >/etc/default/grub
 		echo "GRUB_CMDLINE_LINUX_DEFAULT=\"${cmdline} transparent_hugepage=never intel_idle.max_cstate=1 processor.max_cstate=1 intel_iommu=off\"" >>/etc/default/grub
 		grub2-mkconfig -o /boot/grub2/grub.cfg
 		echo "${HOSTNAME}" >/etc/hostname
@@ -108,7 +90,7 @@ main::config_ssh() {
 	sed -ie 's/PermitRootLogin no/PermitRootLogin yes/g' /etc/ssh/sshd_config
 	service sshd restart
 	cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
-	/usr/sbin/rcgoogle-accounts-daemon restart
+	/usr/sbin/rcgoogle-accounts-daemon restart ||  /usr/sbin/rcgoogle-guest-agent restart
 }
 
 
@@ -148,8 +130,8 @@ main::install_packages() {
 	fi
 
   ## packages to install
-	local sles_packages="libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1"
-	local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 joe resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 libatomic unzip libsss_autofs"
+	local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1"
+	local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 joe resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 libatomic unzip libsss_autofs python2-pip langpacks-en langpacks-de glibc-all-langpacks libnsl libssh2"
 
 	## install packages
 	if [[ ${LINUX_DISTRO} = "SLES" ]]; then
@@ -161,11 +143,14 @@ main::install_packages() {
 		for package in $rhel_packages; do
 		    yum -y install "${package}"
 		done
+    # check for python interpreter - RHEL 8 does not have "python"
+    main::errhandle_log_info 'Checking for python interpreter'
+    if [[ ! -f "/bin/python" ]] && [[ -f "/usr/bin/python2" ]]; then
+    	main::errhandle_log_info 'Updating alternatives for python to python2.7'
+      alternatives --set python /usr/bin/python2
+    fi
 	fi
-	
-	main::errhandle_log_info "Installing python Google Cloud API client"
-	pip install --upgrade google-api-python-client
-	pip install oauth2client --upgrade
+	main::errhandle_log_info 'Install of required operating system packages complete'
 }
 
 
@@ -181,7 +166,7 @@ main::create_vg() {
 		/sbin/vgchange -ay
 	else
 			main::errhandle_log_error "Unable to access ${device}"
-	fi 
+	fi
 }
 
 
@@ -198,7 +183,7 @@ main::create_vg() {
 		/sbin/vgchange -ay
 	else
 			main::errhandle_log_error "Unable to access ${device}"
-	fi 
+	fi
 }
 
 
@@ -265,7 +250,7 @@ main::format_mount() {
 			main::errhandle_log_info "--- Creating ${mount_point}"
 			mkfs -t "${filesystem}" "${device}"
 			mkdir -p "${mount_point}"
-			if [[ ! "${options}" = "tmp" ]]; then 
+			if [[ ! "${options}" = "tmp" ]]; then
 				echo "${device} ${mount_point} ${filesystem} defaults,nofail,logbsize=256k 0 2" >>/etc/fstab
 				mount -a
 			else
@@ -274,8 +259,8 @@ main::format_mount() {
 			main::check_mount "${mount_point}"
 		fi
 	else
-		main::errhandle_log_error "Unable to access ${device}"	
-	fi 
+		main::errhandle_log_error "Unable to access ${device}"
+	fi
 }
 
 
@@ -346,7 +331,7 @@ main::get_settings() {
 	if [[ -n "${VM_METADATA[status]}" ]]; then
 		main::errhandle_log_info "Startup script has previously been run. Aborting execution."
 		exit 0
-	fi	
+	fi
 }
 
 
@@ -374,12 +359,18 @@ main::install_gsdk() {
 
 	if [[ -e /usr/bin/gsutil ]]; then
 		# if SDK is installed, link to the standard location for backwards compatibility
-		mkdir -p /usr/local/google-cloud-sdk/bin
-		ln -s /usr/bin/gsutil /usr/local/google-cloud-sdk/bin/gsutil
-		ln -s /usr/bin/gcloud /usr/local/google-cloud-sdk/bin/gcloud
+		if [[ ! -d /usr/local/google-cloud-sdk/bin ]]; then
+		  mkdir -p /usr/local/google-cloud-sdk/bin
+    fi
+    if [[ ! -e /usr/local/google-cloud-sdk/bin/gsutil ]]; then
+  		ln -s /usr/bin/gsutil /usr/local/google-cloud-sdk/bin/gsutil
+    fi
+    if [[ ! -e /usr/local/google-cloud-sdk/bin/gcloud ]]; then
+  		ln -s /usr/bin/gcloud /usr/local/google-cloud-sdk/bin/gcloud
+    fi
 	elif [[ ! -d "${install_location}/google-cloud-sdk" ]]; then
 		bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir="${install_location}" >/dev/null
-		if [[ "$LINUX_DISTRO" = "SLES" ]]; then
+		if [[ ${LINUX_DISTRO} = "SLES" ]]; then
 			update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
 			update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
 		fi
@@ -390,7 +381,9 @@ main::install_gsdk() {
 	readonly GSUTIL="/usr/bin/gsutil"
 
 	## set default python version for Cloud SDK in SLES, move from 3.4 to 2.7
-	if [[ "$LINUX_DISTRO" = "SLES" ]]; then
+	if [[ ${LINUX_DISTRO} = "SLES" ]]; then
+    update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
+    update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
 		export CLOUDSDK_PYTHON=/usr/bin/python
 	fi
 

@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_maxdb/sap_maxdb.py
-
 resources:
 - name: sap_maxdb
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_maxdb/sap_maxdb.py
+  type: BUILD.SH_URL/sap_maxdb/sap_maxdb.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

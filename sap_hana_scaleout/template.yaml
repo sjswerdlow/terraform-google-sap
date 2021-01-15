@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_hana_scaleout/sap_hana_scaleout.py
-
 resources:
 - name: sap_hana
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_hana_scaleout/sap_hana_scaleout.py
+  type: BUILD.SH_URL/sap_hana_scaleout/sap_hana_scaleout.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]
@@ -42,6 +39,12 @@ resources:
     #    specify the name of the account here. Note that an incorrectly defined service
     #    account will prevent a successful deployment. Example of a correctly specified
     #    custom service account: myserviceuser@myproject.iam.gserviceaccount.com
+    #
+    # sap_hana_double_volume_size: [No | Yes]
+    #    Doubles the HANA volume size. Useful if you wish to locate multiple SAP HANA instances
+    #    or a DR HANA instance on the same VM. By default, the volume size is automatically
+    #    calculated to be the minimum required for your memory footprint while still meeting
+    #    the SAP certification & support requirements.
     #
     # sap_hana_sidadm_uid: [USER_ID]
     #    The default value for the <sid>adm user ID is 900 to avoid user created groups conflicting

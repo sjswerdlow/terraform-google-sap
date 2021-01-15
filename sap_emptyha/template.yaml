@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_emptyha/sap_emptyha.py
-
 resources:
 - name: sap_emptyha
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_emptyha/sap_emptyha.py
+  type: BUILD.SH_URL/sap_emptyha/sap_emptyha.py
   properties:
     primaryInstanceName: [VM_NAME_1]
     secondaryInstanceName: [VM_NAME_2]

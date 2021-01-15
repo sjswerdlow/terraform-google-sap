@@ -47,8 +47,8 @@ def GenerateConfig(context):
   region = context.properties['zone'][:context.properties['zone'].rfind('-')]
   linux_image_project = context.properties['linuxImageProject']
   linux_image = GlobalComputeUrl(linux_image_project, 'images', context.properties['linuxImage'])
-  deployment_script_location = str(context.properties.get('deployment_script_location', 'https://storage.googleapis.com/BUILD.SH_URL'))
-  primary_startup_url = "curl " + deployment_script_location + "/sap_db2/startup.sh | bash -s " + deployment_script_location
+  deployment_script_location = str(context.properties.get('deployment_script_location', 'BUILD.SH_URL'))
+  primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_db2/startup.sh | bash -s " + deployment_script_location))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
 
@@ -88,7 +88,7 @@ def GenerateConfig(context):
 
   # set startup URL
   if sap_deployment_debug == "True":
-      primary_startup_url = primary_startup_url.replace(" -s ", " -x -s ")
+      primary_startup_url = primary_startup_url.replace("bash -s ", "bash -x -s ")
 
   ## determine disk types
   if db2sapdata_ssd == "True":

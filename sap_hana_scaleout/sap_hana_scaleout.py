@@ -46,9 +46,9 @@ def GenerateConfig(context):
   region = context.properties['zone'][:context.properties['zone'].rfind('-')]
   linux_image_project = context.properties['linuxImageProject']
   linux_image = GlobalComputeUrl(linux_image_project, 'images', context.properties['linuxImage'])
-  deployment_script_location = str(context.properties.get('deployment_script_location', 'https://storage.googleapis.com/BUILD.SH_URL'))
-  primary_startup_url = "curl " + deployment_script_location + "/sap_hana_scaleout/startup.sh | bash -s " + deployment_script_location
-  secondary_startup_url = "curl " + deployment_script_location + "/sap_hana_scaleout/startup_secondary.sh | bash -s " + deployment_script_location
+  deployment_script_location = str(context.properties.get('deployment_script_location', 'BUILD.SH_URL'))
+  primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_scaleout/startup.sh | bash -s " + deployment_script_location))
+  secondary_startup_url = str(context.properties.get('secondary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_scaleout/startup_secondary.sh | bash -s " + deployment_script_location))
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
 
@@ -87,8 +87,8 @@ def GenerateConfig(context):
 
   # set startup URL
   if sap_deployment_debug == "True":
-      primary_startup_url = primary_startup_url.replace(" -s ", " -x -s ")
-      secondary_startup_url = secondary_startup_url.replace(" -s "," -x -s ")   
+      primary_startup_url = primary_startup_url.replace("bash -s ", "bash -x -s ")
+      secondary_startup_url = secondary_startup_url.replace("bash -s ", "bash -x -s ")
 
   ## determine disk sizes to add
   if context.properties['instanceType'] == 'n1-highmem-32':
@@ -141,9 +141,9 @@ def GenerateConfig(context):
   pdssd_size = 0
 
   # determine default log/data/shared sizes
-  hana_log_size = max(64, mem_size / 2)
+  hana_log_size = int(max(64, mem_size / 2))
   hana_log_size = min(512, hana_log_size)
-  hana_data_size = mem_size * 15 / 10
+  hana_data_size = int(mem_size * 15 / 10)
 
   # double volume size if specified in template
   if (sap_hana_double_volume_size == "True" and mem_size != 208) :

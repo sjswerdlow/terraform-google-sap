@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_ase/sap_ase.py
-
 resources:
 - name: sap_ase
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_ase/sap_ase.py
+  type: BUILD.SH_URL/sap_ase/sap_ase.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

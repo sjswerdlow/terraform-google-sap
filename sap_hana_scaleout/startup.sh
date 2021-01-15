@@ -15,19 +15,26 @@
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
 # Build Date:   BUILD.SH_DATE
+# Build Hash:   BUILD.HASH
 # ------------------------------------------------------------------------
 
-## Check to see if a custom script path was provieded by the template
+## Check to see if a custom script path was provided by the template
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
-  readonly DEPLOY_URL="https://storage.googleapis.com/BUILD.SH_URL"
+  readonly DEPLOY_URL="BUILD.SH_URL"
 fi
 
-## Import includes
-source /dev/stdin <<< "$(curl -s ${DEPLOY_URL}/lib/sap_lib_main.sh)"
-source /dev/stdin <<< "$(curl -s ${DEPLOY_URL}/lib/sap_lib_hdb.sh)"
-source /dev/stdin <<< "$(curl -s ${DEPLOY_URL}/lib/sap_lib_hdbso.sh)"
+##########################################################################
+## Start includes
+##########################################################################
+SAP_LIB_MAIN_SH
+SAP_LIB_HDB_SH
+SAP_LIB_HDBSO_SH
+##########################################################################
+## End includes
+##########################################################################
+
 
 ### Base GCP and OS Configuration
 main::get_os_version
@@ -44,7 +51,7 @@ hdb::set_kernel_parameters
 hdbso::mount_nfs_vols
 hdbso::calculate_volume_sizes
 hdbso::create_data_log_volumes
-hdbso::gcestorageclient_download
+hdbso::gcestorageclient_install
 hdbso::gcestorageclient_gcloud_config
 hdb::install_worker_sshkeys
 

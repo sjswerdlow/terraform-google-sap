@@ -1,99 +1,249 @@
 #!/bin/bash
-readonly SBOX="deploysandbox"
-readonly ALPHA="deployalpha"
-readonly BETA="deploybeta"
-readonly PROD="sapdeploy"
 
-stage() {
-  local bucket="${1}"
+#
+# The build.sh script is used by developers and Kokoro for development and
+# release of the dm-templates.
+#
+# Private Development:
+# While developing you can run the build locally to deploy the templates to the
+# core-connect-dev projects core-connect-dm-templates bucket.  This bucket is
+# not public, it will use gs:// paths and gsutil cat instead of http:// and curl.
+# To deploy private dev run:
+# >./build.sh dev
+#
+# Private Development Overwrite:
+# This will overwrite the contents of a previously deployed dev timestamped
+# version.
+# To deploy private dev overwrite run:
+# >./build.sh devoverwrite DATESTAMP_TO_OVERWRITE
+#
+# Public Development:
+# This will deploy your local changes to a publicly availble bucket
+# cloudsapdeploytesting.  This bucket will remove content older than 14 days.
+# To deploy public dev run:
+# >./build.sh publicdev
+#
+# Public Beta:
+# This will deploy your local changes to the public cloudsapdeploy release
+# bucket - but will not update the "latest" bucket.  This allows developers
+# to deploy to a location that can be used as a beta before full release.
+# >./build.sh publicbeta
+#
+# Release:
+# Only Kokoro builds can release to the public cloudsapdeploy and "latest"
+# subfolder that is in our public documentation.  This process is done through
+# the Test Fusion UI:
+# https://fusion.corp.google.com/projectanalysis/summary/KOKORO/prod:cloud_partner_eng_ti%2Fsap-ext-dm-templates%2Frelease
+#
 
-  echo "Staging deployment in /tmp/build.sh_${bucket}"
+set -eu -o pipefail
 
-  ## clean out previously deployment folder if it exists
-  if [[ -d /tmp/build.sh_${bucket} ]]; then
-    rm -rf /tmp/build.sh_"${bucket}"
-  fi
+BUILD_DATE=$(date)
+BUILD_DATE_FOR_BUCKET=$(date '+%Y%m%d%H%M')
+if [[ "${1:-}" == "devoverwrite" ]]; then
+  BUILD_DATE_FOR_BUCKET=${2:=}
+fi
+GCS_BUCKET="core-connect-dm-templates/${BUILD_DATE_FOR_BUCKET}"
+GCS_LATEST_BUCKET="cloudsapdeploy/deploymentmanager/latest"
+RESOURCE_URL="gs://${GCS_BUCKET}"
+GCE_STORAGE_REPO_SUFFIX=""
+# Uncomment this to use the unstable RPM repo for the storage client
+# NOTE - should only be used for dev and never checked in uncommented
+# GCE_STORAGE_REPO_SUFFIX="-unstable"
+PACEMAKER_ALIAS_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/alias"
+PACEMAKER_ROUTE_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/route"
+PACEMAKER_STONITH_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/gcpstonith"
+PACEMAKER_CHECKOUT="git clone https://partner-code.googlesource.com/sap-ext-pacemaker-gcp .build_pacemakergcp"
+SED_CMD="sed -i"
+if [[ "$(uname)" == "Darwin" ]]; then
+  SED_CMD="sed -i .bak"
+fi
+GSUTIL_PUBLIC_OPT=""
 
-  mkdir /tmp/build.sh_"${bucket}"
-  cp -R * /tmp/build.sh_"${bucket}"/
-  cd /tmp/build.sh_"${bucket}" || exit
+if [[ "${1:-}" == "publicdev" ]]; then
+  # deploys to public dev location, these get deleted after 14 days
+  GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
+  RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  GCE_STORAGE_REPO_SUFFIX=""
+  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
+  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
+  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/gcpstonith -o"
+  GSUTIL_PUBLIC_OPT="-a public-read"
+fi
 
-  ## Add build date to files
-  datetoday=$(date)
-  ## Add MacOS check
-  if [[ $(uname -s) == "Darwin" ]]; then
-    grep -rl BUILD.SH_DATE . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_DATE/${datetoday}/g"
+if [[ "${1:-}" == "publicbeta" ]]; then
+  GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
+  RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  GCE_STORAGE_REPO_SUFFIX=""
+  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
+  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
+  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/gcpstonith -o"
+  GSUTIL_PUBLIC_OPT="-a public-read"
+fi
 
-    ## Add correct deployment URL to files
-    grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i '' "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
-    grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i '' "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
-    grep -rl GCEPACEMAKER_URL . | grep -v build.sh | xargs sed -i '' "s/GCEPACEMAKER_URL/${bucket}\/pacemaker-gcp/g"
-  else
-    grep -rl BUILD.SH_DATE . | grep -v build.sh | xargs sed -i "s/BUILD.SH_DATE/${datetoday}/g"
+build() {
+  echo "Building DM Templates"
+  local git_rev_dm=$(git rev-parse HEAD)
+  rm -fr .build_dmtemplates
+  mkdir .build_dmtemplates
+  cp -R * .build_dmtemplates
+  echo "Replacing constants in all files"
+  cd .build_dmtemplates
+  # no need to have these files in the deployment here
+  rm -f build.sh OWNERS
+  # Build date replacement
+  grep -rl BUILD.SH_DATE . | xargs ${SED_CMD} "s~BUILD.SH_DATE~${BUILD_DATE}~g"
+  grep -rl BUILD.HASH . | xargs ${SED_CMD} "s~BUILD.HASH~${git_rev_dm}~g"
+  # Add correct deployment URL to files
+  grep -rl BUILD.SH_URL . | xargs ${SED_CMD} "s~BUILD.SH_URL~${RESOURCE_URL}/dm-templates~g"
+  grep -rl GCE_STORAGE_REPO_SUFFIX . | xargs ${SED_CMD} "s~GCE_STORAGE_REPO_SUFFIX~${GCE_STORAGE_REPO_SUFFIX}~g"
+  grep -rl PACEMAKER_ALIAS_COPY . | xargs ${SED_CMD} "s~PACEMAKER_ALIAS_COPY~${PACEMAKER_ALIAS_COPY}~g"
+  grep -rl PACEMAKER_ROUTE_COPY . | xargs ${SED_CMD} "s~PACEMAKER_ROUTE_COPY~${PACEMAKER_ROUTE_COPY}~g"
+  grep -rl PACEMAKER_STONITH_COPY . | xargs ${SED_CMD} "s~PACEMAKER_STONITH_COPY~${PACEMAKER_STONITH_COPY}~g"
 
-    ## Add correct deployment URL to files
-    grep -rl BUILD.SH_URL . | grep -v build.sh | xargs sed -i "s/BUILD.SH_URL/${bucket}\/dm-templates/g"
-    grep -rl GCESTORAGECLIENT_URL . | grep -v build.sh | xargs sed -i "s/GCESTORAGECLIENT_URL/${bucket}\/gceStorageClient/g"
-    grep -rl GCEPACEMAKER_URL . | grep -v build.sh | xargs sed -i "s/GCEPACEMAKER_URL/${bucket}\/pacemaker-gcp/g"
-  fi
+  # Inline all of the libraries
+  grep -rl SAP_LIB_ASE_SH . | xargs ${SED_CMD} -e '/SAP_LIB_ASE_SH/{r lib/sap_lib_ase.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_DB2_SH . | xargs ${SED_CMD} -e '/SAP_LIB_DB2_SH/{r lib/sap_lib_db2.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_HA_SH . | xargs ${SED_CMD} -e '/SAP_LIB_HA_SH/{r lib/sap_lib_ha.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_HDB_SH . | xargs ${SED_CMD} -e '/SAP_LIB_HDB_SH/{r lib/sap_lib_hdb.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_HDBSO_SH . | xargs ${SED_CMD} -e '/SAP_LIB_HDBSO_SH/{r lib/sap_lib_hdbso.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_MAIN_SH . | xargs ${SED_CMD} -e '/SAP_LIB_MAIN_SH/{r lib/sap_lib_main.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_MAXDB_SH . | xargs ${SED_CMD} -e '/SAP_LIB_MAXDB_SH/{r lib/sap_lib_maxdb.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_NFS_SH . | xargs ${SED_CMD} -e '/SAP_LIB_NFS_SH/{r lib/sap_lib_nfs.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_NW_SH . | xargs ${SED_CMD} -e '/SAP_LIB_NW_SH/{r lib/sap_lib_nw.sh' -e 'd' -e '}'
+  # remove any .bak files, will only affect mac
+  find . -name "*.bak" -type f -delete
+  cd ..
+  echo "Finished Building DM Templates"
+
+  echo "Building Pacemaker GCP"
+  rm -fr .build_pacemakergcp
+  $PACEMAKER_CHECKOUT
+  cd .build_pacemakergcp
+  rm build.sh README.md
+  cd ..
+  echo "Finished Building Pacemaker GCP"
 }
 
-deploy() {
-  local deploy_url="${1}/dm-templates"
-
-  echo "Removing current deployments in gs://${deploy_url}"
-  gsutil -m rm -r gs://"${deploy_url}" &>/dev/null
-  echo "Deploying to gs://${deploy_url}"
-  ## silly work around for MacOSX bug. Takes a little longer but it works X-platform so keeping it in.
-  for entry in $(find . -maxdepth 1 | grep -v Icon | grep -v OWNERS); do
-    gsutil -q -m cp -r -c "${entry}" gs://"${deploy_url}"/
-  done
-  gsutil -q rm gs://"${deploy_url}"/build.sh
-  wait
+deploy_dmtemplates() {
+  cd .build_dmtemplates
+  local deploy_url="${GCS_BUCKET}/dm-templates"
+  echo "Deploying DM Templates to gs://${deploy_url}"
+  gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
   echo "Resetting cache on gs://${deploy_url}"
   gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${deploy_url}/*" >/dev/null
-  echo "BUILD COMPLETE"
+  cd ..
+  echo "Deploying DM Templates complete"
 }
 
-main () {
-  local destination="${1}"
+deploy_pacemakergcp() {
+  cd .build_pacemakergcp
+  local deploy_url="${GCS_BUCKET}/pacemaker-gcp"
+  echo "Deploying Pacemaker GCP to gs://${deploy_url}"
+  gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
+  echo "Resetting cache on gs://${deploy_url}"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${deploy_url}/*" >/dev/null
+  cd ..
+  echo "Deploying Pacemaker GCP complete"
+}
 
-  if [[ ! "$(dirname "$0")" = "." ]]; then
-    echo "Error: build.sh must be executed from the root of the package"
-    exit 1
+deploy_latest() {
+  echo "Deploying to latest folder gs://${GCS_LATEST_BUCKET}"
+  gsutil rm gs://${GCS_LATEST_BUCKET}/**
+  gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/* gs://${GCS_LATEST_BUCKET}/
+  echo "Resetting cache on gs://${GCS_LATEST_BUCKET}"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${GCS_LATEST_BUCKET}/*" >/dev/null
+  echo "Deploying to latest folder complete"
+}
+
+deploy_old_latest() {
+  # This will be removed after 6/2021, this is the old location of the latest
+  # dm-templates (sapdeploy bucket)
+  echo "Deploying to OLD latest folder gs://sapdeploy/dm-templates"
+  gsutil rm gs://sapdeploy/dm-templates/**
+  gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/dm-templates/* gs://sapdeploy/dm-templates/
+  echo "Resetting cache on gs://sapdeploy/dm-templates"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://sapdeploy/dm-templates/*" >/dev/null
+  echo "Deploying to OLD latest folder complete"
+}
+
+cleanup_build() {
+  echo "Cleanup build dirs"
+  rm -fr .build_dmtemplates
+  rm -fr .build_pacemakergcp
+  echo "Cleanup build dirs complete"
+}
+
+#
+# Check execution dir
+#
+if [[ ! "$(dirname "$0")" = "." ]]; then
+  echo "Error: build.sh must be executed from the root of the package"
+  exit 1
+fi
+#
+# Kokoro sets the GCS_FOLDER or by the user as the single command line arg
+#
+if [[ -z "${GCS_FOLDER:=}" ]] ; then
+  GCS_FOLDER="${1:-}"
+fi;
+[[ -z "${GCS_FOLDER}" ]] && \
+  echo "ERROR: GCS_FOLDER environment variable or argument must be provided" \
+  && exit 1
+if [[ "${GCS_FOLDER}" == "release" ]]; then
+  if [[ -z "${KOKORO_ARTIFACTS_DIR}" ]]; then
+    echo "ERROR: Cannot run release outside of Kokoro" \
+    && exit 1
   fi
+  if [[ "${HOME}" != "/home/kbuilder" ]]; then
+    echo "ERROR: Cannot run release outside of Kokoro" \
+    && exit 1
+  fi
+  GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
+  RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  GCE_STORAGE_REPO_SUFFIX=""
+  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
+  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
+  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/gcpstonith -o"
+  GSUTIL_PUBLIC_OPT="-a public-read"
+fi
 
-  case "${destination}" in
-    sandbox)
-      stage ${SBOX}
-      deploy ${SBOX}
-      ;;
+if [[ "${KOKORO_JOB_NAME:=}" != "" ]] ; then
+  # This is Kokoro, modify git checkouts
+  echo "Kokoro build, modifying the git checkouts"
+  PACEMAKER_CHECKOUT="cp -R ../sap-ext-pacemaker-gcp .build_pacemakergcp"
+fi;
 
-    alpha)
-      stage ${ALPHA}
-      deploy ${ALPHA}
-      ;;
+echo ""
+echo "Starting build and deploy for SAP DM Templates"
+echo "GCS_BUCKET=${GCS_BUCKET}"
+echo "RESOURCE_URL=${RESOURCE_URL}"
+echo "GCE_STORAGE_REPO_SUFFIX=${GCE_STORAGE_REPO_SUFFIX}"
+echo "PACEMAKER_ALIAS_COPY=${PACEMAKER_ALIAS_COPY}"
+echo "PACEMAKER_ROUTE_COPY=${PACEMAKER_ROUTE_COPY}"
+echo "PACEMAKER_STONITH_COPY=${PACEMAKER_STONITH_COPY}"
+echo ""
+build
+deploy_dmtemplates &
+deploy_pacemakergcp &
+echo "Waiting for all deploys to finish..."
+wait
+echo "All done with deploys"
+# tiny sleep so we don't see the shell-init error on mac
+sleep 1
+# if this is release then deploy_latest
+if [[ "${GCS_FOLDER}" == "release" ]]; then
+  deploy_latest
+  # TODO uncomment this once we are sure release is running in kokoro
+  # deploy_old_latest
+fi
+cleanup_build
 
-    beta)
-      stage ${BETA}
-      deploy ${BETA}
-      ;;
+echo ""
+echo "Deployed templates to: ${RESOURCE_URL}"
+echo "Pantheon link: https://pantheon.corp.google.com/storage/browser/${GCS_BUCKET}"
+echo "Date stamp to use in your template: ${BUILD_DATE_FOR_BUCKET}"
+echo ""
 
-    prod)
-      echo "I hope you have updated your CHANGELOG.MD?"
-      echo -n "**** WARNING **** You are attempting to deploy to production. To continue, please type the color of the sky (if you're not in London or Seattle) in capital letters: "
-      read -r verify
-      if [[ "${verify}" = "BLUE" ]]; then
-        stage ${PROD}
-        deploy ${PROD}
-      else
-        echo "Verification failed. Build aborted"
-      fi
-      ;;
-
-    *)
-        echo "Error: Unknown destination"
-  esac
-}
-
-main "${1}"
+echo "Finished build and deploy for SAP DM Templates"
+echo ""

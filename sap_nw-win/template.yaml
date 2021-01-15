@@ -1,9 +1,6 @@
-imports:
-- path: https://storage.googleapis.com/BUILD.SH_URL/sap_nw-win/sap_nw-win.py
-
 resources:
 - name: sap_nw-win
-  type: https://storage.googleapis.com/BUILD.SH_URL/sap_nw-win/sap_nw-win.py
+  type: BUILD.SH_URL/sap_nw-win/sap_nw-win.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

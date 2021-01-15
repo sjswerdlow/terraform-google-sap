@@ -1,28 +1,64 @@
+#
+# deployed with:
+# gcloud deployment-manager deployments create hana-scaleout --project core-connect-dev --config sap_hana_scaleout_example.yaml
+#
+# Replace all DATE_TIME_STAMP occurances with your build dir, there are 5 total
+#
 resources:
-- name: sap_hana_ha
-  type: BUILD.SH_URL/sap_hana_ha/sap_hana_ha.py
+- name: sap_hana
+  type: gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/sap_hana_scaleout.py
   properties:
-    primaryInstanceName: [VM_NAME_1]
-    secondaryInstanceName: [VM_NAME_2]
-    primaryZone: [ZONE]
-    secondaryZone: [ZONE]
-    instanceType: [MACHINE_TYPE]
-    network: [NETWORK_NAME]
-    subnetwork: [SUBNETWORK_NAME]
-    linuxImage: [IMAGE_FAMILY]
-    linuxImageProject: [IMAGE_PROJECT]
-    # SAP HANA parameters
-    sap_hana_deployment_bucket: [MEDIA_BUCKET]
-    sap_hana_sid: [SID]
-    sap_hana_instance_number: [INSTANCE_NUMBER]
-    sap_hana_sidadm_password: [PASSWORD]
-    sap_hana_system_password: [PASSWORD]
-    # VIP parameters
-    sap_vip: [VIRTUAL_IP]
-    primaryInstanceGroupName: [INSTANCE_GROUP_1]
-    secondaryInstanceGroupName: [INSTANCE_GROUP_2]
-    loadBalancerName: [ILB_NAME]
-    #
+    instanceName: hana-scaleout
+    instanceType: e2-standard-8
+    zone: us-central1-a
+    subnetwork: default
+    # linuxImage: family/rhel-7-6-sap-ha
+    # linuxImageProject: rhel-sap-cloud
+    linuxImage: family/sles-12-sp5-sap
+    linuxImageProject: suse-sap-cloud
+    sap_hana_deployment_bucket: core-connect-dev-saphana/hana-47
+    sap_hana_sid: TM1
+    sap_hana_instance_number: 00
+    sap_hana_sidadm_password: Google123
+    sap_hana_system_password: Google123
+    sap_hana_worker_nodes: 1
+    sap_hana_standby_nodes: 1
+    sap_hana_shared_nfs: 10.6.120.90:/hanashared
+    sap_hana_backup_nfs: 10.150.221.242:/hanabackup
+    primary_startup_url: '
+
+if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
+
+  bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
+
+  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
+
+fi
+
+if [[ -e "/usr/bin/python" ]]; then
+
+  export CLOUDSDK_PYTHON=/usr/bin/python
+
+fi
+
+gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/startup.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'
+    secondary_startup_url: '
+
+if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
+
+  bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
+
+  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
+
+fi
+
+if [[ -e "/usr/bin/python" ]]; then
+
+  export CLOUDSDK_PYTHON=/usr/bin/python
+
+fi
+
+gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/startup_secondary.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'    #
     # --- Advanced Options ---
     # The following advanced options are not usually needed. To use an advanced option, remove
     # the comment indicator, #, before the parameter name and specify an appropriate value.
@@ -45,21 +81,6 @@ resources:
     #    account will prevent a successful deployment. Example of a correctly specified
     #    custom service account: myserviceuser@myproject.iam.gserviceaccount.com
     #
-    # sap_vip_secondary_range: [VIP_SECONDARY_RANGE]
-    #    By default the virtual IP is created in the same network as the VM instance. However If
-    #    if that network has a secondary IP range, and you want your virtual IP address to be in
-    #    that secondary range, specify the nmame of the range here.
-    #
-    # sap_hana_backup_size: [BACKUP_SIZE]
-    #    Overrides the backup volume size (2x machine memory size) and sets the size to the
-    #    number of GB specified. Valid values are 1 to 64000
-    #
-    # sap_hana_double_volume_size: [No | Yes]
-    #    Doubles the HANA volume size. Useful if you wish to locate multiple SAP HANA instances
-    #    or a DR HANA instance on the same VM. By default, the volume size is automatically
-    #    calculated to be the minimum required for your memory footprint while still meeting
-    #    the SAP certification & support requirements.
-    #
     # sap_hana_sidadm_uid: [USER_ID]
     #    The default value for the <sid>adm user ID is 900 to avoid user created groups conflicting
     #    with SAP HANA. However, you may want to change this to a different value and be consistent\
@@ -71,15 +92,6 @@ resources:
     #
     # sap_deployment_debug: [No | Yes]
     #    Debug mode. Do not enable debug mode unless you are asked by support to turn it on.
-    #
-    # labels:
-    #    [mylabel]: [mylabelvalue]
-    #    Labels to apply to this instance. These can be later modified by the setLabels method.
-    #
-    # dependsOn:
-    #   -[DEPENDENCY_1]
-    #   -[DEPENDENCY_2]
-    #   The list of the resources that must be created before this template is applied.
     #
     # --- Developer Options ---
     # post_deployment_script: [SCRIPT_URL]
