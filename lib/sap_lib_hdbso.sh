@@ -176,7 +176,7 @@ EOF
 partition_*_data__dev = /dev/vg_hana/data
 partition_*_log__dev = /dev/vg_hana/log
 partition_*_data__mountOptions = -t xfs -o logbsize=256k
-partition_*_log__mountOptions = -t xfs -o nobarrier,logbsize=256k
+partition_*_log__mountOptions = -t xfs -o logbsize=256k
 partition_*_*__fencing = disabled
 
 [trace]
