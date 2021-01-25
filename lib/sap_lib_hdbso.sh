@@ -100,6 +100,18 @@ hdbso::mount_nfs_vols() {
 
   ## set permissions correctly. Workaround for some NFS servers
   chmod 775 /hana/shared
+
+  ## Check for existing sid in shared
+  if [[ -d "/hana/shared/${VM_METADATA[sap_hana_sid]}" ]]; then
+    # no need to add an exit - the errhandle_log_error stops the installation
+    main::errhandle_log_error "HANA SID exists in shared volume: /hana/shared/${VM_METADATA[sap_hana_sid]}, cannot continue with installation"
+  fi
+
+  ## Check for existing data in /hana/shared
+  if [[ "$(ls -A /hana/shared)" ]]; then
+    # we just log an warning, this can be okay
+    main::errhandle_log_warning "HANA Shared volume (/hana/shared) is not empty"
+  fi
 }
 
 
