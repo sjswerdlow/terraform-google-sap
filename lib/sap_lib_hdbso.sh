@@ -151,7 +151,7 @@ EOM
 
 
 hdbso::gcestorageclient_gcloud_config() {
-	# Configuring gcloud to work under target SAP HANA sidadm account
+  # Configuring gcloud to work under target SAP HANA sidadm account
   mkdir -p /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
   chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /usr/sap/"${VM_METADATA[sap_hana_sid]}"/home/.config/gcloud/
 }
@@ -213,7 +213,7 @@ hdbso::install_scaleout_nodes() {
 
   for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
     while [[ $(ssh -o StrictHostKeyChecking=no "${HOSTNAME}"w"${worker}" "echo 1") != [1] ]]; do
-			count=$((count +1))
+      count=$((count +1))
       main::errhandle_log_info "--- ${HOSTNAME}w${worker} is not accessible via SSH - sleeping for 10 seconds and trying again"
       sleep 10
       if [ ${count} -gt 60 ]; then

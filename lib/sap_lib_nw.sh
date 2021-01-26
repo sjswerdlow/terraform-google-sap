@@ -7,7 +7,7 @@ nw::create_filesystems() {
 
   if [[ -h /dev/disk/by-id/google-"${HOSTNAME}"-sapmnt ]]; then
     main::create_filesystem /sapmnt sapmnt xfs
-  fi    
+  fi
 
   if [[ -h /dev/disk/by-id/google-"${HOSTNAME}"-swap ]]; then
     main::create_filesystem swap swap swap

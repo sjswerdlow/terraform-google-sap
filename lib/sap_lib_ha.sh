@@ -94,7 +94,7 @@ ha::wait_for_secondary() {
   main::errhandle_log_info "Waiting for ready signal from ${VM_METADATA[sap_secondary_instance]} before continuing"
 
   while [[ ! -f /root/.deploy/.${VM_METADATA[sap_secondary_instance]}.ready ]]; do
-		count=$((count +1))
+    count=$((count +1))
     scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_secondary_instance]}":/root/.deploy/."${VM_METADATA[sap_secondary_instance]}".ready /root/.deploy
     main::errhandle_log_info "--- ${VM_METADATA[sap_secondary_instance]} is not ready - sleeping for 60 seconds then trying again"
     sleep 60s
@@ -115,7 +115,7 @@ ha::wait_for_primary() {
   scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy
 
   while [[ ! -f /root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready ]]; do
-		count=$((count +1))
+    count=$((count +1))
     scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy
     main::errhandle_log_info "--- ${VM_METADATA[sap_primary_instance]} is not not ready - sleeping for 60 seconds then trying again"
     sleep 60s
