@@ -145,7 +145,7 @@ hdb::download_media() {
   chmod a=wrx /root/.deploy/unrar
 
   ## download SAP HANA media
-  if ! ${GSUTIL} rsync -x ".part*$|IMDB_SERVER*.SAR$" gs://"${VM_METADATA[sap_hana_deployment_bucket]}" /hana/shared/media/ ; then
+  if ! ${GSUTIL} -o "GSUtil:state_dir=/root/.deploy" -m cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/* /hana/shared/media/; then
     main::errhandle_log_warning "HANA Media Download Failed. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually"
     main::complete
   fi
