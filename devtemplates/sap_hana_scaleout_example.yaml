@@ -31,7 +31,7 @@ if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
 
   bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
 
-  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
+  export PATH=/usr/local/google-cloud-sdk/bin/:/bin:$PATH
 
 fi
 
@@ -48,7 +48,7 @@ if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
 
   bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
 
-  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
+  export PATH=/usr/local/google-cloud-sdk/bin/:/bin:$PATH
 
 fi
 
@@ -58,7 +58,8 @@ if [[ -e "/usr/bin/python" ]]; then
 
 fi
 
-gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/startup_secondary.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'    #
+gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/startup_secondary.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'
+    #
     # --- Advanced Options ---
     # The following advanced options are not usually needed. To use an advanced option, remove
     # the comment indicator, #, before the parameter name and specify an appropriate value.
