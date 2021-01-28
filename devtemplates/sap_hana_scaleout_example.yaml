@@ -31,7 +31,7 @@ if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
 
   bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
 
-  export PATH=/usr/local/google-cloud-sdk/bin/:/bin:$PATH
+  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
 
 fi
 
@@ -48,7 +48,7 @@ if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
 
   bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
 
-  export PATH=/usr/local/google-cloud-sdk/bin/:/bin:$PATH
+  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
 
 fi
 
