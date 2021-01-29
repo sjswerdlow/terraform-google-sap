@@ -64,9 +64,9 @@ def GenerateConfig(context):
   sap_hana_total_nodes = sap_hana_worker_nodes + sap_hana_standby_nodes
   sap_hana_shared_nfs = str(context.properties.get('sap_hana_shared_nfs', ''))
   sap_hana_backup_nfs = str(context.properties.get('sap_hana_backup_nfs', ''))
-  sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False')) 
+  sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False'))
   sap_hana_deployment_bucket =  str(context.properties.get('sap_hana_deployment_bucket', ''))
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
   # Subnetwork: with SharedVPC support
@@ -153,6 +153,18 @@ def GenerateConfig(context):
   # ensure pd-ssd meets minimum size/performance
   pdssd_size = int(max(834, hana_log_size + hana_data_size + 1))
 
+  # default the reservation affinity to ANY
+  reservation_affinity = {
+    "consumeReservationType": "ANY_RESERVATION"
+  }
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
+
   # compile complete json
   hana_nodes = []
 
@@ -185,7 +197,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                       
+                  },
                   {
                       'key': 'sap_deployment_debug',
                       'value': sap_deployment_debug
@@ -229,7 +241,7 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_hana_scaleout_nodes',
                       'value': sap_hana_total_nodes
-                  },                  
+                  },
                   {
                       'key': 'sap_hana_worker_nodes',
                       'value': sap_hana_worker_nodes
@@ -273,7 +285,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
               }
 
           })
@@ -318,7 +331,7 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_hana_orgiginal_role',
                               'value': "worker"
-                          },                                                    
+                          },
                           {
                               'key': 'sap_hana_sid',
                               'value': sap_hana_sid
@@ -338,7 +351,7 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_hana_scaleout_nodes',
                               'value': sap_hana_total_nodes
-                          },                           
+                          },
                           {
                               'key': 'sap_hana_worker_nodes',
                               'value': sap_hana_worker_nodes
@@ -386,7 +399,8 @@ def GenerateConfig(context):
                       'networkInterfaces': [{
                           'accessConfigs': networking,
                             'subnetwork': subnetwork
-                          }]
+                          }],
+                      'reservationAffinity': reservation_affinity
                   }
             })
 
@@ -411,7 +425,7 @@ def GenerateConfig(context):
                           {
                               'key': 'post_deployment_script',
                               'value': post_deployment_script
-                          },                                                
+                          },
                           {
                               'key': 'sap_hana_deployment_bucket',
                               'value': sap_hana_deployment_bucket
@@ -419,7 +433,7 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_hana_original_role',
                               'value': "standby"
-                          },                          
+                          },
                           {
                               'key': 'sap_hana_sid',
                               'value': sap_hana_sid
@@ -439,7 +453,7 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_hana_scaleout_nodes',
                               'value': sap_hana_total_nodes
-                          },                          
+                          },
                           {
                               'key': 'sap_hana_worker_nodes',
                               'value': sap_hana_worker_nodes
@@ -481,7 +495,8 @@ def GenerateConfig(context):
                       'networkInterfaces': [{
                           'accessConfigs': networking,
                             'subnetwork': subnetwork
-                          }]
+                          }],
+                      'reservationAffinity': reservation_affinity
                   }
             })
 

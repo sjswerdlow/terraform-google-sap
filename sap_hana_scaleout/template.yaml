@@ -58,6 +58,18 @@ resources:
     # sap_deployment_debug: [No | Yes]
     #    Debug mode. Do not enable debug mode unless you are asked by support to turn it on.
     #
+    # use_reservation_name: [RESERVATION_NAME]
+    #    Use a reservation specified by RESERVATION_NAME.  By default ANY reservation is used.
+    #    In order for a reservation to be used it must be created with the
+    #    "Select specific reservation" selected (specificReservationRequired set to true)
+    #    Be sure to create your reservation with the correct Min CPU Platform for the
+    #    following instance types:
+    #    n1-highmem-32 : Intel Broadwell
+    #    n1-highmem-64 : Intel Broadwell
+    #    n1-highmem-96 : Intel Skylake
+    #    n1-megamem-96 : Intel Skylake
+    #    All other instance types can have automatic Min CPU Platform
+    #
     # --- Developer Options ---
     # post_deployment_script: [SCRIPT_URL]
     #    Specifies the location of a script to run after the deployment is complete.
