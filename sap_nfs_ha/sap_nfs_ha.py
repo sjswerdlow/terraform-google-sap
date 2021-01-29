@@ -56,7 +56,7 @@ def GenerateConfig(context):
   sap_vip = str(context.properties.get('sap_vip', ''))
   sap_vip_secondary_range = str(context.properties.get('sap_vip_secondary_range', ''))
   nfs_vol_size = int(context.properties.get('nfsVolSize', '10'))
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
   # Subnetwork: with SharedVPC support
@@ -82,6 +82,14 @@ def GenerateConfig(context):
 
   ## compile complete json
   instance_name=context.properties['primaryInstanceName']
+
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
 
   nfs_nodes = []
 
@@ -121,7 +129,7 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_secondary_zone',
                       'value': secondary_zone
-                  },                  
+                  },
                   {
                       'key': 'sap_deployment_debug',
                       'value': sap_deployment_debug
@@ -129,7 +137,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                  
+                  },
                   {
                       'key': 'sap_vip',
                       'value': sap_vip
@@ -173,7 +181,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
               }
 
           })
@@ -217,7 +226,7 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_secondary_zone',
                       'value': secondary_zone
-                  },                  
+                  },
                   {
                       'key': 'sap_deployment_debug',
                       'value': sap_deployment_debug
@@ -225,7 +234,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                  
+                  },
                   {
                       'key': 'sap_vip',
                       'value': sap_vip
@@ -269,7 +278,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
           }
     })
 

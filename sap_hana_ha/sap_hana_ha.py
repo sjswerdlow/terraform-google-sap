@@ -213,6 +213,14 @@ def GenerateConfig(context):
   ## compile complete json
   instance_name=context.properties['primaryInstanceName']
 
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
+
   hana_nodes = []
 
   hana_nodes.append({
@@ -356,7 +364,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                   'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
               }
 
           })
@@ -505,7 +514,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
           }
     })
 

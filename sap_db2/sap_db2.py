@@ -65,7 +65,7 @@ def GenerateConfig(context):
   db2backup_size = context.properties['db2backupSize']
   usrsap_size = context.properties['usrsapSize']
   sapmnt_size = context.properties['sapmntSize']
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
   other_host = str(context.properties.get('otherHost',''))
   swap_size = context.properties['swapSize']
@@ -100,6 +100,14 @@ def GenerateConfig(context):
       db2log_type = "pd-ssd"
   else:
       db2log_type = "pd-standard"
+
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
 
   # compile complete json
   sap_node = []
@@ -160,7 +168,7 @@ def GenerateConfig(context):
                           'type': ZonalComputeUrl(project, zone, 'diskTypes','pd-standard')
                   }
                   })
-                    
+
   disks.append({'deviceName': instance_name + '-db2home',
                           'type': 'PERSISTENT',
                           'source': ''.join(['$(ref.', instance_name + '-db2home', '.selfLink)']),
@@ -298,7 +306,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                  
+                  },
                   {
                       'key': 'sap_ibm_db2_sid',
                       'value': db2_sid
@@ -330,7 +338,8 @@ def GenerateConfig(context):
                     'subnetwork': subnetwork
                   }],
               "tags": network_tags,
-              'disks': disks
+              'disks': disks,
+              'reservationAffinity': reservation_affinity
               }
           })
 

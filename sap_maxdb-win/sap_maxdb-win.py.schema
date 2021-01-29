@@ -107,7 +107,11 @@ properties:
     description: OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created
     type: integer
     default: 0
-    
+
   serviceAccount:
     description: OPTIONAL - Ability to define a custom service account instead of using the default project service account
+    type: string
+
+  use_reservation_name:
+    description: OPTIONAL - Ability to use a specified reservation
     type: string

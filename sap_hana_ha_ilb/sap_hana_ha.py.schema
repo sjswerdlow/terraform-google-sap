@@ -164,3 +164,7 @@ properties:
   loadBalancerName:
     description: OPTIONAL - Name of the load balancer that will be created. If left blank with use_ilb_vip set to true, then will use lb-SID as default
     type: string
+
+  use_reservation_name:
+    description: OPTIONAL - Ability to use a specified reservation
+    type: string

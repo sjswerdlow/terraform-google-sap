@@ -61,9 +61,9 @@ def GenerateConfig(context):
   sap_hana_sapsys_gid = str(context.properties.get('sap_hana_sapsys_gid', '79'))
   sap_hana_scaleout_nodes = int(context.properties.get('sap_hana_scaleout_nodes', ''))
   sap_hana_deployment_bucket =  str(context.properties.get('sap_hana_deployment_bucket', ''))
-  sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False')) 
+  sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False'))
   sap_hana_backup_size = int(context.properties.get('sap_hana_backup_size', '0'))
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
   # Subnetwork: with SharedVPC support
@@ -176,6 +176,14 @@ def GenerateConfig(context):
   # change PD-HDD size if a custom backup size has been set
   if (sap_hana_backup_size > 0):
     pdhdd_size = sap_hana_backup_size
+
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
 
   # compile complete json
   hana_nodes = []
@@ -293,7 +301,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
               }
 
           })
@@ -333,7 +342,7 @@ def GenerateConfig(context):
                           {
                               'key': 'post_deployment_script',
                               'value': post_deployment_script
-                          },                          
+                          },
                           {
                               'key': 'sap_hana_sid',
                               'value': sap_hana_sid
@@ -385,7 +394,8 @@ def GenerateConfig(context):
                       'networkInterfaces': [{
                           'accessConfigs': networking,
                             'subnetwork': subnetwork
-                          }]
+                          }],
+                      'reservationAffinity': reservation_affinity
                   }
             })
 

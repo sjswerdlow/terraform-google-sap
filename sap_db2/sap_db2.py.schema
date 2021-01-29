@@ -72,7 +72,7 @@ properties:
     type: integer
     minimum: 8
     default: 8
-  
+
   db2homeSize:
     description: Size of /db2/db2[dbsid] - the home directory of the database instance
     type: integer
@@ -132,7 +132,7 @@ properties:
     default: 0
 
   otherHost:
-    description: OPTIONAL - In a HA environment this would be used to specify the other node in the cluster. 
+    description: OPTIONAL - In a HA environment this would be used to specify the other node in the cluster.
     type: string
 
   networkTag:
@@ -155,4 +155,8 @@ properties:
 
   serviceAccount:
     description: OPTIONAL - Ability to define a custom service account instead of using the default project service account
+    type: string
+
+  use_reservation_name:
+    description: OPTIONAL - Ability to use a specified reservation
     type: string

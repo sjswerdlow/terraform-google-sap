@@ -50,12 +50,12 @@ def GenerateConfig(context):
   primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_nw/startup.sh | bash -s " + deployment_script_location))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
-  
+
   ## Get deployment template specific variables from context
   usrsap_size = context.properties['usrsapSize']
   sapmnt_size = context.properties['sapmntSize']
   swap_size = context.properties['swapSize']
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
   # Subnetwork: with SharedVPC support
@@ -85,6 +85,14 @@ def GenerateConfig(context):
       cpu_platform="Intel Skylake"
   else:
       cpu_platform="Automatic"
+
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
 
   # compile complete json
   sap_node = []
@@ -193,8 +201,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
-
+                  }],
+              'reservationAffinity': reservation_affinity
               }
           })
 

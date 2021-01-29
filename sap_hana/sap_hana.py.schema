@@ -132,7 +132,11 @@ properties:
   post_deployment_script:
     description: OPTIONAL - gs:// or https:// location of a script to execute on the created VM's post deployment
     type: string
-    
+
   serviceAccount:
     description: OPTIONAL - Ability to define a custom service account instead of using the default project service account
+    type: string
+
+  use_reservation_name:
+    description: OPTIONAL - Ability to use a specified reservation
     type: string

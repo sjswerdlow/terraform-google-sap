@@ -32,10 +32,15 @@ resources:
     #    you wish, you can create your own service account with locked down permissions and
     #    specify the name of the account here. Note that an incorrectly defined service
     #    account will prevent a successful deployment. Example of a correctly specified
-    #    custom service account: myserviceuser@myproject.iam.gserviceaccount.com 
+    #    custom service account: myserviceuser@myproject.iam.gserviceaccount.com
     #
     # sap_deployment_debug: [No | Yes]
     #    Debug mode. Do not enable debug mode unless you are asked by support to turn it on.
+    #
+    # use_reservation_name: [RESERVATION_NAME]
+    #    Use a reservation specified by RESERVATION_NAME.  By default ANY reservation is used.
+    #    In order for a reservation to be used it must be created with the
+    #    "Select specific reservation" selected (specificReservationRequired set to true)
     #
     # --- Developer Options ---
     # post_deployment_script: [SCRIPT_URL]

@@ -37,3 +37,9 @@ resources:
     #    specify the name of the account here. Note that an incorrectly defined service
     #    account will prevent a successful deployment. Example of a correctly specified
     #    custom service account: myserviceuser@myproject.iam.gserviceaccount.com
+    #
+    # use_reservation_name: [RESERVATION_NAME]
+    #    Use a reservation specified by RESERVATION_NAME.  By default ANY reservation is used.
+    #    In order for a reservation to be used it must be created with the
+    #    "Select specific reservation" selected (specificReservationRequired set to true)
+    #

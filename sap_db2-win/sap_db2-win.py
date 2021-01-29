@@ -79,7 +79,7 @@ def GenerateConfig(context):
         'name': 'external-nat',
         'type': 'ONE_TO_ONE_NAT'
       }]
-      
+
   ## determine disk types
   if db2sapdata_ssd == "True":
       db2sapdata_type = "pd-ssd"
@@ -90,6 +90,14 @@ def GenerateConfig(context):
       db2log_type = "pd-ssd"
   else:
       db2log_type = "pd-standard"
+
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
 
   # compile complete json
   sap_node = []

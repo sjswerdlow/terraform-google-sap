@@ -59,7 +59,7 @@ def GenerateConfig(context):
   ## Get deployment template specific variables from context
   sap_vip = str(context.properties.get('sap_vip', ''))
   sap_vip_secondary_range = str(context.properties.get('sap_vip_secondary_range', ''))
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
   # Subnetwork: with SharedVPC support
@@ -83,6 +83,14 @@ def GenerateConfig(context):
       primary_startup_url = primary_startup_url.replace("bash -s ", "bash -x -s ")
       secondary_startup_url = secondary_startup_url.replace("bash -s ", "bash -x -s ")
 
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
+
   # compile complete json
   sap_node = []
 
@@ -105,7 +113,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                      
+                  },
                   {
                       'key': 'sap_deployment_debug',
                       'value': sap_deployment_debug
@@ -163,7 +171,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
               }
 
           })
@@ -189,7 +198,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                      
+                  },
                   {
                       'key': 'sap_primary_instance',
                       'value': primary_instance_name
@@ -243,7 +252,8 @@ def GenerateConfig(context):
               'networkInterfaces': [{
                   'accessConfigs': networking,
                     'subnetwork': subnetwork
-                  }]
+                  }],
+              'reservationAffinity': reservation_affinity
           }
     })
 

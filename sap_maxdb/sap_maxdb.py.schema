@@ -130,3 +130,7 @@ properties:
   serviceAccount:
     description: OPTIONAL - Ability to define a custom service account instead of using the default project service account
     type: string
+
+  use_reservation_name:
+    description: OPTIONAL - Ability to use a specified reservation
+    type: string

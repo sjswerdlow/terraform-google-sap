@@ -90,6 +90,14 @@ def GenerateConfig(context):
   else:
       maxdb_log_type = "pd-standard"
 
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
+
   # compile complete json
   sap_node = []
   disks = []
@@ -239,7 +247,8 @@ def GenerateConfig(context):
                     'subnetwork': subnetwork
                   }],
               "tags": network_tags,
-              'disks': disks
+              'disks': disks,
+              'reservationAffinity': reservation_affinity
               }
           })
 
