@@ -83,6 +83,10 @@ def GenerateConfig(context):
       primary_startup_url = primary_startup_url.replace("bash -s ", "bash -x -s ")
       secondary_startup_url = secondary_startup_url.replace("bash -s ", "bash -x -s ")
 
+  # default the reservation affinity to ANY
+  reservation_affinity = {
+    "consumeReservationType": "ANY_RESERVATION"
+  }
   use_reservation_name = str(context.properties.get('use_reservation_name', ''))
   if use_reservation_name != '':
     reservation_affinity = {

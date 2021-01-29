@@ -64,7 +64,7 @@ def GenerateConfig(context):
   usrsap_size = context.properties['usrsapSize']
   sapmnt_size = context.properties['sapmntSize']
   swap_size = context.properties['swapSize']
-  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False')) 
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
   post_deployment_script = str(context.properties.get('post_deployment_script', ''))
 
   # Subnetwork: with SharedVPC support
@@ -97,6 +97,18 @@ def GenerateConfig(context):
       aselog_type = "pd-ssd"
   else:
       aselog_type = "pd-standard"
+
+  # default the reservation affinity to ANY
+  reservation_affinity = {
+    "consumeReservationType": "ANY_RESERVATION"
+  }
+  use_reservation_name = str(context.properties.get('use_reservation_name', ''))
+  if use_reservation_name != '':
+    reservation_affinity = {
+      "consumeReservationType": "SPECIFIC_RESERVATION",
+      "key": "compute.googleapis.com/reservation-name",
+      "values": [use_reservation_name]
+    }
 
   # compile complete json
   sap_node = []
@@ -276,7 +288,7 @@ def GenerateConfig(context):
                   {
                       'key': 'post_deployment_script',
                       'value': post_deployment_script
-                  },                  
+                  },
                   {
                       'key': 'sap_ase_sid',
                       'value': ase_sid
@@ -304,7 +316,8 @@ def GenerateConfig(context):
                     'subnetwork': subnetwork
                   }],
               "tags": network_tags,
-              'disks': disks
+              'disks': disks,
+              'reservationAffinity': reservation_affinity
               }
           })
 

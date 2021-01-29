@@ -72,6 +72,10 @@ def GenerateConfig(context):
         'type': 'ONE_TO_ONE_NAT'
       }]
 
+  # default the reservation affinity to ANY
+  reservation_affinity = {
+    "consumeReservationType": "ANY_RESERVATION"
+  }
   use_reservation_name = str(context.properties.get('use_reservation_name', ''))
   if use_reservation_name != '':
     reservation_affinity = {
