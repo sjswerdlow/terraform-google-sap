@@ -71,6 +71,18 @@ if [[ "${1:-}" == "publicdev" ]]; then
   GSUTIL_PUBLIC_OPT="-a public-read"
 fi
 
+if [[ "${1:-}" == "publicdevoverwrite" ]]; then
+  BUILD_DATE_FOR_BUCKET=${2:=}
+  # deploys to public dev location, these get deleted after 14 days
+  GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
+  RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  GCE_STORAGE_REPO_SUFFIX=""
+  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
+  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
+  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/gcpstonith -o"
+  GSUTIL_PUBLIC_OPT="-a public-read"
+fi
+
 if [[ "${1:-}" == "publicbeta" ]]; then
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"

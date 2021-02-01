@@ -139,6 +139,12 @@ main::install_packages() {
         zypper in -y "${package}"
     done
     zypper in -y sapconf saptune
+    # making sure we refresh the bash env
+    . /etc/bash.bashrc
+    # boto.cfg has spaces in 15sp2, getting rid of them (b/172181835)
+    if [[ $(tail -n 1 /etc/boto.cfg) == "  ca_certificates_file = system" ]]; then
+      sed -i 's/^[ \t]*//' /etc/boto.cfg
+    fi
   elif [[ ${LINUX_DISTRO} = "RHEL" ]]; then
     for package in $rhel_packages; do
         yum -y install "${package}"

@@ -166,7 +166,7 @@ hdbso::create_global_ini(){
 basepath_datavolumes = /hana/data/${VM_METADATA[sap_hana_sid]}
 basepath_logvolumes = /hana/log/${VM_METADATA[sap_hana_sid]}
 use_mountpoints = yes
-basepath_shared = no
+basepath_shared = yes
 
 [storage]
 ha_provider = gceStorageClient
@@ -270,6 +270,10 @@ hdbso::restart() {
   main::errhandle_log_info "Restarting SAP HANA"
   /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function StopSystem HDB
   /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function WaitforStopped 400 2 HDB
+
+  # reset basepath_shared = no (b/179021501)
+  sed -i -e 's/basepath_shared = yes/basepath_shared = no/g' /hana/shared/gceStorageClient/global.ini
+
   /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function StartSystem HDB
   /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function WaitforStarted 400 2 HDB
 }
