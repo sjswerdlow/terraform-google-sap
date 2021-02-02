@@ -170,23 +170,6 @@ main::create_vg() {
 }
 
 
-
-main::create_vg() {
-  local device=${1}
-  local volume_group=${2}
-
-  if [[ -b "$device" ]]; then
-    main::errhandle_log_info "--- Creating physical volume group ${device}"
-    pvcreate "${device}"
-    main::errhandle_log_info "--- Creating volume group ${volume_group} on ${device}"
-    vgcreate "${volume_group}" "${device}"
-    /sbin/vgchange -ay
-  else
-      main::errhandle_log_error "Unable to access ${device}"
-  fi
-}
-
-
 main::create_filesystem() {
   local mount_point=${1}
   local device=${2}
