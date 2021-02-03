@@ -340,13 +340,16 @@ hdb::config_nfs() {
     main::errhandle_log_info "Configuring NFS for scale-out"
 
     ## turn off NFS4 support
-    sed -ie 's/NFS4_SUPPORT="yes"/NFS4_SUPPORT="no"/g' /etc/sysconfig/nfs
+    sed -ie 's/NFS4_SUPPORT="yes"/NFS4_SUPPORT="no"/g' /etc/sysconfig/nfs || \
+    sed -ie 's/vers4=y/vers4=n/g' /etc/nfs.conf
+    # Addition for RHEL 8 where old config is removed
+    # It is recommended not to mix the two
 
     main::errhandle_log_info "--- Starting NFS server"
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       systemctl start nfsserver
     elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-      systemctl start nfs
+      systemctl start nfs || systemctl start nfs-server
     fi
 
     ## Check NFS has started - Fix for bug which occasionally causes a delay in the NFS start-up
@@ -356,7 +359,7 @@ hdb::config_nfs() {
       if [ "${LINUX_DISTRO}" = "SLES" ]; then
         systemctl start nfsserver
       elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-        systemctl start nfs
+        systemctl start nfs  || systemctl start nfs-server
       fi
     done
 
@@ -365,7 +368,7 @@ hdb::config_nfs() {
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       systemctl enable nfsserver
     elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-      systemctl enable nfs
+      systemctl enable nfs  || systemctl enable nfs-server
     fi
 
     ## Adding file system to NFS exports file systems
