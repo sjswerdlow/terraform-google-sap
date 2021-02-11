@@ -230,6 +230,10 @@ hdb::extract_media() {
 
 hdb::install() {
   main::errhandle_log_info 'Installing SAP HANA'
+  if [[ ! "$(grep -c "${VM_METADATA[sap_hana_sid],,}"adm /etc/passwd)" == "0" ]]; then
+    main::errhandle_log_warning "--- User ${VM_METADATA[sap_hana_sid],,}adm already exists on the system. This may prevent SAP HANA from installing correctly. If this occurs, ensure that you are using a clean image and that ${VM_METADATA[sap_hana_sid],,}adm doesn't exist in the project ssh-keys metadata"
+  fi
+
   if ! /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
     main::errhandle_log_error "HANA Installation Failed. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required"
   fi
@@ -521,7 +525,7 @@ hdb::config_backint() {
 
   ## check if bucket is accessible
   if ! ${GSUTIL} -q ls gs://"${VM_METADATA[sap_hana_backup_bucket]}"; then
-    main::errhandle_log_warning "--- Bbackup bucket doesn't exist or permission is denied."
+    main::errhandle_log_warning "--- Backup bucket doesn't exist or permission is denied."
   fi
 
   ## update configuration file with settings
