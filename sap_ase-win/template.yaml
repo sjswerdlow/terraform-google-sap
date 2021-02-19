@@ -1,6 +1,10 @@
 resources:
 - name: sap_ase-win
-  type: BUILD.SH_URL/sap_ase-win/sap_ase-win.py
+  type: BUILD.SH_URL_LATEST/sap_ase-win/sap_ase-win.py
+  #
+  # In order to lock this template to the current released template type
+  # comment out the above type and uncomment the below type
+  # type: BUILD.SH_URL/sap_ase-win/sap_ase-win.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

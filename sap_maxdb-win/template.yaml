@@ -1,6 +1,10 @@
 resources:
 - name: sap_maxdb-win
-  type: BUILD.SH_URL/sap_maxdb-win/sap_maxdb-win.py
+  type: BUILD.SH_URL_LATEST/sap_maxdb-win/sap_maxdb-win.py
+  #
+  # In order to lock this template to the current released template type
+  # comment out the above type and uncomment the below type
+  # type: BUILD.SH_URL/sap_maxdb-win/sap_maxdb-win.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

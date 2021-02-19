@@ -1,6 +1,10 @@
 resources:
 - name: sap_hana
-  type: BUILD.SH_URL/sap_hana_scaleout/sap_hana_scaleout.py
+  type: BUILD.SH_URL_LATEST/sap_hana_scaleout/sap_hana_scaleout.py
+  #
+  # In order to lock this template to the current released template type
+  # comment out the above type and uncomment the below type
+  # type: BUILD.SH_URL/sap_hana_scaleout/sap_hana_scaleout.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

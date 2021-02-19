@@ -1,6 +1,10 @@
 resources:
 - name: sap_nw
-  type: BUILD.SH_URL/sap_nw/sap_nw.py
+  type: BUILD.SH_URL_LATEST/sap_nw/sap_nw.py
+  #
+  # In order to lock this template to the current released template type
+  # comment out the above type and uncomment the below type
+  # type: BUILD.SH_URL/sap_nw/sap_nw.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

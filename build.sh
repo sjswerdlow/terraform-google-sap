@@ -46,6 +46,7 @@ fi
 GCS_BUCKET="core-connect-dm-templates/${BUILD_DATE_FOR_BUCKET}"
 GCS_LATEST_BUCKET="cloudsapdeploy/deploymentmanager/latest"
 RESOURCE_URL="gs://${GCS_BUCKET}"
+RESOURCE_URL_LATEST="gs://${GCS_BUCKET}"
 GCE_STORAGE_REPO_SUFFIX=""
 # Uncomment this to use the unstable RPM repo for the storage client
 # NOTE - should only be used for dev and never checked in uncommented
@@ -64,6 +65,7 @@ if [[ "${1:-}" == "publicdev" ]]; then
   # deploys to public dev location, these get deleted after 14 days
   GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -76,6 +78,7 @@ if [[ "${1:-}" == "publicdevoverwrite" ]]; then
   # deploys to public dev location, these get deleted after 14 days
   GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -86,6 +89,7 @@ fi
 if [[ "${1:-}" == "publicbeta" ]]; then
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -99,6 +103,7 @@ build() {
   rm -fr .build_dmtemplates
   mkdir .build_dmtemplates
   cp -R * .build_dmtemplates
+  echo "Build Hash: ${git_rev_dm}"
   echo "Replacing constants in all files"
   cd .build_dmtemplates
   # no need to have these files in the deployment here
@@ -107,13 +112,21 @@ build() {
   grep -rl BUILD.SH_DATE . | xargs ${SED_CMD} "s~BUILD.SH_DATE~${BUILD_DATE}~g"
   grep -rl BUILD.HASH . | xargs ${SED_CMD} "s~BUILD.HASH~${git_rev_dm}~g"
   # Add correct deployment URL to files
+  echo "Replacing BUILD.SH_URL_LATEST"
+  grep -rl BUILD.SH_URL_LATEST . | xargs ${SED_CMD} "s~BUILD.SH_URL_LATEST~${RESOURCE_URL_LATEST}/dm-templates~g"
+  echo "Replacing BUILD.SH_URL"
   grep -rl BUILD.SH_URL . | xargs ${SED_CMD} "s~BUILD.SH_URL~${RESOURCE_URL}/dm-templates~g"
+  echo "Replacing GCE_STORAGE_REPO_SUFFIX"
   grep -rl GCE_STORAGE_REPO_SUFFIX . | xargs ${SED_CMD} "s~GCE_STORAGE_REPO_SUFFIX~${GCE_STORAGE_REPO_SUFFIX}~g"
+  echo "Replacing PACEMAKER_ALIAS_COPY"
   grep -rl PACEMAKER_ALIAS_COPY . | xargs ${SED_CMD} "s~PACEMAKER_ALIAS_COPY~${PACEMAKER_ALIAS_COPY}~g"
+  echo "Replacing PACEMAKER_ROUTE_COPY"
   grep -rl PACEMAKER_ROUTE_COPY . | xargs ${SED_CMD} "s~PACEMAKER_ROUTE_COPY~${PACEMAKER_ROUTE_COPY}~g"
+  echo "Replacing PACEMAKER_STONITH_COPY"
   grep -rl PACEMAKER_STONITH_COPY . | xargs ${SED_CMD} "s~PACEMAKER_STONITH_COPY~${PACEMAKER_STONITH_COPY}~g"
 
   # Inline all of the libraries
+  echo "Inlining the libraries"
   grep -rl SAP_LIB_ASE_SH . | xargs ${SED_CMD} -e '/SAP_LIB_ASE_SH/{r lib/sap_lib_ase.sh' -e 'd' -e '}'
   grep -rl SAP_LIB_DB2_SH . | xargs ${SED_CMD} -e '/SAP_LIB_DB2_SH/{r lib/sap_lib_db2.sh' -e 'd' -e '}'
   grep -rl SAP_LIB_HA_SH . | xargs ${SED_CMD} -e '/SAP_LIB_HA_SH/{r lib/sap_lib_ha.sh' -e 'd' -e '}'
@@ -213,10 +226,11 @@ if [[ "${GCS_FOLDER}" == "release" ]]; then
   fi
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  RESOURCE_URL_LATEST="https://storage.googleapis.com/cloudsapdeploy/deploymentmanager/latest"
   GCE_STORAGE_REPO_SUFFIX=""
-  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
-  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
-  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/gcpstonith -o"
+  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/alias -o"
+  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/route -o"
+  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/gcpstonith -o"
   GSUTIL_PUBLIC_OPT="-a public-read"
 fi
 
@@ -230,6 +244,7 @@ echo ""
 echo "Starting build and deploy for SAP DM Templates"
 echo "GCS_BUCKET=${GCS_BUCKET}"
 echo "RESOURCE_URL=${RESOURCE_URL}"
+echo "RESOURCE_URL_LATEST=${RESOURCE_URL_LATEST}"
 echo "GCE_STORAGE_REPO_SUFFIX=${GCE_STORAGE_REPO_SUFFIX}"
 echo "PACEMAKER_ALIAS_COPY=${PACEMAKER_ALIAS_COPY}"
 echo "PACEMAKER_ROUTE_COPY=${PACEMAKER_ROUTE_COPY}"
@@ -253,6 +268,7 @@ cleanup_build
 
 echo ""
 echo "Deployed templates to: ${RESOURCE_URL}"
+echo "Deployed templates to latest: ${RESOURCE_URL_LATEST}"
 echo "Pantheon link: https://pantheon.corp.google.com/storage/browser/${GCS_BUCKET}"
 echo "Date stamp to use in your template: ${BUILD_DATE_FOR_BUCKET}"
 echo ""

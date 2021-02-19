@@ -1,6 +1,10 @@
 resources:
 - name: sap_db2
-  type: BUILD.SH_URL/sap_db2/sap_db2.py
+  type: BUILD.SH_URL_LATEST/sap_db2/sap_db2.py
+  #
+  # In order to lock this template to the current released template type
+  # comment out the above type and uncomment the below type
+  # type: BUILD.SH_URL/sap_db2/sap_db2.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]

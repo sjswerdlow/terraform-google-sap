@@ -1,6 +1,10 @@
 resources:
 - name: sap_db2_primary
-  type: BUILD.SH_URL/sap_db2/sap_db2.py
+  type: BUILD.SH_URL_LATEST/sap_db2/sap_db2.py
+  #
+  # In order to lock this template to the current released template type
+  # comment out the above type and uncomment the below type
+  # type: BUILD.SH_URL/sap_db2/sap_db2.py
   properties:
     instanceName: [VM_NAME]
     instanceType: [MACHINE_TYPE]
@@ -10,7 +14,7 @@ resources:
     linuxImageProject: [IMAGE_PROJECT]
     db2SID: [DATABASE_SID_/db2/SID]
     db2sidSize: [DBSID_DISK_SIZE]
-    db2homeSize: [DB2_HOME_SIZE_/db2/db2SID]        
+    db2homeSize: [DB2_HOME_SIZE_/db2/db2SID]
     db2dumpSize: [DB2DUMP_DISK_SIZE]
     db2saptmpSize: [SAPTMP_DISK_SIZE]
     db2sapdataSize: [SAPDATA_DISK_SIZE]
@@ -67,7 +71,7 @@ resources:
     linuxImageProject: [IMAGE_PROJECT]
     db2SID: [DATABASE_SID_/db2/SID]
     db2sidSize: [DBSID_DISK_SIZE]
-    db2homeSize: [DB2_HOME_SIZE_/db2/db2SID]    
+    db2homeSize: [DB2_HOME_SIZE_/db2/db2SID]
     db2dumpSize: [DB2DUMP_DISK_SIZE]
     db2saptmpSize: [SAPTMP_DISK_SIZE]
     db2sapdataSize: [SAPDATA_DISK_SIZE]
@@ -78,7 +82,7 @@ resources:
     usrsapSize: [USRSAP_DISK_SIZE]
     sapmntSize: [SAPMNT_DISK_SIZE]
     swapSize: [SWAP_SIZE]
-    otherHost: [PRIMARY_VM NAME]   
+    otherHost: [PRIMARY_VM NAME]
     #
     # --- Advanced Options ---
     # The following advanced options are not usually needed. To use an advanced option, remove
