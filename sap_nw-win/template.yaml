@@ -2,8 +2,10 @@ resources:
 - name: sap_nw-win
   type: BUILD.SH_URL_LATEST/sap_nw-win/sap_nw-win.py
   #
-  # In order to lock this template to the current released template type
-  # comment out the above type and uncomment the below type
+  # By default, this configuration file uses the latest release of the deployment
+  # scripts for SAP on Google Cloud.  To fix your deployments to a specific release
+  # of the scripts, comment out the type property above and uncomment the type property below.
+  #
   # type: BUILD.SH_URL/sap_nw-win/sap_nw-win.py
   properties:
     instanceName: [VM_NAME]

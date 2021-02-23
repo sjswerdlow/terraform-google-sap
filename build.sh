@@ -261,8 +261,8 @@ sleep 1
 # if this is release then deploy_latest
 if [[ "${GCS_FOLDER}" == "release" ]]; then
   deploy_latest
-  # TODO uncomment this once we are sure release is running in kokoro
-  # deploy_old_latest
+  # TODO stop deploying to old latest once final deprecation is complete
+  deploy_old_latest
 fi
 cleanup_build
 
