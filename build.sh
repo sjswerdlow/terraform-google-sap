@@ -35,7 +35,12 @@
 # the Test Fusion UI:
 # https://fusion.corp.google.com/projectanalysis/summary/KOKORO/prod:cloud_partner_eng_ti%2Fsap-ext-dm-templates%2Frelease
 #
-
+# Deploy to old gs://sapdeploy/dm-templates:
+# TODO: remove this option after 6/2021
+# NOTE: This must be MANUALLY because kokoro does not have access to gs://sapdeploy
+# This will copy the cloudsapdeploy latest templates to the old sapdeloy/dm-templates folder
+# >./build.sh deployoldlatest
+#
 set -eu -o pipefail
 
 BUILD_DATE=$(date)
@@ -60,6 +65,21 @@ if [[ "$(uname)" == "Darwin" ]]; then
   SED_CMD="sed -i .bak"
 fi
 GSUTIL_PUBLIC_OPT=""
+
+if [[ "${1:-}" == "deployoldlatest" ]]; then
+  echo "NOT DEPLOYING ANYTHING - JUST COPYING BUCKET TO BUCKET"
+  echo "Copying cloudsapdeploy latest to old sapdeploy"
+  # TODO: stop deploying to old latest once final deprecation is complete
+  # This will be removed after 6/2021, this is the old location of the latest
+  # dm-templates (sapdeploy bucket)
+  echo "Deploying to OLD latest folder gs://sapdeploy/dm-templates"
+  gsutil rm gs://sapdeploy/dm-templates/**
+  gsutil -q -m cp -r -c -a public-read gs://"${GCS_LATEST_BUCKET}"/dm-templates/* gs://sapdeploy/dm-templates/
+  echo "Resetting cache on gs://sapdeploy/dm-templates"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://sapdeploy/dm-templates/*" >/dev/null
+  echo "Deploying to OLD latest folder complete"
+  exit 0
+fi
 
 if [[ "${1:-}" == "publicdev" ]]; then
   # deploys to public dev location, these get deleted after 14 days
@@ -181,17 +201,6 @@ deploy_latest() {
   echo "Deploying to latest folder complete"
 }
 
-deploy_old_latest() {
-  # This will be removed after 6/2021, this is the old location of the latest
-  # dm-templates (sapdeploy bucket)
-  echo "Deploying to OLD latest folder gs://sapdeploy/dm-templates"
-  gsutil rm gs://sapdeploy/dm-templates/**
-  gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/dm-templates/* gs://sapdeploy/dm-templates/
-  echo "Resetting cache on gs://sapdeploy/dm-templates"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://sapdeploy/dm-templates/*" >/dev/null
-  echo "Deploying to OLD latest folder complete"
-}
-
 cleanup_build() {
   echo "Cleanup build dirs"
   rm -fr .build_dmtemplates
@@ -261,8 +270,6 @@ sleep 1
 # if this is release then deploy_latest
 if [[ "${GCS_FOLDER}" == "release" ]]; then
   deploy_latest
-  # TODO stop deploying to old latest once final deprecation is complete
-  deploy_old_latest
 fi
 cleanup_build
 
