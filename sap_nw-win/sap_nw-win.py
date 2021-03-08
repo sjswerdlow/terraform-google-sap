@@ -48,7 +48,7 @@ def GenerateConfig(context):
   windows_image_project = context.properties['windowsImageProject']
   windows_image = GlobalComputeUrl(windows_image_project, 'images', context.properties['windowsImage'])
   networkTag = str(context.properties.get('networkTag', ''))
-  primary_startup_url = "https://storage.googleapis.com/BUILD.SH_URL/sap_nw-win/startup.ps1"
+  primary_startup_url = "BUILD.SH_URL_LATEST/sap_nw-win/startup.ps1"
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
 
