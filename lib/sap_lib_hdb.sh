@@ -138,17 +138,19 @@ hdb::download_media() {
 
   ## download unrar from GCS. Fix for RHEL missing unrar and SAP packaging change which stoppped unar working.
   if [[ ${DEPLOY_URL} = gs* ]]; then
-    ${GSUTIL} cp "${DEPLOY_URL}"/third_party/unrar/unrar /root/.deploy/unrar
+    ${GSUTIL} -q cp "${DEPLOY_URL}"/third_party/unrar/unrar /root/.deploy/unrar
   else
     curl "${DEPLOY_URL}"/third_party/unrar/unrar -o /root/.deploy/unrar
   fi
   chmod a=wrx /root/.deploy/unrar
 
   ## download SAP HANA media
-  if ! ${GSUTIL} -o "GSUtil:state_dir=/root/.deploy" -m cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/* /hana/shared/media/; then
+  main::errhandle_log_info "gsutil cp of gs://${VM_METADATA[sap_hana_deployment_bucket]} to /hana/shared/media/ in progress..."
+  if ! ${GSUTIL} -q -o "GSUtil:state_dir=/root/.deploy" -m cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/* /hana/shared/media/; then
     main::errhandle_log_warning "HANA Media Download Failed. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually"
     main::complete
   fi
+  main::errhandle_log_info "gsutil cp of HANA media complete."
 }
 
 
@@ -264,7 +266,7 @@ hdb::install_afl() {
   if [[ "$(${GSUTIL} ls gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/IMDB_AFL*)" ]]; then
     main::errhandle_log_info "SAP AFL was found in GCS. Installing SAP AFL addon"
     main::errhandle_log_info "--- Downloading AFL media"
-    ${GSUTIL} cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/IMDB_AFL*.SAR /hana/shared/media/
+    ${GSUTIL} -q cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/IMDB_AFL*.SAR /hana/shared/media/
     main::errhandle_log_info "--- Extracting AFL media"
     cd /hana/shared/media || main::errhandle_log_warning "AFL failed to install"
     /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/SAPCAR -xvf "IMDB_AFL*.SAR"

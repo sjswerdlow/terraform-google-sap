@@ -426,7 +426,7 @@ main::complete() {
   ## Upload logs to GCS bucket & display complete message
     if [ -n "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
       main::errhandle_log_info "--- Uploading logs to Google Cloud Storage bucket"
-      ${GSUTIL} cp /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz  gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/logs/
+      ${GSUTIL} -q cp /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz  gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/logs/
     fi
   fi
 
