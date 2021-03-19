@@ -16,15 +16,18 @@ ha::check_settings() {
 
 
 ha::download_scripts() {
-  main::errhandle_log_info "Downloading pacemaker-gcp"
-  mkdir -p /usr/lib/ocf/resource.d/gcp
-  mkdir -p /usr/lib64/stonith/plugins/external
-  PACEMAKER_ALIAS_COPY /usr/lib/ocf/resource.d/gcp/alias
-  PACEMAKER_ROUTE_COPY /usr/lib/ocf/resource.d/gcp/route
-  PACEMAKER_STONITH_COPY /usr/lib64/stonith/plugins/external/gcpstonith
-  chmod +x /usr/lib/ocf/resource.d/gcp/alias
-  chmod +x /usr/lib/ocf/resource.d/gcp/route
-  chmod +x /usr/lib64/stonith/plugins/external/gcpstonith
+  if [ "${LINUX_DISTRO}" = "SLES" ]; then
+    main::errhandle_log_info "Downloading pacemaker-gcp"
+    mkdir -p /usr/lib/ocf/resource.d/gcp
+    mkdir -p /usr/lib64/stonith/plugins/external
+    PACEMAKER_ALIAS_COPY /usr/lib/ocf/resource.d/gcp/alias
+    PACEMAKER_ROUTE_COPY /usr/lib/ocf/resource.d/gcp/route
+    PACEMAKER_STONITH_COPY /usr/lib64/stonith/plugins/external/gcpstonith
+    chmod +x /usr/lib/ocf/resource.d/gcp/alias
+    chmod +x /usr/lib/ocf/resource.d/gcp/route
+    chmod +x /usr/lib64/stonith/plugins/external/gcpstonith
+  fi
+  # not needed for RHEL
 }
 
 
@@ -56,7 +59,7 @@ ha::hdbuserstore() {
     hana_user_store_key="SAPHANARH2SR"
   fi
 
-  main::errhandle_log_info "Adding hdbuserstore entry '${hana_user_store_key}' ponting to localhost:3${VM_METADATA[sap_hana_instance_number]}15"
+  main::errhandle_log_info "Adding hdbuserstore entry '${hana_user_store_key}' pointing to localhost:3${VM_METADATA[sap_hana_instance_number]}15"
 
   #add user store
   PATH="$PATH:/usr/sap/${VM_METADATA[sap_hana_sid]}/HDB${VM_METADATA[sap_hana_instance_number]}/exe"
@@ -172,6 +175,7 @@ ha::check_hdb_replication(){
   local count=0
 
   while ! grep -q \"ACTIVE\" /root/.deploy/hdbsql.out; do
+    count=$((count +1)) # b/183019459
     main::errhandle_log_info "--- Replication is still in progressing. Waiting 60 seconds then trying again"
     bash -c "source /usr/sap/*/home/.sapenv.sh && /usr/sap/${VM_METADATA[sap_hana_sid]}/HDB${VM_METADATA[sap_hana_instance_number]}/exe/hdbsql -o /root/.deploy/hdbsql.out -a -U ${hana_user_store_key} 'select distinct REPLICATION_STATUS from SYS.M_SERVICE_REPLICATION'"
     sleep 60s
@@ -185,14 +189,26 @@ ha::check_hdb_replication(){
 
 ha::check_cluster(){
   main::errhandle_log_info "Checking cluster status"
-
   local count=0
+  local max_attempts=20
+  local sleep_time=60
+  local finished=1
 
-  while ! crm_mon -s | grep -q "2 nodes online"; do
-    main::errhandle_log_info "--- Cluster is not yet online. Waiting 60 seconds then trying again"
-    sleep 60s
-    if [ ${count} -gt 20 ]; then
-      main::errhandle_log_error "Pacemaker cluster failed to come online. Please check network connectivity and firewall rules"
+  while ! [ ${finished} -eq 0 ]; do
+    if [ "${LINUX_DISTRO}" = "SLES" ]; then
+      crm_mon -s | grep -q "2 nodes online"
+      finished=$?
+    elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+      [ $(pcs cluster status | egrep -e "(${VM_METADATA[sap_primary_instance]}|${VM_METADATA[sap_secondary_instance]}): Online" | wc -l) = "2" ]
+      finished=$?
+    fi
+    if ! [ ${finished} -eq 0 ]; then
+      count=$((count +1))
+      main::errhandle_log_info "--- Cluster is not yet online. Waiting ${sleep_time} seconds then trying again (attempt number ${count} of max ${max_attempts})"
+      sleep ${sleep_time}s
+      if [ ${count} -gt ${max_attempts} ]; then
+        main::errhandle_log_error "Pacemaker cluster failed to come online. Please check network connectivity and firewall rules"
+      fi
     fi
   done
   main::errhandle_log_info "--- Two cluster nodes are online and ready. Continuing with HA configuration"
@@ -267,15 +283,51 @@ ha::config_pacemaker_primary() {
     systemctl enable pacemaker
     systemctl start pacemaker
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    main::errhandle_log_info "--- Creating /etc/corosync/corosync.conf"
-    pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]}" "${VM_METADATA[sap_secondary_instance]}" --force
-    main::errhandle_log_info "--- Starting cluster services & enabling on startup"
-    service pacemaker start
-    service pscd start
-    systemctl enable pcsd.service
-    systemctl enable pacemaker
     main::errhandle_log_info "--- Setting hacluster password"
     echo linux | passwd --stdin hacluster
+    main::errhandle_log_info "--- Configure firewall to allow high-availability traffic"
+    firewall-cmd --permanent --add-service=high-availability
+    firewall-cmd --reload
+    main::errhandle_log_info "--- Starting cluster services & enabling on startup"
+    systemctl start pcsd.service
+    systemctl enable pcsd.service
+    echo $SECONDARY_NODE_IP " " ${VM_METADATA[sap_secondary_instance]}"."`hostname -d`" "${VM_METADATA[sap_secondary_instance]} >> /etc/hosts
+    main::errhandle_log_info "--- Creating the cluster"
+
+    local count=0
+    local max_attempts=30
+    local sleep_time=20
+    local finished=1
+    local pcs_auth_command="pcs REPLACEME auth ${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]} -u hacluster -p linux"
+
+    while ! [ ${finished} -eq 0 ]; do
+      if [ "${LINUX_MAJOR_VERSION}" = "7" ]; then
+        ${pcs_auth_command/REPLACEME/cluster}
+        finished=$?
+      elif [ "${LINUX_MAJOR_VERSION}" = "8"  ]; then
+        ${pcs_auth_command/REPLACEME/host}
+        finished=$?
+      fi
+      if [ ${finished} -eq 0 ]; then
+        if [ "${LINUX_MAJOR_VERSION}" = "7" ]; then
+          pcs cluster setup --name hacluster ${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]} --token 20000 --join 60
+          main::errhandle_log_info "--- Configuring Corosync"
+          sed -i 's/join: 60/join: 60\n    token_retransmits_before_loss_const: 10\n    max_messages: 20/g' /etc/corosync/corosync.conf
+        elif [ "${LINUX_MAJOR_VERSION}" = "8"  ]; then
+          pcs cluster setup hacluster ${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]} totem token=20000 join=60 token_retransmits_before_loss_const=10 max_messages=20
+        fi
+      else
+        count=$((count +1))
+        main::errhandle_log_info "--- pcsd.service not yet started on secondary - retrying in ${sleep_time} seconds (attempt number ${count} of max ${max_attempts})"
+        sleep ${sleep_time}s
+        if [ ${count} -gt ${max_attempts} ]; then
+          main::errhandle_log_error "--- pcsd.service not started on secondary. Stopping deployment. Check logs on secondary."
+        fi
+      fi
+    done
+    pcs cluster sync
+    pcs cluster enable --all
+    pcs cluster start --all
   fi
 }
 
@@ -283,8 +335,11 @@ ha::config_pacemaker_primary() {
 ha::pacemaker_maintenance() {
   local mode="${1}"
 
-  main::errhandle_log_info "Setting cluster maintenance mode to ${mode}"
-  crm configure property maintenance-mode="${mode}"
+  if [ "${LINUX_DISTRO}" = "SLES" ]; then
+    main::errhandle_log_info "Setting cluster maintenance mode to ${mode}"
+    crm configure property maintenance-mode="${mode}"
+  fi
+  # not needed for RHEL during setup - might have to implement it later if needed
 }
 
 
@@ -303,12 +358,15 @@ ha::config_pacemaker_secondary() {
       zypper in -y socat || main::errhandle_log_warning "- socat could not be installed. Manual configuration will be needed"
     fi
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    corosync-keygen
-    pcs cluster setup --name hana --local "${VM_METADATA[sap_primary_instance]}" "${VM_METADATA[sap_secondary_instance]}" --force
-    service pacemaker start
-    service pscd start
+    main::errhandle_log_info "--- Setting hacluster password"
+    echo linux | passwd --stdin hacluster
+    main::errhandle_log_info "--- Configure firewall to allow high-availability traffic"
+    firewall-cmd --permanent --add-service=high-availability
+    firewall-cmd --reload
+    main::errhandle_log_info "--- Starting cluster services & enabling on startup"
+    systemctl start pcsd.service
     systemctl enable pcsd.service
-    systemctl enable pacemaker
+    echo ${PRIMARY_NODE_IP} " " ${VM_METADATA[sap_primary_instance]}"."`hostname -d`" "${VM_METADATA[sap_primary_instance]} >> /etc/hosts
   fi
 
   main::complete
@@ -322,6 +380,12 @@ ha::pacemaker_add_stonith() {
     crm configure primitive STONITH-"${VM_METADATA[sap_secondary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" onfail="restart" params instance_name="${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
     crm configure location LOC_STONITH_"${VM_METADATA[sap_primary_instance]}" STONITH-"${VM_METADATA[sap_primary_instance]}" -inf: "${VM_METADATA[sap_primary_instance]}"
     crm configure location LOC_STONITH_"${VM_METADATA[sap_secondary_instance]}" STONITH-"${VM_METADATA[sap_secondary_instance]}" -inf: "${VM_METADATA[sap_secondary_instance]}"
+  elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+    pcs stonith create STONITH-"${VM_METADATA[sap_primary_instance]}" \
+        fence_gce port="${VM_METADATA[sap_primary_instance]}" zone="${VM_METADATA[sap_primary_zone]}" project="${VM_PROJECT}"
+    pcs stonith create STONITH-"${VM_METADATA[sap_secondary_instance]}" fence_gce port="${VM_METADATA[sap_secondary_instance]}" zone="${VM_METADATA[sap_secondary_zone]}" project="${VM_PROJECT}"
+    pcs constraint location STONITH-"${VM_METADATA[sap_primary_instance]}" prefers "${VM_METADATA[sap_secondary_instance]}"=INFINITY
+    pcs constraint location STONITH-"${VM_METADATA[sap_secondary_instance]}" prefers "${VM_METADATA[sap_primary_instance]}"=INFINITY
   fi
 }
 
@@ -339,13 +403,20 @@ ha::pacemaker_add_vip() {
       else
         main::errhandle_log_warning "- socat could not be installed, attempting to continue with rest of configuration. Manual configuration will be needed"
       fi
+    elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+      pcs resource create rsc_vip_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]} \
+        IPaddr2 ip="${VM_METADATA[sap_vip]}" nic=eth0 cidr_netmask=32
+      pcs resource create rsc_healthcheck_${VM_METADATA[sap_hana_sid]} service:haproxy
+      pcs resource move rsc_healthcheck_${VM_METADATA[sap_hana_sid]} ${VM_METADATA[sap_primary_instance]}
+      pcs resource clear rsc_healthcheck_${VM_METADATA[sap_hana_sid]}
+      pcs resource group add g-primary rsc_healthcheck_${VM_METADATA[sap_hana_sid]} rsc_vip_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]}
     fi
   else
     if ! ping -c 1 -W 1 "${VM_METADATA[sap_vip]}"; then
       if [ "${LINUX_DISTRO}" = "SLES" ]; then
         crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
         if [[ -n "${VM_METADATA[sap_vip_secondary_range]}" ]]; then
-          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range}" logging="yes" meta priority=10
+          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range]}" logging="yes" meta priority=10
         else
           crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
         fi
@@ -369,13 +440,16 @@ ha::pacemaker_config_bootstrap_hdb() {
     crm configure rsc_defaults migration-threshold="5000"
     crm configure op_defaults timeout="600"
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    pcs property set no-quorum-policy="stop"
+    main::errhandle_log_info "--- Setting cluster defaults"
+    # as per documentation
+    pcs resource defaults resource-stickiness=1000
+    pcs resource defaults migration-threshold=5000
     pcs property set startup-fencing="true"
-    pcs property set stonith-timeout="300s"
     pcs property set stonith-enabled="true"
-    pcs resource defaults default-resource-stickness=1000
-    pcs resource defaults default-migration-threshold=5000
-    pcs resource op defaults timeout=600s
+    # increase from default 60
+    pcs property set stonith-timeout="300s"
+    # increase from default 20
+    pcs resource op defaults timeout="600s"
   fi
 }
 
@@ -403,7 +477,7 @@ ha::pacemaker_config_bootstrap_nfs() {
 
 
 ha::pacemaker_add_hana() {
-  main::errhandle_log_info "Cluster: Adding HANA nodes"
+  main::errhandle_log_info "Cluster: Creating HANA resources (SAPHanaTopology, SAPHana)"
 
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     cat <<EOF > /root/.deploy/cluster.tmp
@@ -442,5 +516,91 @@ EOF
 EOF
 
     crm configure load update /root/.deploy/cluster.tmp
+
+  elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
+    main::errhandle_log_info "Cluster: Creating resources SAPHanaTopology"
+    pcs resource create SAPHanaTopology_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]} SAPHanaTopology SID=${VM_METADATA[sap_hana_sid]} \
+      InstanceNumber=${VM_METADATA[sap_hana_instance_number]} \
+      op start timeout=600 \
+      op stop timeout=300 \
+      op monitor interval=10 timeout=600 \
+      clone clone-max=2 clone-node-max=1 interleave=true
+    main::errhandle_log_info "Cluster: Creating resources SAPHana and constraints"
+    pcs_create_command="pcs resource create SAPHana_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]} SAPHana SID=${VM_METADATA[sap_hana_sid]}
+        InstanceNumber=${VM_METADATA[sap_hana_instance_number]}
+        PREFER_SITE_TAKEOVER=true DUPLICATE_PRIMARY_TIMEOUT=7200 AUTOMATED_REGISTER=true
+        op start timeout=3600
+        op stop timeout=3600
+        op monitor interval=61 role=Slave timeout=700
+        op monitor interval=59 role=Master timeout=700
+        op promote timeout=3600
+        op demote timeout=3600
+        REPLACEME meta notify=true clone-max=2 clone-node-max=1 interleave=true"
+    pcs_constraint_order="pcs constraint order SAPHanaTopology_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]}-clone
+        then SAPHana_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]}-REPLACEME symmetrical=false"
+    pcs_constraint_coloc="pcs constraint colocation add g-primary
+        with master SAPHana_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]}-REPLACEME 4000"
+    if [ "${LINUX_MAJOR_VERSION}" = "7" ]; then
+      ${pcs_create_command/REPLACEME/master}
+      ${pcs_constraint_order/REPLACEME/master}
+      ${pcs_constraint_coloc/REPLACEME/master}
+    elif [ "${LINUX_MAJOR_VERSION}" = "8" ]; then
+      ${pcs_create_command/REPLACEME/promotable}
+      ${pcs_constraint_order/REPLACEME/clone}
+      ${pcs_constraint_coloc/REPLACEME/clone}
+    fi
+  fi
+}
+
+
+ha::enable_hdb_hadr_provider_hook() {
+  # only used for RHEL and with HANA 2 SP3 +
+  if [ "${LINUX_DISTRO}" = "RHEL" ]; then
+    main::errhandle_log_info "Enabling HA/DR provider hook"
+    HANA_MAJOR_VERSION=$(su - "${VM_METADATA[sap_hana_sid],,}"adm HDB version | grep "version:" | awk '{ print $2 }' | awk -F "." '{ print $1 }')
+    HANA_MINOR_VERSION=$(expr $(su - "${VM_METADATA[sap_hana_sid],,}"adm HDB version | grep "version:" | awk '{ print $2 }' | awk -F "." '{ print $3 }') + 0)
+    if [ "${HANA_MAJOR_VERSION}" -ge 2 -a "${HANA_MINOR_VERSION}" -ge 30 ]; then
+      su - "${VM_METADATA[sap_hana_sid],,}"adm HDB stop
+      mkdir -p /hana/shared/myHooks
+      cp /usr/share/SAPHanaSR/srHook/SAPHanaSR.py /hana/shared/myHooks
+      chown -R "${VM_METADATA[sap_hana_sid],,}"adm:sapsys /hana/shared/myHooks
+      cat <<EOF >> /hana/shared/"${VM_METADATA[sap_hana_sid]}"/global/hdb/custom/config/global.ini
+
+[ha_dr_provider_SAPHanaSR]
+provider = SAPHanaSR
+path = /hana/shared/myHooks
+execution_order = 1
+
+[trace]
+ha_dr_saphanasr = info
+EOF
+      cat <<EOF > /etc/sudoers.d/20-saphana
+Cmnd_Alias SOK   = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid]}_glob_srHook -v SOK -t crm_config -s SAPHanaSR
+Cmnd_Alias SFAIL = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid]}_glob_srHook -v SFAIL -t crm_config -s SAPHanaSR
+${VM_METADATA[sap_hana_sid],,}adm ALL=(ALL) NOPASSWD: SOK, SFAIL
+EOF
+      su - "${VM_METADATA[sap_hana_sid],,}"adm HDB start
+    fi
+  fi
+}
+
+
+ha::setup_haproxy() {
+  if [ "${LINUX_DISTRO}" = "RHEL" -a "${VM_METADATA[sap_vip_solution]}" = "ILB" ]; then
+    main::errhandle_log_info "Installing haproxy"
+    yum install -y haproxy || main::errhandle_log_warning "- haproxy could not be installed. Manual configuration will be needed"
+
+    main::errhandle_log_info "Configuring haproxy"
+    sed -ie '/mode/s/http/tcp/' /etc/haproxy/haproxy.cfg
+    sed -ie '/option/s/httplog/tcplog/' /etc/haproxy/haproxy.cfg
+    sed -ie 's/option forwardfor/#option forwardfor/' /etc/haproxy/haproxy.cfg
+    cat <<EOF >> /etc/haproxy/haproxy.cfg
+
+#---------------------------------------------------------------------
+# Health check listener port for SAP HANA HA cluster
+#---------------------------------------------------------------------
+listen healthcheck
+  bind *:${VM_METADATA[sap_hc_port]}
+EOF
   fi
 }

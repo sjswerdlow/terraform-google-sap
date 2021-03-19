@@ -1,0 +1,48 @@
+#
+# deployed with:
+# gcloud deployment-manager deployments create <deployment-name> --project <project> --config sap_hana_ha_ilb_example.yaml
+#
+# Replace all DATE_TIME_STAMP occurances with your build dir, there are 5 total
+#
+resources:
+- name: sap_hana_ha
+  type: gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_ha_ilb/sap_hana_ha.py
+  properties:
+    primaryInstanceName: fl-dm-rhel7-1
+    secondaryInstanceName: fl-dm-rhel7-2
+    primaryZone: us-central1-a
+    secondaryZone: us-central1-b
+    instanceType: n2-highmem-8
+    network: sapcertificationnetwork
+    subnetwork: sapcertificationnetwork
+    linuxImage: family/rhel-7-7-sap-ha
+    linuxImageProject: rhel-sap-cloud
+    # SAP HANA parameters
+    sap_hana_deployment_bucket: hana2sp4rev48
+    sap_hana_sid: R77
+    sap_hana_instance_number: 00
+    sap_hana_sidadm_password: xxx
+    sap_hana_system_password: xxx
+    # VIP parameters
+    sap_vip: 10.128.0.113
+    primaryInstanceGroupName: fl-dm-rhel7-ig1
+    secondaryInstanceGroupName: fl-dm-rhel7-ig2
+    loadBalancerName: fl-dm-rhel7-ilb
+    primary_startup_url: '
+if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
+  bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null;
+  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH;
+fi;
+if [[ -e "/usr/bin/python" ]]; then
+  export CLOUDSDK_PYTHON=/usr/bin/python;
+fi;
+gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_ha_ilb/startup.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'
+    secondary_startup_url: '
+if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
+  bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null;
+  export PATH=/usr/local/google-cloud-sdk/bin/:$PATH;
+fi;
+if [[ -e "/usr/bin/python" ]]; then
+  export CLOUDSDK_PYTHON=/usr/bin/python;
+fi;
+gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_ha_ilb/startup_secondary.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'

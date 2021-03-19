@@ -18,7 +18,7 @@
 # Build Hash:   BUILD.HASH
 # ------------------------------------------------------------------------
 
-## Check to see if a custom script path was provieded by the template
+## Check to see if a custom script path was provided by the template
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
@@ -37,7 +37,7 @@ SAP_LIB_HA_SH
 ## End includes
 ##########################################################################
 
-### Base main:: and OS Configuration
+## Base main:: and OS Configuration
 main::get_os_version
 main::install_gsdk /usr/local
 main::set_boot_parameters
@@ -65,21 +65,23 @@ hdb::config_backup
 ## Setup HA
 ha::check_settings
 ha::install_secondary_sshkeys
-ha::download_scripts
+ha::download_scripts  # SLES only
 ha::create_hdb_user
 ha::hdbuserstore
 hdb::backup /hanabackup/data/pre_ha_config
 ha::enable_hsr
+ha::enable_hdb_hadr_provider_hook  # RHEL only
 ha::ready
+ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_primary
 ha::check_cluster
-ha::pacemaker_maintenance true
+ha::pacemaker_maintenance true  # SLES only
 ha::pacemaker_add_stonith
 ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
 ha::pacemaker_add_hana
 ha::check_hdb_replication
-ha::pacemaker_maintenance false
+ha::pacemaker_maintenance false  # SLES only
 
 ## Post deployment & installation cleanup
 main::complete

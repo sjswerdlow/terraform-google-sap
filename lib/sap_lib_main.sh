@@ -79,6 +79,7 @@ main::get_os_version() {
   elif grep -q "Red Hat" /etc/os-release; then
     readonly LINUX_DISTRO="RHEL"
     readonly LINUX_VERSION=$(grep VERSION_ID /etc/os-release | awk -F '\"' '{ print $2 }')
+    readonly LINUX_MAJOR_VERSION=$(echo $LINUX_VERSION | awk -F '.' '{ print $1 }')
   else
     main::errhandle_log_warning "Unsupported Linux distribution. Only SLES and RHEL are supported."
   fi
@@ -154,6 +155,11 @@ main::install_packages() {
     if [[ ! -f "/bin/python" ]] && [[ -f "/usr/bin/python2" ]]; then
       main::errhandle_log_info 'Updating alternatives for python to python2.7'
       alternatives --set python /usr/bin/python2
+    fi
+    # make sure latest packages are installed (https://cloud.google.com/solutions/sap/docs/sap-hana-ha-config-rhel#install_the_cluster_agents_on_both_nodes)
+    main::errhandle_log_info 'Applying updates to packages on system'
+    if ! yum update -y; then
+      main::errhandle_log_error 'Applying updates to packages on system failed ("yum update -y"). Logon to the VM to investigate the issue.'
     fi
   fi
   main::errhandle_log_info 'Install of required operating system packages complete'

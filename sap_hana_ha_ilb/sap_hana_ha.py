@@ -51,8 +51,8 @@ def GenerateConfig(context):
   linux_image_project = context.properties['linuxImageProject']
   linux_image = GlobalComputeUrl(linux_image_project, 'images', context.properties['linuxImage'])
   deployment_script_location = str(context.properties.get('deployment_script_location', 'BUILD.SH_URL'))
-  primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_ha/startup.sh | bash -s " + deployment_script_location))
-  secondary_startup_url = str(context.properties.get('secondary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_ha/startup_secondary.sh | bash -s " + deployment_script_location))
+  primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_ha_ilb/startup.sh | bash -s " + deployment_script_location))
+  secondary_startup_url = str(context.properties.get('secondary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_ha_ilb/startup_secondary.sh | bash -s " + deployment_script_location))
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   subnetwork = context.properties['subnetwork']
