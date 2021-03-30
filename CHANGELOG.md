@@ -17,6 +17,10 @@ Current Templates:
 - Two node empty SuSE pacemaker cluster (sap_emptyha)
 - Two node NFS cluster using DRBD (sap_nfs)
 
+## [4.8] 2021-03-29
+### Changed
+- Added HANA HA on RHEL to existing HANA HA on SLES (w/ ILB)
+
 ## [4.7] 2020-11-13
 ### Changed
 - Build refactoring to allow for gs:// and http:// resources
