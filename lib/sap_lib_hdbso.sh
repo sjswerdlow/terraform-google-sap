@@ -63,6 +63,27 @@ hdbso::create_data_log_volumes() {
 
   ## create base SID directory to avoid hdblcm failing on worker/standby nodes
   mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
+
+  ## add 2GB swap file as per Note 1999997, point 21. Non-critical, warning on failure
+  main::errhandle_log_info "Attempting to add swap space"
+  if (( $(free -k | grep -i swap | awk '{print $2}') > 2097152 )); then
+    main::errhandle_log_warning "Swap space larger than recommended 2GiB. Please review."
+  elif (( $(free -k | grep -i swap | awk '{print $2}') > 0 )); then
+    main::errhandle_log_info "Non-zero swap already exists. Skipping."
+  else
+    if dd if=/dev/zero of=/swapfile bs=1048576 count=2048; then
+      chmod 0600 /swapfile
+      mkswap /swapfile
+      echo "/swapfile swap swap defaults 0 0" >> /etc/fstab
+      systemctl daemon-reload
+      swapon /swapfile
+    fi
+    if (( $(free -k | grep -i swap | awk '{print $2}') > 0 )); then
+      main::errhandle_log_info "Swap space added."
+    else
+      main::errhandle_log_warning "Swap space not added. Post-processing needed."
+    fi
+  fi
 }
 
 
