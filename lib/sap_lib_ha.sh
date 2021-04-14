@@ -384,8 +384,8 @@ ha::pacemaker_add_stonith() {
     pcs stonith create STONITH-"${VM_METADATA[sap_primary_instance]}" \
         fence_gce port="${VM_METADATA[sap_primary_instance]}" zone="${VM_METADATA[sap_primary_zone]}" project="${VM_PROJECT}"
     pcs stonith create STONITH-"${VM_METADATA[sap_secondary_instance]}" fence_gce port="${VM_METADATA[sap_secondary_instance]}" zone="${VM_METADATA[sap_secondary_zone]}" project="${VM_PROJECT}"
-    pcs constraint location STONITH-"${VM_METADATA[sap_primary_instance]}" prefers "${VM_METADATA[sap_secondary_instance]}"=INFINITY
-    pcs constraint location STONITH-"${VM_METADATA[sap_secondary_instance]}" prefers "${VM_METADATA[sap_primary_instance]}"=INFINITY
+    pcs constraint location STONITH-"${VM_METADATA[sap_primary_instance]}" avoids "${VM_METADATA[sap_primary_instance]}"
+    pcs constraint location STONITH-"${VM_METADATA[sap_secondary_instance]}" avoids "${VM_METADATA[sap_secondary_instance]}"
   fi
 }
 
