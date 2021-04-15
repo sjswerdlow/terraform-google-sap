@@ -52,6 +52,9 @@ GCS_BUCKET="core-connect-dm-templates/${BUILD_DATE_FOR_BUCKET}"
 GCS_LATEST_BUCKET="cloudsapdeploy/deploymentmanager/latest"
 RESOURCE_URL="gs://${GCS_BUCKET}"
 RESOURCE_URL_LATEST="gs://${GCS_BUCKET}"
+TERRAFORM_URL="https://www.googleapis.com/storage/v1/${GCS_BUCKET}"
+TERRAFORM_URL_LATEST="https://www.googleapis.com/storage/v1/${GCS_LATEST_BUCKET}"
+TERRAFORM_PREFIX="gcs::"
 GCE_STORAGE_REPO_SUFFIX=""
 # Uncomment this to use the unstable RPM repo for the storage client
 # NOTE - should only be used for dev and never checked in uncommented
@@ -86,6 +89,7 @@ if [[ "${1:-}" == "publicdev" ]]; then
   GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_PREFIX=""
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -99,6 +103,7 @@ if [[ "${1:-}" == "publicdevoverwrite" ]]; then
   GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_PREFIX=""
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -110,6 +115,7 @@ if [[ "${1:-}" == "publicbeta" ]]; then
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_PREFIX=""
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -125,13 +131,22 @@ build() {
   cp -R * .build_dmtemplates
   echo "Build Hash: ${git_rev_dm}"
   echo "Replacing constants in all files"
-  cd .build_dmtemplates
+  pushd .build_dmtemplates
   # no need to have these files in the deployment here
   rm -f build.sh OWNERS
+  find . -type d -name ".terraform" -exec rm -rf {} +
+  find . -name ".terraform*" -delete
+  find . -name "*.tfstate*" -delete
   # Build date replacement
   grep -rl BUILD.SH_DATE . | xargs ${SED_CMD} "s~BUILD.SH_DATE~${BUILD_DATE}~g"
   grep -rl BUILD.HASH . | xargs ${SED_CMD} "s~BUILD.HASH~${git_rev_dm}~g"
   # Add correct deployment URL to files
+  echo "Replacing TERRAFORM_PREFIX"
+  grep -rl TERRAFORM_PREFIX . | xargs ${SED_CMD} "s~TERRAFORM_PREFIX~${TERRAFORM_PREFIX}~g"
+  echo "Replacing TERRAFORM_URL_LATEST"
+  grep -rl TERRAFORM_URL_LATEST . | xargs ${SED_CMD} "s~TERRAFORM_URL_LATEST~${TERRAFORM_URL_LATEST}~g"
+  echo "Replacing TERRAFORM_URL"
+  grep -rl TERRAFORM_URL . | xargs ${SED_CMD} "s~TERRAFORM_URL~${TERRAFORM_URL}~g"
   echo "Replacing BUILD.SH_URL_LATEST"
   grep -rl BUILD.SH_URL_LATEST . | xargs ${SED_CMD} "s~BUILD.SH_URL_LATEST~${RESOURCE_URL_LATEST}/dm-templates~g"
   echo "Replacing BUILD.SH_URL"
@@ -158,37 +173,47 @@ build() {
   grep -rl SAP_LIB_NW_SH . | xargs ${SED_CMD} -e '/SAP_LIB_NW_SH/{r lib/sap_lib_nw.sh' -e 'd' -e '}'
   # remove any .bak files, will only affect mac
   find . -name "*.bak" -type f -delete
-  cd ..
+  popd
   echo "Finished Building DM Templates"
 
   echo "Building Pacemaker GCP"
   rm -fr .build_pacemakergcp
   $PACEMAKER_CHECKOUT
-  cd .build_pacemakergcp
+  pushd .build_pacemakergcp
   rm build.sh README.md
-  cd ..
+  popd
   echo "Finished Building Pacemaker GCP"
+
+  echo "Building Terraform module zips"
+  pushd .build_dmtemplates
+  pushd sap_hana_scaleout/terraform/hana_scaleout
+  zip ../../sap_hana_scaleout_module.zip *
+  popd
+  popd
+  echo "Finished building Terraform module zips"
 }
 
 deploy_dmtemplates() {
-  cd .build_dmtemplates
+  pushd .build_dmtemplates
   local deploy_url="${GCS_BUCKET}/dm-templates"
   echo "Deploying DM Templates to gs://${deploy_url}"
   gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
   echo "Resetting cache on gs://${deploy_url}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${deploy_url}/*" >/dev/null
-  cd ..
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${deploy_url}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/plain" "gs://${deploy_url}/*/**.tf" >/dev/null
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${deploy_url}/**" >/dev/null
+  popd
   echo "Deploying DM Templates complete"
 }
 
 deploy_pacemakergcp() {
-  cd .build_pacemakergcp
+  pushd .build_pacemakergcp
   local deploy_url="${GCS_BUCKET}/pacemaker-gcp"
   echo "Deploying Pacemaker GCP to gs://${deploy_url}"
   gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
   echo "Resetting cache on gs://${deploy_url}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${deploy_url}/*" >/dev/null
-  cd ..
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${deploy_url}/**" >/dev/null
+  popd
   echo "Deploying Pacemaker GCP complete"
 }
 
@@ -197,7 +222,8 @@ deploy_latest() {
   gsutil rm gs://${GCS_LATEST_BUCKET}/**
   gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/* gs://${GCS_LATEST_BUCKET}/
   echo "Resetting cache on gs://${GCS_LATEST_BUCKET}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" -h "Cache-Control:private, max-age=0, no-transform" "gs://${GCS_LATEST_BUCKET}/*" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_LATEST_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${GCS_LATEST_BUCKET}/**" >/dev/null
   echo "Deploying to latest folder complete"
 }
 
@@ -236,6 +262,7 @@ if [[ "${GCS_FOLDER}" == "release" ]]; then
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/cloudsapdeploy/deploymentmanager/latest"
+  TERRAFORM_PREFIX=""
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/route -o"
@@ -260,10 +287,8 @@ echo "PACEMAKER_ROUTE_COPY=${PACEMAKER_ROUTE_COPY}"
 echo "PACEMAKER_STONITH_COPY=${PACEMAKER_STONITH_COPY}"
 echo ""
 build
-deploy_dmtemplates &
-deploy_pacemakergcp &
-echo "Waiting for all deploys to finish..."
-wait
+deploy_dmtemplates
+deploy_pacemakergcp
 echo "All done with deploys"
 # tiny sleep so we don't see the shell-init error on mac
 sleep 1
