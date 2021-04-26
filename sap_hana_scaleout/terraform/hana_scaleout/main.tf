@@ -142,6 +142,11 @@ resource "google_compute_instance" "hana_scaleout_instances" {
 
   metadata_startup_script = count.index == 0 ? var.primary_startup_url : var.secondary_startup_url
 
+  lifecycle {
+    # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
+    ignore_changes = [metadata]
+  }
+
   depends_on = [
     google_compute_disk.hana_scaleout_boot_disks,
     google_compute_disk.hana_scaleout_pd_disks,
