@@ -75,14 +75,13 @@ main::errhandle_log_error() {
 main::get_os_version() {
   if grep SLES /etc/os-release; then
     readonly LINUX_DISTRO="SLES"
-    readonly LINUX_VERSION=$(grep VERSION_ID /etc/os-release | awk -F '\"' '{ print $2 }')
   elif grep -q "Red Hat" /etc/os-release; then
     readonly LINUX_DISTRO="RHEL"
-    readonly LINUX_VERSION=$(grep VERSION_ID /etc/os-release | awk -F '\"' '{ print $2 }')
-    readonly LINUX_MAJOR_VERSION=$(echo $LINUX_VERSION | awk -F '.' '{ print $1 }')
   else
     main::errhandle_log_warning "Unsupported Linux distribution. Only SLES and RHEL are supported."
   fi
+  readonly LINUX_VERSION=$(grep VERSION_ID /etc/os-release | awk -F '\"' '{ print $2 }')
+  readonly LINUX_MAJOR_VERSION=$(echo $LINUX_VERSION | awk -F '.' '{ print $1 }')
 }
 
 
@@ -351,6 +350,7 @@ main::remove_metadata() {
 
 main::install_gsdk() {
   local install_location=${1}
+  local rc
 
   if [[ -e /usr/bin/gsutil ]]; then
     # if SDK is installed, link to the standard location for backwards compatibility
@@ -364,19 +364,30 @@ main::install_gsdk() {
       ln -s /usr/bin/gcloud /usr/local/google-cloud-sdk/bin/gcloud
     fi
   elif [[ ! -d "${install_location}/google-cloud-sdk" ]]; then
+    # b/188946979
+    if [[ "${LINUX_DISTRO}" = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
+      export CLOUDSDK_PYTHON=/usr/bin/python
+    fi
     bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir="${install_location}" >/dev/null
+    rc=$?
+    if [[ "${rc}" -eq 0 ]]; then
+      main::errhandle_log_info "Installed Google SDK in ${install_location}"
+    else
+      main::errhandle_log_error "Google SDK not correctly installed. Aborting installation."
+    fi
+
     if [[ ${LINUX_DISTRO} = "SLES" ]]; then
       update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
       update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
     fi
-    main::errhandle_log_info "Installed Google SDK in ${install_location}"
   fi
 
   readonly GCLOUD="/usr/bin/gcloud"
   readonly GSUTIL="/usr/bin/gsutil"
 
   ## set default python version for Cloud SDK in SLES, move from 3.4 to 2.7
-  if [[ ${LINUX_DISTRO} = "SLES" ]]; then
+  # b/188946979 - only applicable to SLES12
+  if [[ ${LINUX_DISTRO} = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
     update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
     update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
     export CLOUDSDK_PYTHON=/usr/bin/python
