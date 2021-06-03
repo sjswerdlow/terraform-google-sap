@@ -21,7 +21,7 @@ resources:
     sap_hana_sidadm_password: [PASSWORD]
     sap_hana_system_password: [PASSWORD]
     sap_hana_worker_nodes: [NUMBER_OF_WORKER_NODES]
-    sap_hana_standby_nodes: [NUMBER_OF_WORKER_NODES]
+    sap_hana_standby_nodes: [NUMBER_OF_STANDBY_NODES]
     sap_hana_shared_nfs: [NFS_ENDPOINT_FOR_/hana/shared]
     sap_hana_backup_nfs: [NFS_ENDPOINT_FOR_/hanabackup]
     #

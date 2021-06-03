@@ -113,11 +113,11 @@ main::install_packages() {
 
     ## check if SuSE repos are registered
     while [[ $(find /etc/zypp/repos.d/ -maxdepth 1 | wc -l) -lt 2 ]]; do
-      main::errhandle_log_info "--- SuSE repositories are not registered. Waiting 10 seconds before trying again"
+      main::errhandle_log_info "--- SuSE repositories are not registered. Waiting 60 seconds before trying again"
       sleep 60s
       count=$((count +1))
       if [ ${count} -gt 30 ]; then
-        main::errhandle_log_error "SuSE repositories didn't register within an acceptable time. If you are using BYOS, ensure you login to the system and apply the SuSE license within 30 minutes after deployment."
+        main::errhandle_log_error "SuSE repositories didn't register within an acceptable time. If you are using BYOS, ensure you login to the system and apply the SuSE license within 30 minutes after deployment. If you are using a VM without external IP make sure you set up a NAT gateway to provide internet access."
       fi
     done
     sleep 10s
@@ -391,6 +391,13 @@ main::install_gsdk() {
     update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
     update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
     export CLOUDSDK_PYTHON=/usr/bin/python
+    # b/189944327 - to avoid gcloud/gsutil fails when using Python3.4 on SLES12
+    if ! grep -q CLOUDSDK_PYTHON /etc/profile; then
+      echo "export CLOUDSDK_PYTHON=/usr/bin/python" | tee -a /etc/profile
+    fi
+    if ! grep -q CLOUDSDK_PYTHON /etc/environment; then
+      echo "export CLOUDSDK_PYTHON=/usr/bin/python" | tee -a /etc/environment
+    fi
   fi
 
   ## run an instances list to ensure the software is up to date
