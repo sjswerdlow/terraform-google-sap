@@ -14,7 +14,10 @@
 # limitations under the License.
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   Mon  3 Feb 2020 10:27:01 GMT
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 # ------------------------------------------------------------------------
 
 info:

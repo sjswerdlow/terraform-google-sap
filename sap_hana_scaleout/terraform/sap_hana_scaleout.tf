@@ -1,4 +1,8 @@
 
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 module "hana_scaleout" {
   source = "TERRAFORM_PREFIXTERRAFORM_URL_LATEST/dm-templates/sap_hana_scaleout/sap_hana_scaleout_module.zip"
   #

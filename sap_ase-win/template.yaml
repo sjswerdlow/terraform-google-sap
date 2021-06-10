@@ -1,3 +1,7 @@
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 resources:
 - name: sap_ase-win
   type: BUILD.SH_URL_LATEST/sap_ase-win/sap_ase-win.py

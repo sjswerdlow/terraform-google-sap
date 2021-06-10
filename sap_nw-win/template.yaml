@@ -1,3 +1,7 @@
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 resources:
 - name: sap_nw-win
   type: BUILD.SH_URL_LATEST/sap_nw-win/sap_nw-win.py

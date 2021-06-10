@@ -14,8 +14,10 @@
 # limitations under the License.
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   BUILD.SH_DATE
-# Build Hash:   BUILD.HASH
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 # ------------------------------------------------------------------------
 ## Check to see if a custom script path was provieded by the template
 if [[ "${1}" ]]; then

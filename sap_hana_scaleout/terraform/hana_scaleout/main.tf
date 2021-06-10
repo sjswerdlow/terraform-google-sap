@@ -7,7 +7,9 @@
 # https://github.com/hashicorp/terraform-provider-google/pull/7669
 # https://github.com/GoogleCloudPlatform/magic-modules/pull/4335
 #
-# Build Date:   BUILD.SH_DATE
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
 #
 
 # Local variables for memory and cpu lookups

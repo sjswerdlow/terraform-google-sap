@@ -1,3 +1,7 @@
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 resources:
 - name: sap_db2_primary
   type: BUILD.SH_URL_LATEST/sap_db2/sap_db2.py

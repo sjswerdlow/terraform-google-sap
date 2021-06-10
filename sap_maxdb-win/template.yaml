@@ -1,3 +1,7 @@
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 resources:
 - name: sap_maxdb-win
   type: BUILD.SH_URL_LATEST/sap_maxdb-win/sap_maxdb-win.py

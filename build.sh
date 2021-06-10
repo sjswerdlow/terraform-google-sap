@@ -43,7 +43,12 @@
 #
 set -eu -o pipefail
 
-BUILD_DATE=$(date)
+#
+# NOTE: Minor version should be bumped for any push to the public bucket
+#
+VERSION=1.1
+
+BUILD_DATE=$(date +"%Y%m%d%H%M%s")
 BUILD_DATE_FOR_BUCKET=$(date '+%Y%m%d%H%M')
 if [[ "${1:-}" == "devoverwrite" ]]; then
   BUILD_DATE_FOR_BUCKET=${2:=}
@@ -138,7 +143,8 @@ build() {
   find . -name ".terraform*" -delete
   find . -name "*.tfstate*" -delete
   # Build date replacement
-  grep -rl BUILD.SH_DATE . | xargs ${SED_CMD} "s~BUILD.SH_DATE~${BUILD_DATE}~g"
+  echo "Replacing BUILD.VERSION and BUILD.HASH"
+  grep -rl BUILD.VERSION . | xargs ${SED_CMD} "s~BUILD.VERSION~${VERSION}.${BUILD_DATE}~g"
   grep -rl BUILD.HASH . | xargs ${SED_CMD} "s~BUILD.HASH~${git_rev_dm}~g"
   # Add correct deployment URL to files
   echo "Replacing TERRAFORM_PREFIX"
@@ -278,6 +284,7 @@ fi;
 
 echo ""
 echo "Starting build and deploy for SAP DM Templates"
+echo "VERSION=${VERSION}.${BUILD_DATE}"
 echo "GCS_BUCKET=${GCS_BUCKET}"
 echo "RESOURCE_URL=${RESOURCE_URL}"
 echo "RESOURCE_URL_LATEST=${RESOURCE_URL_LATEST}"

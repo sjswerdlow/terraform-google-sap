@@ -13,7 +13,10 @@
 # limitations under the License.
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
-# Build Date:   BUILD.SH_DATE
+#
+# Version:    BUILD.VERSION
+# Build Hash: BUILD.HASH
+#
 # ------------------------------------------------------------------------
 
 """Creates a Compute Instance with the provided metadata."""
