@@ -1,0 +1,268 @@
+##############################################################################
+## MANDATORY SETTINGS
+##############################################################################
+#
+# General settings
+#
+variable "project_id" {
+  type = string
+  description = "Project id where the instances will be created"
+}
+variable "machine_type" {
+  type = string
+  description = "Machine type for the instances"
+}
+variable "subnetwork" {
+  type = string
+  description = "Subnetwork for the instance"
+}
+variable "linux_image" {
+  type = string
+  description = "Linux image name"
+}
+variable "linux_image_project" {
+  type = string
+  description = "Linux image project"
+}
+#
+# SCS settings
+#
+variable "sap_primary_instance" {
+  type = string
+  description = "Name of first instance (initial SCS location)"
+}
+variable "sap_primary_zone" {
+  type = string
+  description = "Zone where the first instance will be created"
+}
+#
+# ERS settings
+#
+variable "sap_secondary_instance" {
+  type = string
+  description = "Name of second instance (initial ERS location)"
+}
+variable "sap_secondary_zone" {
+  type = string
+  description = "Zone where the second instance will be created"
+}
+#
+# File system settings
+#
+variable "nfs_path" {
+  type = string
+  description = "NFS path for shared file system, e.g. 10.163.58.114:/ssd"
+}
+#
+# SAP system settings
+#
+variable "sap_sid" {
+  type = string
+  description = "SAP System ID"
+}
+
+##############################################################################
+## OPTIONAL SETTINGS (default values will be determined/calculated)
+##############################################################################
+#
+# General settings
+#
+variable "hc_network_tag" {
+  type = list(string)
+  default = []
+  description = "Network tag for the health check firewall"
+}
+variable "hc_firewall_name" {
+  type = string
+  default = ""
+  description = "Name of health check firewall"
+}
+#
+# SCS settings
+#
+variable "scs_inst_group_name" {
+  type = string
+  default = ""
+  description = "Name of SCS instance group"
+}
+variable "scs_hc_name" {
+  type = string
+  default = ""
+  description = "Name of SCS health check"
+}
+variable "scs_hc_port" {
+  type = string
+  default = ""
+  description = "Port of SCS health check"
+}
+variable "scs_vip_name" {
+  type = string
+  default = ""
+  description = "Name of SCS virtual IP"
+}
+variable "scs_vip_address" {
+  type = string
+  default = ""
+  description = "Address of SCS virtual IP"
+}
+variable "scs_backend_svc_name" {
+  type = string
+  default = ""
+  description = "Name of SCS backend service"
+}
+variable "scs_forw_rule_name" {
+  type = string
+  default = ""
+  description = "Name of SCS forwarding rule"
+}
+#
+# ERS settings
+#
+variable "ers_inst_group_name" {
+  type = string
+  default = ""
+  description = "Name of ERS instance group"
+}
+variable "ers_hc_name" {
+  type = string
+  default = ""
+  description = "Name of ERS health check"
+}
+variable "ers_hc_port" {
+  type = string
+  default = ""
+  description = "Port of ERS health check"
+}
+variable "ers_vip_name" {
+  type = string
+  default = ""
+  description = "Name of ERS virtual IP"
+}
+variable "ers_vip_address" {
+  type = string
+  default = ""
+  description = "Address of ERS virtual IP"
+}
+variable "ers_backend_svc_name" {
+  type = string
+  default = ""
+  description = "Name of ERS backend service"
+}
+variable "ers_forw_rule_name" {
+  type = string
+  default = ""
+  description = "Name of ERS forwarding rule"
+}
+#
+# File system settings
+#
+variable "usrsap_size" {
+  type = number
+  default = 8
+  description = "Size of /usr/sap in GB"
+  validation {
+    condition     = var.usrsap_size >= 8
+    error_message = "Size of /usr/sap must be larger than 8 GB."
+  }
+}
+variable "sapmnt_size" {
+  type = number
+  default = 8
+  description = "Size of /sapmnt in GB"
+
+  validation {
+    condition     = var.sapmnt_size >= 8
+    error_message = "Size of /sapmnt must be larger than 8 GB."
+  }
+}
+variable "swap_size" {
+  type = number
+  default = 8
+  description = "Size of swap in GB"
+
+  validation {
+    condition     = var.swap_size >= 0
+    error_message = "Size of swap must be 0 or larger."
+  }
+}
+#
+# SAP system settings
+#
+variable "sap_scs_instance_number" {
+  type = string
+  default = ""
+  description = "SCS instance number"
+}
+variable "sap_ers_instance_number" {
+  type = string
+  default = ""
+  description = "ERS instance number"
+}
+variable "sap_nw_abap" {
+  type = bool
+  default = true
+  description = "Is this a Netweaver ABAP installation. Set 'false' for NW Java. Dual stack is not supported by this script."
+}
+#
+# Pacemaker settings
+#
+variable "pacemaker_cluster_name" {
+  type = string
+  default = ""
+  description = "Name of Pacemaker cluster."
+}
+#
+# Optional Settings
+#
+variable "public_ip" {
+  type = bool
+  default = false
+  description = "Create an ephemeral public ip for the instances"
+}
+variable "service_account" {
+  type = string
+  default = ""
+  description = <<-EOT
+  Service account that will be used as the service account on the created instance.
+  Leave this blank to use the project default service account
+  EOT
+}
+variable "network_tags" {
+  type = list(string)
+  default = []
+  description = "Network tags to apply to the instances"
+}
+variable "sap_deployment_debug" {
+  type = bool
+  default = false
+  description = "Debug log level for deployment"
+}
+variable "install_monitoring_agent" {
+  type = bool
+  default = true
+  description = "Automatically install the Google Cloud monitoring agent for SAP NetWeaver"
+}
+#
+# DO NOT MODIFY unless you know what you are doing
+#
+variable "primary_startup_url" {
+  type = string
+  default = "curl -s BUILD.SH_URL/sap_nw_ha/startup_scs.sh | bash -s BUILD.SH_URL"
+  description = "DO NOT USE"
+}
+variable "secondary_startup_url" {
+  type = string
+  default = "curl -s BUILD.SH_URL/sap_nw_ha/startup_ers.sh | bash -s BUILD.SH_URL"
+  description = "DO NOT USE"
+}
+variable "post_deployment_script" {
+  type = string
+  default = ""
+  description = <<-EOT
+  Specifies the location of a script to run after the deployment is complete.
+  The script should be hosted on a web server or in a GCS bucket. The URL should
+  begin with http:// https:// or gs://. Note that this script will be executed
+  on all VM's that the template creates. If you only want to run it on the master
+  instance you will need to add a check at the top of your script.
+  EOT
+}
