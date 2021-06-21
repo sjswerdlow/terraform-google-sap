@@ -92,8 +92,8 @@ resource "google_compute_instance" "hana_scaleout_instances" {
       # we only attach the PDs to the primary and workers
       for_each = count.index <= var.sap_hana_worker_nodes ? [1] : []
       content {
-        device_name = format("${var.instance_name}-mnt%05d", count.index + 1)
-        source = format("projects/${var.project_id}/zones/${var.zone}/disks/${var.instance_name}-mnt%05d", count.index + 1)
+        device_name = google_compute_disk.hana_scaleout_pd_disks[count.index].name
+        source = google_compute_disk.hana_scaleout_pd_disks[count.index].self_link
       }
   }
 
