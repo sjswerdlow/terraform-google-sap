@@ -98,7 +98,7 @@ ha::wait_for_secondary() {
 
   while [[ ! -f /root/.deploy/.${VM_METADATA[sap_secondary_instance]}.ready ]]; do
     count=$((count +1))
-    scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_secondary_instance]}":/root/.deploy/."${VM_METADATA[sap_secondary_instance]}".ready /root/.deploy
+    scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_secondary_instance]}":/root/.deploy/."${VM_METADATA[sap_secondary_instance]}".ready /root/.deploy/
     main::errhandle_log_info "--- ${VM_METADATA[sap_secondary_instance]} is not ready - sleeping for 60 seconds then trying again"
     sleep 60s
     if [ ${count} -gt 15 ]; then
@@ -115,11 +115,11 @@ ha::wait_for_primary() {
   local count=0
 
   main::errhandle_log_info "Waiting for ready signal from ${VM_METADATA[sap_primary_instance]} before continuing"
-  scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy
+  scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy/
 
   while [[ ! -f /root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready ]]; do
     count=$((count +1))
-    scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy
+    scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy/
     main::errhandle_log_info "--- ${VM_METADATA[sap_primary_instance]} is not not ready - sleeping for 60 seconds then trying again"
     sleep 60s
     if [ ${count} -gt 10 ]; then
@@ -384,8 +384,8 @@ ha::config_pacemaker_secondary() {
 ha::pacemaker_add_stonith() {
   main::errhandle_log_info "Cluster: Adding STONITH devices"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    crm configure primitive STONITH-"${VM_METADATA[sap_primary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" onfail="restart" params instance_name="${VM_METADATA[sap_primary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
-    crm configure primitive STONITH-"${VM_METADATA[sap_secondary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" onfail="restart" params instance_name="${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
+    crm configure primitive STONITH-"${VM_METADATA[sap_primary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" on-fail="restart" params instance_name="${VM_METADATA[sap_primary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
+    crm configure primitive STONITH-"${VM_METADATA[sap_secondary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" on-fail="restart" params instance_name="${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
     crm configure location LOC_STONITH_"${VM_METADATA[sap_primary_instance]}" STONITH-"${VM_METADATA[sap_primary_instance]}" -inf: "${VM_METADATA[sap_primary_instance]}"
     crm configure location LOC_STONITH_"${VM_METADATA[sap_secondary_instance]}" STONITH-"${VM_METADATA[sap_secondary_instance]}" -inf: "${VM_METADATA[sap_secondary_instance]}"
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then

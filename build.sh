@@ -195,6 +195,9 @@ build() {
   pushd sap_hana_scaleout/terraform/hana_scaleout
   zip ../../sap_hana_scaleout_module.zip *
   popd
+  pushd sap_nw_ha/terraform/sap_nw_ha
+  zip ../../sap_nw_ha_module.zip *
+  popd
   popd
   echo "Finished building Terraform module zips"
 }
