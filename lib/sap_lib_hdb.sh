@@ -8,7 +8,7 @@ hdb::calculate_volume_sizes() {
     hana_log_size=512
   fi
 
-  hana_data_size=$(((VM_MEMSIZE*15)/10))
+  hana_data_size=$(((VM_MEMSIZE*12)/10))
 
   # check if node is a standby or not
   if [[ "${VM_METADATA[hana_node_type]}" = "secondary" ]]; then
