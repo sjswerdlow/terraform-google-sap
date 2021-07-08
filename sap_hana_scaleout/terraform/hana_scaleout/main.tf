@@ -39,7 +39,7 @@ locals {
   }
   mem_size = lookup(local.mem_map, var.machine_type, 256)
   hana_log_size_min = min(512, max(64, local.mem_size / 2))
-  hana_data_size_min = local.mem_size * 15 / 10
+  hana_data_size_min = local.mem_size * 12 / 10
   # we double the log and data sizes if sap_hana_double_volume_size is true and mem_size != 208
   hana_log_size = var.sap_hana_double_volume_size == true && local.mem_size != 208 ? local.hana_log_size_min * 2 : local.hana_log_size_min
   hana_data_size = var.sap_hana_double_volume_size == true && local.mem_size != 208 ? local.hana_data_size_min * 2 : local.hana_data_size_min

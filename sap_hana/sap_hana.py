@@ -157,7 +157,7 @@ def GenerateConfig(context):
   # determine default log/data/shared sizes
   hana_log_size = max(64, mem_size / 2)
   hana_log_size = min(512, hana_log_size)
-  hana_data_size = mem_size * 15 / 10
+  hana_data_size = mem_size * 12 / 10
   hana_shared_size = min(1024, mem_size + 0)
 
   # double volume size if specified in template

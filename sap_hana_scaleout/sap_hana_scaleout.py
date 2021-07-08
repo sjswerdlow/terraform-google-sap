@@ -146,7 +146,7 @@ def GenerateConfig(context):
   # determine default log/data/shared sizes
   hana_log_size = int(max(64, mem_size / 2))
   hana_log_size = min(512, hana_log_size)
-  hana_data_size = int(mem_size * 15 / 10)
+  hana_data_size = int(mem_size * 12 / 10)
 
   # double volume size if specified in template
   if (sap_hana_double_volume_size == "True" and mem_size != 208) :

@@ -10,7 +10,7 @@ hdbso::calculate_volume_sizes() {
       hana_log_size=512
     fi
 
-    hana_data_size=$(((VM_MEMSIZE*15)/10))
+    hana_data_size=$(((VM_MEMSIZE*12)/10))
 
     ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
     hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE /dev/sdb)/1024/1024/1024))
