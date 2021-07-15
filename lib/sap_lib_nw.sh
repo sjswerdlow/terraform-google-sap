@@ -32,7 +32,7 @@ nw::install_agent() {
         main::errhandle_log_info "Could not download agent installation script."
       fi
     else
-      main::errhandle_log_error "/usr/sap not mounted, aborting agent install."
+      main::errhandle_log_warning "/usr/sap not mounted, aborting agent install."
     fi
   fi
 }
