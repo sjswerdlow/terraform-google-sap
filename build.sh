@@ -198,6 +198,9 @@ build() {
   pushd sap_nw_ha/terraform/sap_nw_ha
   zip ../../sap_nw_ha_module.zip *
   popd
+  pushd sap_ase/terraform/sap_ase
+  zip ../../sap_ase_module.zip *
+  popd
   popd
   echo "Finished building Terraform module zips"
 }
