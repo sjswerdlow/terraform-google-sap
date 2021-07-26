@@ -119,7 +119,19 @@ variable "primary_startup_url" {
 variable "use_reservation_name" {
   type = string
   default = ""
-  description = "Reservation name to use when creating instances"
+  description = <<-EOT
+  Use a reservation specified by RESERVATION_NAME.
+  By default ANY_RESERVATION is used when this variable is empty.
+  In order for a reservation to be used it must be created with the
+  "Select specific reservation" selected (specificReservationRequired set to true)
+  Be sure to create your reservation with the correct Min CPU Platform for the
+  following instance types:
+  n1-highmem-32 : Intel Broadwell
+  n1-highmem-64 : Intel Broadwell
+  n1-highmem-96 : Intel Skylake
+  n1-megamem-96 : Intel Skylake
+  All other instance types can have automatic Min CPU Platform"
+  EOT
 }
 variable "can_ip_forward" {
   type = bool

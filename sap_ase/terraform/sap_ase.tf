@@ -40,6 +40,7 @@ module "sap_ase" {
   # sap_deployment_debug   = TRUE_OR_FALSE            # default is false
   # use_reservation_name   = "RESERVATION_NAME"
 
-  # Developer options
+  # Developer options - do not modify unless instructed to
+  # primary_startup_url    = "SCRIPT_URL"
   # post_deployment_script = "SCRIPT_URL"
 }

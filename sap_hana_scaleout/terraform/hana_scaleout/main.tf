@@ -1,21 +1,10 @@
 #
 # Terraform SAP HANA Scaleout for Google Cloud
 #
-# TODO - cannot set reservation affinity
-# - reservaction affinity - cannot find it in terraform google module
-# this is activly being added, but is not available yet by the google provider:
-# https://github.com/hashicorp/terraform-provider-google/pull/7669
-# https://github.com/GoogleCloudPlatform/magic-modules/pull/4335
-#
 #
 # Version:    BUILD.VERSION
 # Build Hash: BUILD.HASH
 #
-
-provider "google" {
-  project = var.project_id
-  zone = var.zone
-}
 
 ################################################################################
 # Local variables
@@ -65,15 +54,19 @@ resource "google_compute_disk" "hana_scaleout_pd_disks" {
   name  = format("${var.instance_name}-mnt%05d", count.index + 1)
   type  = "pd-ssd"
   size = local.pdssd_size
+  zone = var.zone
+  project = var.project_id
 }
 
 resource "google_compute_disk" "hana_scaleout_boot_disks" {
   # Need a disk for primary, worker nodes, standby nodes
   count = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes + 1
   name  = count.index == 0 ? "${var.instance_name}-boot" : "${var.instance_name}w${count.index}-boot"
-  type  = "pd-standard"
+  type  = "pd-balanced"
   size = 45
   image = "${var.linux_image_project}/${var.linux_image}"
+  zone = var.zone
+  project = var.project_id
 }
 
 ################################################################################
@@ -84,6 +77,8 @@ resource "google_compute_instance" "hana_scaleout_primary" {
   name = var.instance_name
   machine_type = var.machine_type
   min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
+  zone = var.zone
+  project = var.project_id
   boot_disk {
     auto_delete = true
     device_name = "boot"
@@ -113,14 +108,19 @@ resource "google_compute_instance" "hana_scaleout_primary" {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
     scopes = [
-      "https://www.googleapis.com/auth/compute",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring.write",
-      "https://www.googleapis.com/auth/trace.append",
-      "https://www.googleapis.com/auth/devstorage.read_write"
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
+  }
+
+  dynamic "reservation_affinity" {
+    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key = "compute.googleapis.com/reservation-name"
+        values = [var.use_reservation_name]
+      }
+    }
   }
 
   metadata = {
@@ -154,6 +154,8 @@ resource "google_compute_instance" "hana_scaleout_workers" {
   name = "${var.instance_name}w${count.index + 1}"
   machine_type = var.machine_type
   min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
+  zone = var.zone
+  project = var.project_id
   boot_disk {
     auto_delete = true
     device_name = "boot"
@@ -183,14 +185,19 @@ resource "google_compute_instance" "hana_scaleout_workers" {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
     scopes = [
-      "https://www.googleapis.com/auth/compute",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring.write",
-      "https://www.googleapis.com/auth/trace.append",
-      "https://www.googleapis.com/auth/devstorage.read_write"
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
+  }
+
+  dynamic "reservation_affinity" {
+    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key = "compute.googleapis.com/reservation-name"
+        values = [var.use_reservation_name]
+      }
+    }
   }
 
   metadata = {
@@ -228,6 +235,8 @@ resource "google_compute_instance" "hana_scaleout_standbys" {
   name = "${var.instance_name}w${count.index + var.sap_hana_worker_nodes + 1}"
   machine_type = var.machine_type
   min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
+  zone = var.zone
+  project = var.project_id
   boot_disk {
     auto_delete = true
     device_name = "boot"
@@ -252,14 +261,19 @@ resource "google_compute_instance" "hana_scaleout_standbys" {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
     scopes = [
-      "https://www.googleapis.com/auth/compute",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring.write",
-      "https://www.googleapis.com/auth/trace.append",
-      "https://www.googleapis.com/auth/devstorage.read_write"
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
+  }
+
+  dynamic "reservation_affinity" {
+    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key = "compute.googleapis.com/reservation-name"
+        values = [var.use_reservation_name]
+      }
+    }
   }
 
   metadata = {

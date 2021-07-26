@@ -1,13 +1,6 @@
 #
 # Terraform SAP ASE for Google Cloud
 #
-# TODO - cannot set reservation affinity
-# - reservaction affinity - cannot find it in terraform google module
-# this is activly being added, but is not available yet by the google provider:
-# https://github.com/hashicorp/terraform-provider-google/pull/7669
-# https://github.com/GoogleCloudPlatform/magic-modules/pull/4335
-#
-#
 # Version:    BUILD.VERSION
 # Build Hash: BUILD.HASH
 #

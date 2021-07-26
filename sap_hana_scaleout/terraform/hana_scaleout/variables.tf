@@ -112,10 +112,10 @@ variable "sap_hana_sapsys_gid" {
 }
 variable "use_reservation_name" {
   type = string
-  default = "ANY_RESERVATION"
+  default = ""
   description = <<-EOT
   Use a reservation specified by RESERVATION_NAME.
-  By default ANY_RESERVATION is used.
+  By default ANY_RESERVATION is used when this variable is empty.
   In order for a reservation to be used it must be created with the
   "Select specific reservation" selected (specificReservationRequired set to true)
   Be sure to create your reservation with the correct Min CPU Platform for the
