@@ -60,6 +60,7 @@ module "sap_nw_ha" {
   sap_deployment_debug       = true
   install_monitoring_agent   = true
   post_deployment_script     = ""
+  use_reservation_name       = ""
 
   #
   # Dev scripts at DATE_TIME_STAMP, use when developing changes to the bash scripts

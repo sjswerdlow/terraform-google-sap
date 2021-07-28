@@ -4,9 +4,6 @@
 # Version:    BUILD.VERSION
 # Build Hash: BUILD.HASH
 #
-provider "google" {
-  project     = var.project_id
-}
 
 ################################################################################
 # Local variables
@@ -48,66 +45,70 @@ locals {
 # disks
 ################################################################################
 resource "google_compute_disk" "nw_boot_disks" {
-  count = 2
-  name  = count.index == 0 ? "${var.sap_primary_instance}-boot" : "${var.sap_secondary_instance}-boot"
-  type  = "pd-balanced"
-  zone  = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
-  size  = 30
-  image = "${var.linux_image_project}/${var.linux_image}"
+  count   = 2
+  name    = count.index == 0 ? "${var.sap_primary_instance}-boot" : "${var.sap_secondary_instance}-boot"
+  type    = "pd-balanced"
+  zone    = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
+  size    = 30
+  image   = "${var.linux_image_project}/${var.linux_image}"
+  project = var.project_id
 }
 
 resource "google_compute_disk" "nw_usr_sap_disks" {
-  count = 2
-  name  = count.index == 0 ? "${var.sap_primary_instance}-usrsap" : "${var.sap_secondary_instance}-usrsap"
-  type  = "pd-balanced"
-  zone  = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
-  size  = var.usrsap_size
+  count   = 2
+  name    = count.index == 0 ? "${var.sap_primary_instance}-usrsap" : "${var.sap_secondary_instance}-usrsap"
+  type    = "pd-balanced"
+  zone    = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
+  size    = var.usrsap_size
+  project = var.project_id
 }
 
 resource "google_compute_disk" "nw_sapmnt_disks" {
-  count = 2
-  name  = count.index == 0 ? "${var.sap_primary_instance}-sapmnt" : "${var.sap_secondary_instance}-sapmnt"
-  type  = "pd-balanced"
-  zone  = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
-  size  = var.sapmnt_size
+  count   = 2
+  name    = count.index == 0 ? "${var.sap_primary_instance}-sapmnt" : "${var.sap_secondary_instance}-sapmnt"
+  type    = "pd-balanced"
+  zone    = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
+  size    = var.sapmnt_size
+  project = var.project_id
 }
 
 resource "google_compute_disk" "nw_swap_disks" {
-  count = var.swap_size > 0 ? 2 : 0
-  name  = count.index == 0 ? "${var.sap_primary_instance}-swap" : "${var.sap_secondary_instance}-swap"
-  type  = "pd-balanced"
-  zone  = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
-  size  = var.swap_size
+  count   = var.swap_size > 0 ? 2 : 0
+  name    = count.index == 0 ? "${var.sap_primary_instance}-swap" : "${var.sap_secondary_instance}-swap"
+  type    = "pd-balanced"
+  zone    = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
+  size    = var.swap_size
+  project = var.project_id
 }
 
 ################################################################################
 # instances
 ################################################################################
-resource "google_compute_instance" "nw_instances" {
-  count        = 2
-  name         = count.index == 0 ? var.sap_primary_instance : var.sap_secondary_instance
+resource "google_compute_instance" "scs_instance" {
+  name         = var.sap_primary_instance
   machine_type = var.machine_type
-  zone         = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
+  zone         = var.sap_primary_zone
+  project      = var.project_id
 
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source = element(google_compute_disk.nw_boot_disks.*.self_link, count.index)
+    source = google_compute_disk.nw_boot_disks[0].self_link
   }
 
   attached_disk {
-    device_name = element(google_compute_disk.nw_usr_sap_disks.*.name, count.index)
-    source = element(google_compute_disk.nw_usr_sap_disks.*.self_link, count.index)
+    device_name = google_compute_disk.nw_usr_sap_disks[0].name
+    source = google_compute_disk.nw_usr_sap_disks[0].self_link
   }
   attached_disk {
-    device_name = element(google_compute_disk.nw_sapmnt_disks.*.name, count.index)
-    source = element(google_compute_disk.nw_sapmnt_disks.*.self_link, count.index)
+    device_name = google_compute_disk.nw_sapmnt_disks[0].name
+    source = google_compute_disk.nw_sapmnt_disks[0].self_link
   }
   dynamic "attached_disk" {
       for_each = var.swap_size > 0 ? [1] : []
       content {
-        device_name = element(google_compute_disk.nw_swap_disks.*.name, count.index)
-        source = element(google_compute_disk.nw_swap_disks.*.self_link, count.index)
+        device_name = google_compute_disk.nw_swap_disks[0].name
+        source = google_compute_disk.nw_swap_disks[0].self_link
       }
   }
 
@@ -129,14 +130,18 @@ resource "google_compute_instance" "nw_instances" {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
     scopes = [
-      "https://www.googleapis.com/auth/compute",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring.write",
-      "https://www.googleapis.com/auth/trace.append",
-      "https://www.googleapis.com/auth/devstorage.read_write"
+      "https://www.googleapis.com/auth/cloud-platform"
     ]
+  }
+  dynamic "reservation_affinity" {
+    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key = "compute.googleapis.com/reservation-name"
+        values = [var.use_reservation_name]
+      }
+    }
   }
   metadata = {
     # SCS settings
@@ -171,7 +176,7 @@ resource "google_compute_instance" "nw_instances" {
     post_deployment_script     = var.post_deployment_script
   }
 
-  metadata_startup_script = count.index == 0 ? var.primary_startup_url : var.secondary_startup_url
+  metadata_startup_script = var.primary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
@@ -179,6 +184,105 @@ resource "google_compute_instance" "nw_instances" {
   }
 }
 
+resource "google_compute_instance" "ers_instance" {
+  name         = var.sap_secondary_instance
+  machine_type = var.machine_type
+  zone         = var.sap_secondary_zone
+  project      = var.project_id
+
+  boot_disk {
+    auto_delete = true
+    device_name = "boot"
+    source = google_compute_disk.nw_boot_disks[1].self_link
+  }
+
+  attached_disk {
+    device_name = google_compute_disk.nw_usr_sap_disks[1].name
+    source = google_compute_disk.nw_usr_sap_disks[1].self_link
+  }
+  attached_disk {
+    device_name = google_compute_disk.nw_sapmnt_disks[1].name
+    source = google_compute_disk.nw_sapmnt_disks[1].self_link
+  }
+  dynamic "attached_disk" {
+      for_each = var.swap_size > 0 ? [1] : []
+      content {
+        device_name = google_compute_disk.nw_swap_disks[1].name
+        source = google_compute_disk.nw_swap_disks[1].self_link
+      }
+  }
+
+  can_ip_forward = true
+  network_interface {
+    subnetwork = length(local.shared_vpc) > 1 ? (
+      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
+      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    # we only include access_config if public_ip is true, an empty access_config
+    # will create an ephemeral public ip
+    dynamic "access_config" {
+      for_each = var.public_ip ? [1] : []
+      content {
+      }
+    }
+  }
+  tags = flatten([var.network_tags, local.hc_network_tag])
+  service_account {
+    # An empty string service account will default to the projects default compute engine service account
+    email = var.service_account
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+  }
+  dynamic "reservation_affinity" {
+    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key = "compute.googleapis.com/reservation-name"
+        values = [var.use_reservation_name]
+      }
+    }
+  }
+  metadata = {
+    # SCS settings
+    sap_primary_instance       = var.sap_primary_instance
+    sap_primary_zone           = var.sap_primary_zone
+    scs_hc_port                = local.scs_hc_port
+    scs_vip_address            = google_compute_address.nw_vips.0.address
+    scs_vip_name               = local.scs_vip_name
+
+    # ERS settings
+    sap_secondary_instance     = var.sap_secondary_instance
+    sap_secondary_zone         = var.sap_secondary_zone
+    ers_hc_port                = local.ers_hc_port
+    ers_vip_address            = google_compute_address.nw_vips.1.address
+    ers_vip_name               = local.ers_vip_name
+
+    # File system settings
+    nfs_path                   = var.nfs_path
+
+    # SAP system settings
+    sap_sid                    = upper(var.sap_sid)
+    sap_scs_instance_number    = local.sap_scs_instance_number
+    sap_ers_instance_number    = local.sap_ers_instance_number
+    sap_ascs                   = local.ascs
+
+    # Pacemaker settings
+    pacemaker_cluster_name     = local.pacemaker_cluster_name
+
+    # Other
+    sap_deployment_debug       = var.sap_deployment_debug ? "True" : "False"
+    install_monitoring_agent   = var.install_monitoring_agent
+    post_deployment_script     = var.post_deployment_script
+  }
+
+  metadata_startup_script = var.secondary_startup_url
+
+  lifecycle {
+    # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
+    ignore_changes = [metadata]
+  }
+}
 ################################################################################
 # VIPs
 ################################################################################
@@ -189,6 +293,7 @@ resource "google_compute_address" "nw_vips" {
   address_type = "INTERNAL"
   address      = count.index == 0 ? local.scs_vip_address : local.ers_vip_address
   region       = count.index == 0 ? local.primary_region : local.secondary_region
+  project      = var.project_id
 }
 
 ################################################################################
@@ -197,8 +302,9 @@ resource "google_compute_address" "nw_vips" {
 resource "google_compute_instance_group" "nw_instance_groups" {
   count     = 2
   name      = count.index == 0 ? local.scs_inst_group_name : local.ers_inst_group_name
-  instances = [element(google_compute_instance.nw_instances.*.id, count.index)]
+  instances = count.index == 0 ? google_compute_instance.scs_instance.*.self_link : google_compute_instance.ers_instance.*.self_link
   zone      = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
+  project   = var.project_id
 }
 
 ################################################################################
@@ -211,6 +317,7 @@ resource "google_compute_health_check" "nw_hc" {
   check_interval_sec  = 10
   healthy_threshold   = 2
   unhealthy_threshold = 2
+  project             = var.project_id
 
   tcp_health_check {
     port              = count.index == 0 ? local.scs_hc_port : local.ers_hc_port
@@ -226,6 +333,7 @@ resource "google_compute_firewall" "nw_hc_firewall" {
   direction     = "INGRESS"
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
   target_tags   = local.hc_network_tag
+  project       = var.project_id
 
   allow {
     protocol = "tcp"
@@ -242,6 +350,8 @@ resource "google_compute_region_backend_service" "nw_regional_backend_services" 
   region        = local.region
   load_balancing_scheme = "INTERNAL"
   health_checks = [element(google_compute_health_check.nw_hc.*.id, count.index)]
+  project       = var.project_id
+
   failover_policy {
     disable_connection_drain_on_failover = true
     drop_traffic_if_unhealthy = true
@@ -269,4 +379,5 @@ resource "google_compute_forwarding_rule" "nw_forwarding_rules" {
   backend_service       = element(google_compute_region_backend_service.nw_regional_backend_services.*.id, count.index)
   all_ports             = true
   subnetwork            = var.subnetwork
+  project               = var.project_id
 }
