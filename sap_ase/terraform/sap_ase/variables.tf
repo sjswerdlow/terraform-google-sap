@@ -113,7 +113,7 @@ variable "post_deployment_script" {
 }
 variable "primary_startup_url" {
   type = string
-  default = "curl -s https://storage.googleapis.com/cloudsapdeploy/deploymentmanager/latest/dm-templates/sap_ase/startup.sh | bash -x -s https://storage.googleapis.com/cloudsapdeploy/deploymentmanager/latest/dm-templates"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_ase/startup.sh | bash -x -s BUILD.TERRA_SH_URL"
   description = "Startup script to be executed when the VM boots, should not be overridden"
 }
 variable "use_reservation_name" {

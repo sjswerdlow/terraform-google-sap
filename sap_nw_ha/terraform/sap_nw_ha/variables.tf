@@ -264,12 +264,12 @@ variable "use_reservation_name" {
 #
 variable "primary_startup_url" {
   type = string
-  default = "curl -s BUILD.SH_URL/sap_nw_ha/startup_scs.sh | bash -s BUILD.SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_nw_ha/startup_scs.sh | bash -s BUILD.TERRA_SH_URL"
   description = "DO NOT USE"
 }
 variable "secondary_startup_url" {
   type = string
-  default = "curl -s BUILD.SH_URL/sap_nw_ha/startup_ers.sh | bash -s BUILD.SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_nw_ha/startup_ers.sh | bash -s BUILD.TERRA_SH_URL"
   description = "DO NOT USE"
 }
 variable "post_deployment_script" {

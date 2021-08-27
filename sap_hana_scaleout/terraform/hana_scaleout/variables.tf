@@ -137,12 +137,12 @@ variable "sap_deployment_debug" {
 #
 variable "primary_startup_url" {
   type = string
-  default = "curl -s BUILD.SH_URL/sap_hana_scaleout/startup.sh | bash -s BUILD.SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_hana_scaleout/startup.sh | bash -s BUILD.TERRA_SH_URL"
   description = "DO NOT USE"
 }
 variable "secondary_startup_url" {
   type = string
-  default = "curl -s BUILD.SH_URL/sap_hana_scaleout/startup_secondary.sh | bash -s BUILD.SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_hana_scaleout/startup_secondary.sh | bash -s BUILD.TERRA_SH_URL"
   description = "DO NOT USE"
 }
 variable "post_deployment_script" {

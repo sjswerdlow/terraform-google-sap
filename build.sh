@@ -57,9 +57,13 @@ GCS_BUCKET="core-connect-dm-templates/${BUILD_DATE_FOR_BUCKET}"
 GCS_LATEST_BUCKET="cloudsapdeploy/deploymentmanager/latest"
 RESOURCE_URL="gs://${GCS_BUCKET}"
 RESOURCE_URL_LATEST="gs://${GCS_BUCKET}"
-TERRAFORM_URL="https://www.googleapis.com/storage/v1/${GCS_BUCKET}"
-TERRAFORM_URL_LATEST="https://www.googleapis.com/storage/v1/${GCS_LATEST_BUCKET}"
+TERRAFORM_GCS_BUCKET="${GCS_BUCKET}"
+TERRAFORM_GCS_LATEST_BUCKET="${GCS_BUCKET}"
 TERRAFORM_PREFIX="gcs::"
+# Note: these need to be the https://www.googleapis.com links when the
+#       TERRAFORM_PREFIX is gcs:: otherwise it can be storage.googleapis.com
+TERRAFORM_URL="https://www.googleapis.com/storage/v1/${TERRAFORM_GCS_BUCKET}"
+TERRAFORM_URL_LATEST="https://www.googleapis.com/storage/v1/${TERRAFORM_GCS_LATEST_BUCKET}"
 GCE_STORAGE_REPO_SUFFIX=""
 # Uncomment this to use the unstable RPM repo for the storage client
 # NOTE - should only be used for dev and never checked in uncommented
@@ -94,9 +98,11 @@ if [[ "${1:-}" == "publicdev" ]]; then
   GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_GCS_BUCKET="${GCS_BUCKET}"
+  TERRAFORM_GCS_LATEST_BUCKET="https://storage.googleapis.com/${GCS_BUCKET}"
   TERRAFORM_PREFIX=""
-  TERRAFORM_URL="https://storage.googleapis.com/${GCS_BUCKET}"
-  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_URL="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -110,9 +116,11 @@ if [[ "${1:-}" == "publicdevoverwrite" ]]; then
   GCS_BUCKET="cloudsapdeploytesting/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_GCS_BUCKET="${GCS_BUCKET}"
+  TERRAFORM_GCS_LATEST_BUCKET="https://storage.googleapis.com/${GCS_BUCKET}"
   TERRAFORM_PREFIX=""
-  TERRAFORM_URL="https://storage.googleapis.com/${GCS_BUCKET}"
-  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_URL="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -124,9 +132,11 @@ if [[ "${1:-}" == "publicbeta" ]]; then
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_GCS_BUCKET="cloudsapdeploy/terraform/${BUILD_DATE_FOR_BUCKET}"
+  TERRAFORM_GCS_LATEST_BUCKET="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
   TERRAFORM_PREFIX=""
-  TERRAFORM_URL="https://storage.googleapis.com/${GCS_BUCKET}"
-  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_URL="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
@@ -163,6 +173,8 @@ build() {
   grep -rl BUILD.SH_URL_LATEST . | xargs ${SED_CMD} "s~BUILD.SH_URL_LATEST~${RESOURCE_URL_LATEST}/dm-templates~g"
   echo "Replacing BUILD.SH_URL"
   grep -rl BUILD.SH_URL . | xargs ${SED_CMD} "s~BUILD.SH_URL~${RESOURCE_URL}/dm-templates~g"
+  echo "Replacing BUILD.TERRA_SH_URL"
+  grep -rl BUILD.TERRA_SH_URL . | xargs ${SED_CMD} "s~BUILD.TERRA_SH_URL~${TERRAFORM_URL}/terraform~g"
   echo "Replacing GCE_STORAGE_REPO_SUFFIX"
   grep -rl GCE_STORAGE_REPO_SUFFIX . | xargs ${SED_CMD} "s~GCE_STORAGE_REPO_SUFFIX~${GCE_STORAGE_REPO_SUFFIX}~g"
   echo "Replacing PACEMAKER_ALIAS_COPY"
@@ -224,6 +236,23 @@ deploy_dmtemplates() {
   echo "Deploying DM Templates complete"
 }
 
+deploy_terraform() {
+  pushd .build_dmtemplates
+  # remove all of the dm templates
+  find . -name "*.py" -type f -delete
+  find . -name "*.py.schema" -type f -delete
+  find . -name "template.yaml" -type f -delete
+  local deploy_url="${TERRAFORM_GCS_BUCKET}/terraform"
+  echo "Deploying Terraform to gs://${deploy_url}"
+  gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
+  echo "Resetting cache on gs://${deploy_url}"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${deploy_url}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/plain" "gs://${deploy_url}/*/**.tf" >/dev/null
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${deploy_url}/**" >/dev/null
+  popd
+  echo "Deploying Terraform complete"
+}
+
 deploy_pacemakergcp() {
   pushd .build_pacemakergcp
   local deploy_url="${GCS_BUCKET}/pacemaker-gcp"
@@ -236,12 +265,18 @@ deploy_pacemakergcp() {
 }
 
 deploy_latest() {
-  echo "Deploying to latest folder gs://${GCS_LATEST_BUCKET}"
+  echo "Deploying DM Templates to latest folder gs://${GCS_LATEST_BUCKET}"
   gsutil rm gs://${GCS_LATEST_BUCKET}/**
   gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/* gs://${GCS_LATEST_BUCKET}/
   echo "Resetting cache on gs://${GCS_LATEST_BUCKET}"
   gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_LATEST_BUCKET}/*/**.sh" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${GCS_LATEST_BUCKET}/**" >/dev/null
+  echo "Deploying Terraform to latest folder gs://${TERRAFORM_GCS_LATEST_BUCKET}"
+  gsutil rm gs://${TERRAFORM_GCS_LATEST_BUCKET}/**
+  gsutil -q -m cp -r -c -a public-read gs://"${TERRAFORM_GCS_BUCKET}"/* gs://${TERRAFORM_GCS_LATEST_BUCKET}/
+  echo "Resetting cache on gs://${TERRAFORM_GCS_LATEST_BUCKET}"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${TERRAFORM_GCS_LATEST_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${TERRAFORM_GCS_LATEST_BUCKET}/**" >/dev/null
   echo "Deploying to latest folder complete"
 }
 
@@ -280,9 +315,11 @@ if [[ "${GCS_FOLDER}" == "release" ]]; then
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/cloudsapdeploy/deploymentmanager/latest"
+  TERRAFORM_GCS_BUCKET="cloudsapdeploy/terraform/${BUILD_DATE_FOR_BUCKET}"
+  TERRAFORM_GCS_LATEST_BUCKET="cloudsapdeploy/terraform/latest"
   TERRAFORM_PREFIX=""
-  TERRAFORM_URL="https://storage.googleapis.com/${GCS_BUCKET}"
-  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${GCS_LATEST_BUCKET}"
+  TERRAFORM_URL="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${TERRAFORM_GCS_LATEST_BUCKET}"
   GCE_STORAGE_REPO_SUFFIX=""
   PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/alias -o"
   PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL_LATEST}/pacemaker-gcp/route -o"
@@ -296,21 +333,29 @@ if [[ "${KOKORO_JOB_NAME:=}" != "" ]] ; then
   PACEMAKER_CHECKOUT="cp -R ../sap-ext-pacemaker-gcp .build_pacemakergcp"
 fi;
 
-echo ""
+echo "*******************************************************************************************"
 echo "Starting build and deploy for SAP DM Templates"
 echo "VERSION=${VERSION}.${BUILD_DATE}"
 echo "GCS_BUCKET=${GCS_BUCKET}"
+echo "GCS_LATEST_BUCKET=${GCS_LATEST_BUCKET}"
 echo "RESOURCE_URL=${RESOURCE_URL}"
 echo "RESOURCE_URL_LATEST=${RESOURCE_URL_LATEST}"
 echo "GCE_STORAGE_REPO_SUFFIX=${GCE_STORAGE_REPO_SUFFIX}"
 echo "PACEMAKER_ALIAS_COPY=${PACEMAKER_ALIAS_COPY}"
 echo "PACEMAKER_ROUTE_COPY=${PACEMAKER_ROUTE_COPY}"
 echo "PACEMAKER_STONITH_COPY=${PACEMAKER_STONITH_COPY}"
-echo ""
+echo "TERRAFORM_GCS_BUCKET=${TERRAFORM_GCS_BUCKET}"
+echo "TERRAFORM_GCS_LATEST_BUCKET=${TERRAFORM_GCS_LATEST_BUCKET}"
+echo "TERRAFORM_URL=${TERRAFORM_URL}"
+echo "TERRAFORM_URL_LATEST=${TERRAFORM_URL_LATEST}"
+echo "*******************************************************************************************"
 build
 deploy_dmtemplates
+deploy_terraform
 deploy_pacemakergcp
+echo "*******************************************************************************************"
 echo "All done with deploys"
+echo "*******************************************************************************************"
 # tiny sleep so we don't see the shell-init error on mac
 sleep 1
 # if this is release then deploy_latest
@@ -319,12 +364,17 @@ if [[ "${GCS_FOLDER}" == "release" ]]; then
 fi
 cleanup_build
 
-echo ""
+echo "*******************************************************************************************"
 echo "Deployed templates to: ${RESOURCE_URL}"
 echo "Deployed templates to latest: ${RESOURCE_URL_LATEST}"
 echo "Pantheon link: https://pantheon.corp.google.com/storage/browser/${GCS_BUCKET}"
-echo "Date stamp to use in your template: ${BUILD_DATE_FOR_BUCKET}"
-echo ""
+echo "*******************************************************************************************"
+echo "Deployed terraform to: ${TERRAFORM_PREFIX}${TERRAFORM_URL}"
+echo "Deployed terraform to latest: ${TERRAFORM_PREFIX}${TERRAFORM_URL_LATEST}"
+echo "Pantheon link: https://pantheon.corp.google.com/storage/browser/${TERRAFORM_GCS_BUCKET}"
+echo "*******************************************************************************************"
+echo "Date stamp to use in your accelerators: ${BUILD_DATE_FOR_BUCKET}"
+echo "*******************************************************************************************"
 
-echo "Finished build and deploy for SAP DM Templates"
-echo ""
+echo "Finished build and deploy for SAP Accelerators"
+echo "*******************************************************************************************"
