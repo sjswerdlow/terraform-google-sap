@@ -62,7 +62,7 @@ nw-ha::enable_ilb_backend_communication
 nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
 nw-ha::pacemaker_create_cluster_primary
-ha::wait_for_secondary
+ha::wait_for_secondary "nw_ha"
 ha::pacemaker_maintenance true
 nw-ha::create_fencing_resources
 nw-ha::create_file_system_resources

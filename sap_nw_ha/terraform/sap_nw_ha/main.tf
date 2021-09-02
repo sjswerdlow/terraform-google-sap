@@ -17,8 +17,8 @@ locals {
 
   sid                     = lower(var.sap_sid)
 
-  hc_firewall_name        = var.hc_firewall_name == "" ? "${local.sid}-hc-allow" : var.hc_firewall_name
-  hc_network_tag          = length(var.hc_network_tag) == 0 ? ["${local.hc_firewall_name}"] : var.hc_network_tag
+  hc_firewall_rule_name   = var.hc_firewall_rule_name == "" ? "${local.sid}-hc-allow" : var.hc_firewall_rule_name
+  hc_network_tag          = length(var.hc_network_tag) == 0 ? ["${local.hc_firewall_rule_name}"] : var.hc_network_tag
 
   sap_scs_instance_number = var.sap_scs_instance_number == "" ? "00" : var.sap_scs_instance_number
   scs_inst_group_name     = var.scs_inst_group_name == "" ? "${local.sid}-scs-ig" : var.scs_inst_group_name
@@ -327,9 +327,9 @@ resource "google_compute_health_check" "nw_hc" {
 ################################################################################
 # Firewall rule for the Health Checks
 ################################################################################
-resource "google_compute_firewall" "nw_hc_firewall" {
-  name          = local.hc_firewall_name
-  network       = var.subnetwork
+resource "google_compute_firewall" "nw_hc_firewall_rule" {
+  name          = local.hc_firewall_rule_name
+  network       = var.network
   direction     = "INGRESS"
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
   target_tags   = local.hc_network_tag

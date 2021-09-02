@@ -12,9 +12,13 @@ variable "machine_type" {
   type = string
   description = "Machine type for the instances"
 }
+variable "network" {
+  type = string
+  description = "Network for the instances"
+}
 variable "subnetwork" {
   type = string
-  description = "Subnetwork for the instance"
+  description = "Subnetwork for the instances"
 }
 variable "linux_image" {
   type = string
@@ -70,12 +74,12 @@ variable "sap_sid" {
 variable "hc_network_tag" {
   type = list(string)
   default = []
-  description = "Network tag for the health check firewall"
+  description = "Network tag for the health check firewall rule"
 }
-variable "hc_firewall_name" {
+variable "hc_firewall_rule_name" {
   type = string
   default = ""
-  description = "Name of health check firewall"
+  description = "Name of firewall rule for the health check"
 }
 #
 # SCS settings

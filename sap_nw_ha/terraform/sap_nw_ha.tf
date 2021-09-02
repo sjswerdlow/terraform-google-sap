@@ -19,7 +19,8 @@ module "sap_nw_ha" {
   # General settings
   project_id                 = "PROJECT_ID"           # example: my-project-x
   machine_type               = "MACHINE_TYPE"         # example: n1-highmem-32
-  subnetwork                 = "SUBNETWORK"           # example: default
+  network                    = "NETWORK"              # example: default
+  subnetwork                 = "SUBNETWORK"           # example: default-subnet1
   linux_image                = "LINUX_IMAGE"          # example: sles-15-sp2-sap
   linux_image_project        = "LINUX_IMAGE_PROJECT"  # example: suse-sap-cloud
 
@@ -37,7 +38,7 @@ module "sap_nw_ha" {
   ## OPTIONAL SETTINGS
   ##   - default values will be determined/calculated
   ##############################################################################
-  # hc_firewall_name           = "[SID]-hc-allow"
+  # hc_firewall_rule_name      = "[SID]-hc-allow"
   # hc_network_tag             = ["[SID]-hc-allow-tag"]
 
   # scs_inst_group_name        = "[SID]-scs-ig"

@@ -20,7 +20,7 @@ output "nw_hc" {
 }
 output "nw_hc_firewall" {
   description = "Firewall rule for the Health Checks"
-  value       = google_compute_firewall.nw_hc_firewall.*.self_link
+  value       = google_compute_firewall.nw_hc_firewall_rule.*.self_link
 }
 output "nw_regional_backend_services" {
   description = "Backend Services"

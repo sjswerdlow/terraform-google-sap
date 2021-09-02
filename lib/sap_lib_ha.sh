@@ -93,6 +93,7 @@ ha::install_primary_sshkeys() {
 
 ha::wait_for_secondary() {
   local count=0
+  local deployment_type=${1}
 
   main::errhandle_log_info "Waiting for ready signal from ${VM_METADATA[sap_secondary_instance]} before continuing"
 
@@ -102,8 +103,12 @@ ha::wait_for_secondary() {
     main::errhandle_log_info "--- ${VM_METADATA[sap_secondary_instance]} is not ready - sleeping for 60 seconds then trying again"
     sleep 60s
     if [ ${count} -gt 15 ]; then
-      main::errhandle_log_warning "${VM_METADATA[sap_secondary_instance]} wasn't ready in time. Both SAP HANA systems have been installed and configured but the remainder of the HA setup will need to be manually performed"
-      main::complete
+      if [ ${deployment_type} = "nw_ha" ]; then
+        main::errhandle_log_error "${VM_METADATA[sap_secondary_instance]} wasn't ready in time. Aborting installation. Please check /var/log/messages for errors and if machines can communicate with each other."
+      else
+        main::errhandle_log_warning "${VM_METADATA[sap_secondary_instance]} wasn't ready in time. Both SAP HANA systems have been installed and configured but the remainder of the HA setup will need to be manually performed"
+        main::complete
+      fi
     fi
   done
 
@@ -113,6 +118,7 @@ ha::wait_for_secondary() {
 
 ha::wait_for_primary() {
   local count=0
+  local deployment_type=${1}
 
   main::errhandle_log_info "Waiting for ready signal from ${VM_METADATA[sap_primary_instance]} before continuing"
   scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy/
@@ -120,11 +126,15 @@ ha::wait_for_primary() {
   while [[ ! -f /root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready ]]; do
     count=$((count +1))
     scp -o StrictHostKeyChecking=no "${VM_METADATA[sap_primary_instance]}":/root/.deploy/."${VM_METADATA[sap_primary_instance]}".ready /root/.deploy/
-    main::errhandle_log_info "--- ${VM_METADATA[sap_primary_instance]} is not not ready - sleeping for 60 seconds then trying again"
+    main::errhandle_log_info "--- ${VM_METADATA[sap_primary_instance]} is not ready - sleeping for 60 seconds then trying again"
     sleep 60s
     if [ ${count} -gt 10 ]; then
-      main::errhandle_log_warning "${VM_METADATA[sap_primary_instance]} wasn't ready in time. Both SAP HANA systems have been installed and configured but the remainder of the HA setup will need to be manually performed"
-      main::complete
+      if [ ${deployment_type} = "nw_ha" ]; then
+        main::errhandle_log_error "${VM_METADATA[sap_primary_instance]} wasn't ready in time. Aborting installation. Please check /var/log/messages for errors and if machines can communicate with each other."
+      else
+        main::errhandle_log_warning "${VM_METADATA[sap_primary_instance]} wasn't ready in time. Both SAP HANA systems have been installed and configured but the remainder of the HA setup will need to be manually performed"
+        main::complete
+      fi
     fi
   done
 

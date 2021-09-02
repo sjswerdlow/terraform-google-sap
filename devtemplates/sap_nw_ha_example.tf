@@ -6,6 +6,7 @@ module "sap_nw_ha" {
   # General settings
   project_id                 = "sap-certification-env"
   machine_type               = "n2-standard-8"
+  network                    = "sapcertificationnetwork"
   subnetwork                 = "sapcertificationnetwork"
   #linux_image                = "sles-15-sp2-sap"
   linux_image                = "sles-12-sp5-sap"
@@ -25,7 +26,7 @@ module "sap_nw_ha" {
   ## OPTIONAL SETTINGS
   ##   - can be omitted - default values will be determined/calculated
   ##############################################################################
-  hc_firewall_name           = ""
+  hc_firewall_rule_name      = ""
   hc_network_tag             = []
 
   scs_inst_group_name        = ""

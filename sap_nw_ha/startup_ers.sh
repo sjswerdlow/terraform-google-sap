@@ -60,7 +60,7 @@ nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
 nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
-ha::wait_for_primary
+ha::wait_for_primary "nw_ha"
 nw-ha::pacemaker_join_secondary
 
 ## Post deployment & installation cleanup

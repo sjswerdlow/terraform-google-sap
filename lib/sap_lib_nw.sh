@@ -233,7 +233,7 @@ nw-ha::pacemaker_create_cluster_primary() {
   crm configure property stonith-timeout="300s"
   crm configure property stonith-enabled="true"
   crm configure rsc_defaults resource-stickiness="1"
-  crm configure rsc_defaults migration-threshold="5000"
+  crm configure rsc_defaults migration-threshold="3"
   crm configure op_defaults timeout="600"
 
   main::errhandle_log_info "Enable and start Pacemaker."
