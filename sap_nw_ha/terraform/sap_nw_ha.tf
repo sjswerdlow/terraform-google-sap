@@ -3,13 +3,13 @@
 # Build Hash: BUILD.HASH
 #
 module "sap_nw_ha" {
-  source = "TERRAFORM_PREFIXTERRAFORM_URL_LATEST/dm-templates/sap_nw_ha/sap_nw_ha_module.zip"
+  source = "TERRAFORM_PREFIXTERRAFORM_URL_LATEST/terraform/sap_nw_ha/sap_nw_ha_module.zip"
   #
   # By default, this source file uses the latest release of the terraform module
   # for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
-  # source = "TERRAFORM_PREFIXTERRAFORM_URL/dm-templates/sap_nw_ha/sap_nw_ha_module.zip"
+  # source = "TERRAFORM_PREFIXTERRAFORM_URL/terraform/sap_nw_ha/sap_nw_ha_module.zip"
   #
   # Fill in the information below
   #
