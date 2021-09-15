@@ -2,7 +2,11 @@
 #
 variable "instance_name" {
   type = string
-  description = "Naming prefix for the instances created"
+  description = "Hostname of the GCE instance"
+  validation {
+    condition = can(regex("^[a-z0-9\\-]+$", var.instance_name))
+    error_message = "The instance_name must consist of lowercase letters (a-z), numbers, and hyphens."
+  }
 }
 variable "zone" {
   type = string

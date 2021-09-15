@@ -2,8 +2,8 @@ variable "instance_name" {
   type = string
   description = "Hostname of the GCE instance"
   validation {
-    condition = length(var.instance_name) <= 13
-    error_message = "Length of instance name must be less than 14 characters."
+    condition = can(regex("^[a-z0-9\\-]+$", var.instance_name)) && length(var.instance_name) <= 13
+    error_message = "The instance_name must consist of lowercase letters (a-z), numbers, and hyphens and be less than 14 characters long."
   }
 }
 

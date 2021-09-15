@@ -10,6 +10,10 @@ variable "zone" {
 variable "instance_name" {
   type = string
   description = "Naming prefix for the instances created"
+  validation {
+    condition = can(regex("^[a-z0-9\\-]+$", var.instance_name))
+    error_message = "The instance_name must consist of lowercase letters (a-z), numbers, and hyphens."
+  }
 }
 variable "machine_type" {
   type = string

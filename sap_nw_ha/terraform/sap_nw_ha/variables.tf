@@ -34,6 +34,10 @@ variable "linux_image_project" {
 variable "sap_primary_instance" {
   type = string
   description = "Name of first instance (initial SCS location)"
+  validation {
+    condition = can(regex("^[a-z0-9\\-]+$", var.sap_primary_instance)) && length(var.sap_primary_instance) <= 13
+    error_message = "The sap_primary_instance must consist of lowercase letters (a-z), numbers, and hyphens and be less than 14 characters long."
+  }
 }
 variable "sap_primary_zone" {
   type = string
@@ -45,6 +49,10 @@ variable "sap_primary_zone" {
 variable "sap_secondary_instance" {
   type = string
   description = "Name of second instance (initial ERS location)"
+  validation {
+    condition = can(regex("^[a-z0-9\\-]+$", var.sap_secondary_instance)) && length(var.sap_secondary_instance) <= 13
+    error_message = "The sap_secondary_instance must consist of lowercase letters (a-z), numbers, and hyphens and be less than 14 characters long."
+  }
 }
 variable "sap_secondary_zone" {
   type = string

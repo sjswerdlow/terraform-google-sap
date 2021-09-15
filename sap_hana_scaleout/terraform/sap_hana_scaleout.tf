@@ -14,7 +14,7 @@ module "hana_scaleout" {
   #
   # Fill in the information below
   #
-  instance_name              = "VM_NAME"              # example: hana_scaleout
+  instance_name              = "VM_NAME"              # example: hana-scaleout
   machine_type               = "MACHINE_TYPE"         # example: n1-highmem-32
   project_id                 = "PROJECT_ID"           # example: customer-project-x
   zone                       = "ZONE"                 # example: us-central1-a
@@ -35,17 +35,10 @@ module "hana_scaleout" {
   # Add additional variable docs / examples
   # Optional advanced options
   # sap_hana_double_volume_size   = TRUE_OR_FALSE            # default is false
-  # public_ip                     = TRUE_OR_FALSE            # default is true
   # service_account               = "CUSTOM_SERVICE_ACCOUNT"
   # network_tags                  = "TAG"
   # sap_hana_sidadm_uid           = "SIDADM_UID"             # default is 900
   # sap_hana_sapsys_gid           = "SAPSYS_GID"             # default is 79
   # sap_deployment_debug          = TRUE_OR_FALSE            # default is false
   # use_reservation_name          = "RESERVATION_NAME"
-  #
-
-  # Developer options - do not modify unless instructed to
-  # primary_startup_url     = "SCRIPT_URL"
-  # secondary_startup_url   = "SCRIPT_URL"
-  # post_deployment_script  = "SCRIPT_URL"
 }
