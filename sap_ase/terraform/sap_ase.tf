@@ -27,17 +27,17 @@ module "sap_ase" {
   ase_sap_data_size      = SAPDATA_DISK_SIZE   # in GB, default is 30
   ase_log_size           = LOGDIR_DISK_SIZE    # in GB, default is 8
   ase_backup_size        = BACKUP_DISK_SIZE    # in GB, default is 0 and will not be created
-  ase_sap_data_ssd       = TRUE_OR_FALSE       # default is true
-  ase_log_ssd            = TRUE_OR_FALSE       # default is true
+  ase_sap_data_ssd       = true_or_false       # default is true
+  ase_log_ssd            = true_or_false       # default is true
   usr_sap_size           = USRSAP_DISK_SIZE    # in GB, default is 0 and will not be created
   sap_mnt_size           = SAPMNT_DISK_SIZE    # in GB, default is 0 and will not be created
   swap_size              = SWAP_SIZE           # in GB, default is 0 and will not be created
 
   # Optional advanced options
   # network_tags           = "TAG"
-  # public_ip              = TRUE_OR_FALSE            # default is true
+  # public_ip              = true_or_false            # default is true
   # service_account        = "CUSTOM_SERVICE_ACCOUNT"
-  # sap_deployment_debug   = TRUE_OR_FALSE            # default is false
+  # sap_deployment_debug   = true_or_false            # default is false
   # use_reservation_name   = "RESERVATION_NAME"
 
   # Developer options - do not modify unless instructed to

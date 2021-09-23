@@ -30,15 +30,15 @@ module "hana_scaleout" {
   sap_hana_standby_nodes     = STANDBY_NODES_NUM      # example: 1
   sap_hana_shared_nfs        = "HANA_SHARED_NFS"      # example: 10.1.1.1:/hanashared
   sap_hana_backup_nfs        = "HANA_BACKUP_NFS"      # example: 10.1.1.1:/hanabackup
-  public_ip                  = TRUE_OR_FALSE          # example: true
+  public_ip                  = true_or_false          # example: true
 
   # Add additional variable docs / examples
   # Optional advanced options
-  # sap_hana_double_volume_size   = TRUE_OR_FALSE            # default is false
+  # sap_hana_double_volume_size   = true_or_false            # default is false
   # service_account               = "CUSTOM_SERVICE_ACCOUNT"
   # network_tags                  = "TAG"
   # sap_hana_sidadm_uid           = "SIDADM_UID"             # default is 900
   # sap_hana_sapsys_gid           = "SAPSYS_GID"             # default is 79
-  # sap_deployment_debug          = TRUE_OR_FALSE            # default is false
+  # sap_deployment_debug          = true_or_false            # default is false
   # use_reservation_name          = "RESERVATION_NAME"
 }

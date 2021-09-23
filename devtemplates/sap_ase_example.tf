@@ -24,11 +24,11 @@ module "sap_ase" {
 
   # Optional advanced options
   # network_tags           = "TAG"
-  # public_ip              = TRUE_OR_FALSE
+  # public_ip              = true_or_false
   # service_account        = "CUSTOM_SERVICE_ACCOUNT"
-  # sap_deployment_debug   = TRUE_OR_FALSE
+  # sap_deployment_debug   = true_or_false
   # use_reservation_name   = "RESERVATION_NAME"
-  # can_ip_forward         = TRUE_OR_FALSE
+  # can_ip_forward         = true_or_false
 
   # Developer options
   # post_deployment_script = "SCRIPT_URL"
