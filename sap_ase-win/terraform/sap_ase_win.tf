@@ -28,9 +28,9 @@ module "sap_ase_win" {
   # ase_sid_size          = DB_SID_DISK_SIZE_IN_GB   # default is 8, minimum is 8
   # ase_sap_temp_size     = SAP_TEMP_DISK_SIZE_IN_GB # default is 8, minimum is 8
   # ase_sap_data_size     = SAP_DATA_DISK_SIZE_IN_GB # default is 30, minimum is 30
-  # ase_sap_data_ssd      = [true|false]             # default is true
+  # ase_sap_data_ssd      = true_or_false            # default is true
   # ase_log_size          = LOG_DIR_DISK_SIZE_IN_GB  # default is 8, minimum is 8
-  # ase_log_ssd           = [true|false]             # default is true
+  # ase_log_ssd           = true_or_false            # default is true
   # ase_backup_size       = BACKUP_DISK_SIZE_IN_GB   # default is 10
   # usr_sap_size          = USR_SAP_DISK_SIZE_IN_GB  # default is 0
   # swap_size             = SWAP_SIZE_IN_GB          # default is 0
