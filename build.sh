@@ -225,6 +225,9 @@ build() {
   pushd sap_maxdb-win/terraform/sap_maxdb_win
   zip ../../sap_maxdb_win_module.zip *
   popd
+  pushd sap_db2/terraform/sap_db2
+  zip ../../sap_db2_module.zip *
+  popd
   popd
   echo "Finished building Terraform module zips"
 }
