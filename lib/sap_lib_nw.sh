@@ -220,7 +220,6 @@ nw-ha::pacemaker_create_cluster_primary() {
   ha-cluster-init --name "${VM_METADATA[pacemaker_cluster_name]}" --yes --interface eth0 corosync
   main::errhandle_log_info "Configuring Corosync per Google recommendations."
   sed -i 's/token:.*/token: 20000/g' /etc/corosync/corosync.conf
-  sed -i 's/consensus:.*/consensus: 24000/g' /etc/corosync/corosync.conf
   sed -i 's/join:.*/join: 60/g' /etc/corosync/corosync.conf
   sed -i 's/max_messages:.*/max_messages: 20/g' /etc/corosync/corosync.conf
   sed -i 's/token_retransmits_before_loss_const:.*/token_retransmits_before_loss_const: 10/g' /etc/corosync/corosync.conf
@@ -228,8 +227,6 @@ nw-ha::pacemaker_create_cluster_primary() {
   ha-cluster-init --name ${VM_METADATA[pacemaker_cluster_name]} --yes cluster
 
   main::errhandle_log_info "Setting general cluster properties."
-  crm configure property no-quorum-policy="stop"
-  crm configure property startup-fencing="true"
   crm configure property stonith-timeout="300s"
   crm configure property stonith-enabled="true"
   crm configure rsc_defaults resource-stickiness="1"
@@ -282,19 +279,21 @@ nw-ha::create_fencing_resources() {
   sec_suffix="${VM_METADATA[sap_sid]}-${VM_METADATA[sap_secondary_instance]}"
 
   crm configure primitive "fence-${pri_suffix}" stonith:fence_gce \
-    op monitor interval="300s" timeout="120s" on-fail="restart" \
-    op start interval="0" timeout="60s" on-fail="restart" \
+    op monitor interval="300s" timeout="120s" \
+    op start interval="0" timeout="60s" \
     params port="${VM_METADATA[sap_primary_instance]}" \
-    zone="${VM_METADATA[sap_primary_zone]}" project="${VM_PROJECT}"
+    zone="${VM_METADATA[sap_primary_zone]}" project="${VM_PROJECT}" \
+    pcmk_reboot_timeout=300 pcmk_monitor_retries=4 pcmk_delay_max=30
 
   crm configure location "loc-fence-${pri_suffix}" "fence-${pri_suffix}" \
                          -inf: "${VM_METADATA[sap_primary_instance]}"
 
   crm configure primitive "fence-${sec_suffix}" stonith:fence_gce \
-    op monitor interval="300s" timeout="120s" on-fail="restart" \
-    op start interval="0" timeout="60s" on-fail="restart" \
+    op monitor interval="300s" timeout="120s" \
+    op start interval="0" timeout="60s" \
     params port="${VM_METADATA[sap_secondary_instance]}" \
-    zone="${VM_METADATA[sap_secondary_zone]}" project="${VM_PROJECT}"
+    zone="${VM_METADATA[sap_secondary_zone]}" project="${VM_PROJECT}" \
+    pcmk_reboot_timeout=300 pcmk_monitor_retries=4
 
   crm configure location "loc-fence-${sec_suffix}" "fence-${sec_suffix}" \
                          -inf: "${VM_METADATA[sap_secondary_instance]}"
@@ -337,13 +336,13 @@ nw-ha::create_health_check_resources() {
     "health-check-${VM_METADATA[sap_sid]}-${VM_METADATA[sap_ascs]}SCS${VM_METADATA[sap_scs_instance_number]}" anything \
     params binfile="/usr/bin/socat" \
     cmdline_options="-U TCP-LISTEN:${VM_METADATA[scs_hc_port]},backlog=10,fork,reuseaddr /dev/null" \
-    op monitor timeout=20s interval=10 \
+    op monitor timeout=20s interval=10s \
     op_params depth=0
 
   crm configure primitive "health-check-${VM_METADATA[sap_sid]}-ERS${VM_METADATA[sap_ers_instance_number]}" anything \
     params binfile="/usr/bin/socat" \
     cmdline_options="-U TCP-LISTEN:${VM_METADATA[ers_hc_port]},backlog=10,fork,reuseaddr /dev/null" \
-    op monitor timeout=20s interval=10 \
+    op monitor timeout=20s interval=10s \
     op_params depth=0
 
   main::errhandle_log_info "Health check resources added."
@@ -357,13 +356,13 @@ nw-ha::create_vip_resources() {
     "vip-${VM_METADATA[sap_sid]}-${VM_METADATA[sap_ascs]}SCS${VM_METADATA[sap_scs_instance_number]}" \
     IPaddr2 \
     params ip=${VM_METADATA[scs_vip_address]} cidr_netmask=32 nic="eth0" \
-    op monitor interval=10s timeout=20s
+    op monitor interval=3600s timeout=60s
 
   crm configure primitive \
     "vip-${VM_METADATA[sap_sid]}-ERS${VM_METADATA[sap_ers_instance_number]}" \
     IPaddr2 \
     params ip=${VM_METADATA[ers_vip_address]} cidr_netmask=32 nic="eth0" \
-    op monitor interval=10s timeout=20s
+    op monitor interval=3600s timeout=60s
 
   main::errhandle_log_info "VIP resources added."
 }

@@ -233,23 +233,22 @@ ha::config_corosync(){
       secauth: off
       crypto_hash: sha1
       crypto_cipher: aes256
-      cluster_name:	hacluster
+      cluster_name: hacluster
       clear_node_high_bit: yes
       token: 20000
       token_retransmits_before_loss_const: 10
       join: 60
-      consensus: 24000
-      max_messages:	20
+      max_messages: 20
       transport: udpu
       interface {
-        ringnumber:	0
+        ringnumber: 0
         bindnetaddr: ${1}
         mcastport: 5405
         ttl: 1
       }
     }
     logging {
-      fileline:	off
+      fileline: off
       to_stderr: no
       to_logfile: no
       logfile: /var/log/cluster/corosync.log
@@ -394,14 +393,29 @@ ha::config_pacemaker_secondary() {
 ha::pacemaker_add_stonith() {
   main::errhandle_log_info "Cluster: Adding STONITH devices"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    crm configure primitive STONITH-"${VM_METADATA[sap_primary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" on-fail="restart" params instance_name="${VM_METADATA[sap_primary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
-    crm configure primitive STONITH-"${VM_METADATA[sap_secondary_instance]}" stonith:external/gcpstonith op monitor interval="300s" timeout="60s" on-fail="restart" op start interval="0" timeout="60s" on-fail="restart" params instance_name="${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes"
+    crm configure primitive STONITH-"${VM_METADATA[sap_primary_instance]}" stonith:external/gcpstonith \
+        op monitor interval="300s" timeout="120s" \
+        op start interval="0" timeout="60s" \
+        params instance_name="${VM_METADATA[sap_primary_instance]}" gcloud_path="${GCLOUD}" logging="yes" \
+        pcmk_reboot_timeout=300 pcmk_monitor_retries=4 pcmk_delay_max=30
+    crm configure primitive STONITH-"${VM_METADATA[sap_secondary_instance]}" stonith:external/gcpstonith \
+        op monitor interval="300s" timeout="120s" \
+        op start interval="0" timeout="60s" \
+        params instance_name="${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" \
+        pcmk_reboot_timeout=300 pcmk_monitor_retries=4
     crm configure location LOC_STONITH_"${VM_METADATA[sap_primary_instance]}" STONITH-"${VM_METADATA[sap_primary_instance]}" -inf: "${VM_METADATA[sap_primary_instance]}"
     crm configure location LOC_STONITH_"${VM_METADATA[sap_secondary_instance]}" STONITH-"${VM_METADATA[sap_secondary_instance]}" -inf: "${VM_METADATA[sap_secondary_instance]}"
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    pcs stonith create STONITH-"${VM_METADATA[sap_primary_instance]}" \
-        fence_gce port="${VM_METADATA[sap_primary_instance]}" zone="${VM_METADATA[sap_primary_zone]}" project="${VM_PROJECT}"
-    pcs stonith create STONITH-"${VM_METADATA[sap_secondary_instance]}" fence_gce port="${VM_METADATA[sap_secondary_instance]}" zone="${VM_METADATA[sap_secondary_zone]}" project="${VM_PROJECT}"
+    pcs stonith create STONITH-"${VM_METADATA[sap_primary_instance]}" fence_gce \
+        port="${VM_METADATA[sap_primary_instance]}" zone="${VM_METADATA[sap_primary_zone]}" project="${VM_PROJECT}" \
+        pcmk_reboot_timeout=300 pcmk_monitor_retries=4 pcmk_delay_max=30 \
+        op monitor interval="300s" timeout="120s" \
+        op start interval="0" timeout="60s"
+    pcs stonith create STONITH-"${VM_METADATA[sap_secondary_instance]}" fence_gce \
+        port="${VM_METADATA[sap_secondary_instance]}" zone="${VM_METADATA[sap_secondary_zone]}" project="${VM_PROJECT}" \
+        pcmk_reboot_timeout=300 pcmk_monitor_retries=4 \
+        op monitor interval="300s" timeout="120s" \
+        op start interval="0" timeout="60s"
     pcs constraint location STONITH-"${VM_METADATA[sap_primary_instance]}" avoids "${VM_METADATA[sap_primary_instance]}"
     pcs constraint location STONITH-"${VM_METADATA[sap_secondary_instance]}" avoids "${VM_METADATA[sap_secondary_instance]}"
   fi
@@ -415,16 +429,16 @@ ha::pacemaker_add_vip() {
     main::errhandle_log_info "Using an ILB for the VIP"
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       if zypper in -y socat; then
-        crm configure primitive rsc_vip_hc-primary anything params binfile="/usr/bin/socat" cmdline_options="-U TCP-LISTEN:"${VM_METADATA[sap_hc_port]}",backlog=10,fork,reuseaddr /dev/null" op monitor timeout=20s interval=10 op_params depth=0
-        crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
+        crm configure primitive rsc_vip_hc-primary anything params binfile="/usr/bin/socat" cmdline_options="-U TCP-LISTEN:"${VM_METADATA[sap_hc_port]}",backlog=10,fork,reuseaddr /dev/null" op monitor timeout=20s interval=10s op_params depth=0
+        crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=3600s timeout=60s
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary
       else
         main::errhandle_log_warning "- socat could not be installed, attempting to continue with rest of configuration. Manual configuration will be needed"
       fi
     elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
       pcs resource create rsc_vip_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]} \
-        IPaddr2 ip="${VM_METADATA[sap_vip]}" nic=eth0 cidr_netmask=32
-      pcs resource create rsc_healthcheck_${VM_METADATA[sap_hana_sid]} service:haproxy
+        IPaddr2 ip="${VM_METADATA[sap_vip]}" nic=eth0 cidr_netmask=32 op monitor interval=3600s timeout=60s
+      pcs resource create rsc_healthcheck_${VM_METADATA[sap_hana_sid]} service:haproxy op monitor interval=10s timeout=20s
       pcs resource move rsc_healthcheck_${VM_METADATA[sap_hana_sid]} ${VM_METADATA[sap_primary_instance]}
       pcs resource clear rsc_healthcheck_${VM_METADATA[sap_hana_sid]}
       pcs resource group add g-primary rsc_healthcheck_${VM_METADATA[sap_hana_sid]} rsc_vip_${VM_METADATA[sap_hana_sid]}_${VM_METADATA[sap_hana_instance_number]}
@@ -432,11 +446,11 @@ ha::pacemaker_add_vip() {
   else
     if ! ping -c 1 -W 1 "${VM_METADATA[sap_vip]}"; then
       if [ "${LINUX_DISTRO}" = "SLES" ]; then
-        crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=10s
+        crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=3600s timeout=60s
         if [[ -n "${VM_METADATA[sap_vip_secondary_range]}" ]]; then
-          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range]}" logging="yes" meta priority=10
+          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="600s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" alias_range_name="${VM_METADATA[sap_vip_secondary_range]}" logging="yes" meta priority=10
         else
-          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="180s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
+          crm configure primitive rsc_vip_gcp-primary ocf:gcp:alias op monitor interval="60s" timeout="60s" op start interval="0" timeout="600s" op stop interval="0" timeout="180s" params alias_ip="${VM_METADATA[sap_vip]}/32" hostlist="${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]}" gcloud_path="${GCLOUD}" logging="yes" meta priority=10
         fi
         crm configure group g-primary rsc_vip_int-primary rsc_vip_gcp-primary
       fi
@@ -450,8 +464,6 @@ ha::pacemaker_add_vip() {
 ha::pacemaker_config_bootstrap_hdb() {
   main::errhandle_log_info "Cluster: Configuring bootstrap for SAP HANA"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
-    crm configure property no-quorum-policy="stop"
-    crm configure property startup-fencing="true"
     crm configure property stonith-timeout="300s"
     crm configure property stonith-enabled="true"
     crm configure rsc_defaults resource-stickiness="1000"
@@ -462,7 +474,6 @@ ha::pacemaker_config_bootstrap_hdb() {
     # as per documentation
     pcs resource defaults resource-stickiness=1000
     pcs resource defaults migration-threshold=5000
-    pcs property set startup-fencing="true"
     pcs property set stonith-enabled="true"
     # increase from default 60
     pcs property set stonith-timeout="300s"
@@ -507,7 +518,7 @@ ha::pacemaker_add_hana() {
         params SID="${VM_METADATA[sap_hana_sid]}" InstanceNumber="${VM_METADATA[sap_hana_instance_number]}"
 
     clone cln_SAPHanaTopology_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} rsc_SAPHanaTopology_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} \
-        meta is-managed="true" clone-node-max="1" target-role="Started" interleave="true"
+        meta clone-node-max="1" target-role="Started" interleave="true"
 EOF
 
     crm configure load update /root/.deploy/cluster.tmp
@@ -518,13 +529,14 @@ EOF
         op start interval="0" timeout="3600" \
         op stop interval="0" timeout="3600" \
         op promote interval="0" timeout="3600" \
+        op demote interval="0" timeout="3600" \
         op monitor interval="60" role="Master" timeout="700" \
         op monitor interval="61" role="Slave" timeout="700" \
         params SID="${VM_METADATA[sap_hana_sid]}" InstanceNumber="${VM_METADATA[sap_hana_instance_number]}" PREFER_SITE_TAKEOVER="true" \
         DUPLICATE_PRIMARY_TIMEOUT="7200" AUTOMATED_REGISTER="true"
 
     ms msl_SAPHana_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} rsc_SAPHana_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} \
-        meta is-managed="true" notify="true" clone-max="2" clone-node-max="1" \
+        meta notify="true" clone-max="2" clone-node-max="1" \
         target-role="Started" interleave="true"
 
     colocation col_saphana_ip_${VM_METADATA[sap_hana_sid]}_HDB${VM_METADATA[sap_hana_instance_number]} 4000: g-primary:Started \
