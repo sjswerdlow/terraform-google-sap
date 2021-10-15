@@ -13,34 +13,39 @@ module "sap_ase" {
   #
   # Fill in the information below
   #
-  instance_name          = "VM_NAME"
-  machine_type           = "MACHINE_TYPE"
-  project_id             = "PROJECT_ID"
-  zone                   = "ZONE"
-  subnetwork             = "SUBNETWORK"
-  linux_image            = "IMAGE_FAMILY"
-  linux_image_project    = "IMAGE_PROJECT"
-  ase_sid                = "ASE_DATABASE_SID"
-  ase_sid_size           = DBSID_DISK_SIZE     # in GB, default is 8
-  ase_diag_size          = DIAG_DISK_SIZE      # in GB, default is 8
-  ase_sap_temp_size      = SAPTEMP_DISK_SIZE   # in GB, default is 8
-  ase_sap_data_size      = SAPDATA_DISK_SIZE   # in GB, default is 30
-  ase_log_size           = LOGDIR_DISK_SIZE    # in GB, default is 8
-  ase_backup_size        = BACKUP_DISK_SIZE    # in GB, default is 0 and will not be created
-  ase_sap_data_ssd       = true_or_false       # default is true
-  ase_log_ssd            = true_or_false       # default is true
-  usr_sap_size           = USRSAP_DISK_SIZE    # in GB, default is 0 and will not be created
-  sap_mnt_size           = SAPMNT_DISK_SIZE    # in GB, default is 0 and will not be created
-  swap_size              = SWAP_SIZE           # in GB, default is 0 and will not be created
+  ##############################################################################
+  ## MANDATORY SETTINGS
+  ##############################################################################
+  # General settings
+  project_id             = "PROJECT_ID"          # example: my-project-x
+  zone                   = "ZONE"                # example: us-east1-b
+  machine_type           = "MACHINE_TYPE"        # example: n1-highmem-32
+  subnetwork             = "SUBNETWORK"          # example: default
+  linux_image            = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
+  linux_image_project    = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  # Optional advanced options
-  # network_tags           = "TAG"
-  # public_ip              = true_or_false            # default is true
-  # service_account        = "CUSTOM_SERVICE_ACCOUNT"
-  # sap_deployment_debug   = true_or_false            # default is false
-  # use_reservation_name   = "RESERVATION_NAME"
+  instance_name          = "VM_NAME"             # example: ase_instance
+  ase_sid                = "ASE_DATABASE_SID"    # example: A00
 
-  # Developer options - do not modify unless instructed to
-  # primary_startup_url    = "SCRIPT_URL"
-  # post_deployment_script = "SCRIPT_URL"
+  ##############################################################################
+  ## OPTIONAL SETTINGS
+  ##   - default values will be determined/calculated
+  ##############################################################################
+  # ase_sid_size         = DB_SID_DISK_SIZE      # default is 8, minimum is 8
+  # ase_diag_size        = DIAG_DISK_SIZE        # default is 8, minimum is 8
+  # ase_sap_temp_size    = SAP_TEMP_DISK_SIZE    # default is 8, minimum is 8
+  # ase_sap_data_size    = SAP_DATA_DISK_SIZE    # default is 30, minimum is 30
+  # ase_sap_data_ssd     = true_or_false         # default is true
+  # ase_log_size         = LOG_DISK_SIZE         # default is 8, minimum is 8
+  # ase_log_ssd          = true_or_false         # default is true
+  # ase_backup_size      = BACKUP_DISK_SIZE      # default is 0, minimum is 0
+
+  # usr_sap_size         = USR_SAP_DISK_SIZE     # default is 0, minimum is 0
+  # sap_mnt_size         = SAP_MNT_DISK_SIZE     # default is 0, minimum is 0
+  # swap_size            = SWAP_SIZE             # default is 0, minimum is 0
+  # network_tags         = []                    # default is an empty list
+  # public_ip            = true_or_false         # default is true
+  # service_account      = ""                    # default is an empty string
+  # sap_deployment_debug = true_or_false         # default is false
+  # use_reservation_name = ""                    # default is an empty string
 }
