@@ -178,9 +178,9 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
-    sap_hana_sid_adm_password = var.sap_hana_sid_adm_password
-    # wording on system_adm_password may be inconsitent with DM
-    sap_hana_system_adm_password = var.sap_hana_system_adm_password
+    sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    # wording on system_password may be inconsitent with DM
+    sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_hana_scaleout_nodes = var.sap_hana_scaleout_nodes
@@ -255,9 +255,9 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
-    sap_hana_sid_adm_password = var.sap_hana_sid_adm_password
-    # wording on system_adm_password may be inconsitent with DM
-    sap_hana_system_password = var.sap_hana_system_adm_password
+    sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    # wording on system_password may be inconsitent with DM
+    sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_hana_scaleout_nodes = var.sap_hana_scaleout_nodes

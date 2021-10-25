@@ -1,4 +1,3 @@
-
 #
 # Version:    BUILD.VERSION
 # Build Hash: BUILD.HASH
@@ -14,31 +13,42 @@ module "hana_scaleout" {
   #
   # Fill in the information below
   #
-  instance_name              = "VM_NAME"              # example: hana-scaleout
-  machine_type               = "MACHINE_TYPE"         # example: n1-highmem-32
-  project_id                 = "PROJECT_ID"           # example: customer-project-x
-  zone                       = "ZONE"                 # example: us-central1-a
-  subnetwork                 = "SUBNETWORK"           # example: default
-  linux_image                = "LINUX_IMAGE"          # example: sles-15-sp2-sap
-  linux_image_project        = "LINUX_IMAGE_PROJECT"  # example: suse-sap-cloud
-  sap_hana_deployment_bucket = "GCS_BUCKET"           # example: customer-bucket/hana-install-media
-  sap_hana_sid               = "HANA_SID"             # example: SH1
-  sap_hana_instance_number   = "HANA_INSTANCE_NUM"    # example: 00
-  sap_hana_sidadm_password   = "SIDADM_PASS"          # example: Google123
-  sap_hana_system_password   = "SYSTE$M_PASS"         # example: Google123
-  sap_hana_worker_nodes      = WORKER_NODES_NUM       # example: 2
-  sap_hana_standby_nodes     = STANDBY_NODES_NUM      # example: 1
-  sap_hana_shared_nfs        = "HANA_SHARED_NFS"      # example: 10.1.1.1:/hanashared
-  sap_hana_backup_nfs        = "HANA_BACKUP_NFS"      # example: 10.1.1.1:/hanabackup
-  public_ip                  = true_or_false          # example: true
+  ##############################################################################
+  ## MANDATORY SETTINGS
+  ##############################################################################
+  # General settings
+  project_id                     = "PROJECT_ID"          # example: my-project-x
+  zone                           = "ZONE"                # example: us-east1-b
+  machine_type                   = "MACHINE_TYPE"        # example: n1-highmem-32
+  subnetwork                     = "SUBNETWORK"          # example: default
+  linux_image                    = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
+  linux_image_project            = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  # Add additional variable docs / examples
-  # Optional advanced options
-  # sap_hana_double_volume_size   = true_or_false            # default is false
-  # service_account               = "CUSTOM_SERVICE_ACCOUNT"
-  # network_tags                  = "TAG"
-  # sap_hana_sidadm_uid           = "SIDADM_UID"             # default is 900
-  # sap_hana_sapsys_gid           = "SAPSYS_GID"             # default is 79
-  # sap_deployment_debug          = true_or_false            # default is false
-  # use_reservation_name          = "RESERVATION_NAME"
+  instance_name                  = "VM_NAME"             # example: hana_instance
+  sap_hana_shared_nfs            = "HANA_SHARED_NFS"     # example: 10.10.10.10:/shared
+  sap_hana_backup_nfs            = "HANA_BACKUP_NFS"     # example: 10.10.10.10:/backup
+
+  ##############################################################################
+  ## OPTIONAL SETTINGS
+  ##   - default values will be determined/calculated
+  ##############################################################################
+  # HANA settings
+  # sap_hana_deployment_bucket   = "GCS_BUCKET"          # default is ""
+  # sap_hana_sid                 = "SID"                 # default is "", otherwise must conform to [a-zA-Z][a-zA-Z0-9]{2}
+  # sap_hana_instance_number     = INSTANCE_NUMBER       # default is 0, must be a 2 digit positive number
+  # sap_hana_sidadm_password     = "SID_ADM_PASSWORD"    # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
+  # sap_hana_system_password     = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
+  # sap_hana_double_volume_size  = true_or_false         # default is false
+  # sap_hana_sidadm_uid          = HANA_SIDADM_UID       # default is 900
+  # sap_hana_sapsys_gid          = HANA_SAPSYS_GID       # default is 79
+
+  # Scaleout settings
+  # sap_hana_worker_nodes        = WORKER_NODES_NUM        # default is 1, must be at least 1, at most 15
+  # sap_hana_standby_nodes       = STANDBY_NODES_NUM       # default is 1, must be at least 1, at most 3
+
+  # network_tags                 = []                    # default is an empty list
+  # public_ip                    = true_or_false         # default is true
+  # service_account              = ""                    # default is an empty string
+  # sap_deployment_debug         = true_or_false         # default is false
+  # use_reservation_name         = ""                    # default is an empty string
 }

@@ -10,90 +10,114 @@
 # Local variables
 ################################################################################
 locals {
-  mem_map = {
-    "n1-highmem-32": 208,
-    "n1-highmem-64": 416,
-    "n1-highmem-96": 624,
-    "n1-megamem-96": 1433,
-    "n1-ultramem-40": 961,
-    "n1-ultramem-80": 1922,
-    "n1-ultramem-160": 3844,
-    "m1-megamem-96": 1433,
-    "m1-ultramem-40": 961,
-    "m1-ultramem-80": 1922,
-    "m1-ultramem-160": 3844,
-    "m2-ultramem-208": 5916,
-    "m2-megamem-416": 5916,
-    "m2-ultramem-416": 11832,
+  mem_size_map = {
+    "n1-highmem-32"   = 208
+    "n1-highmem-64"   = 416
+    "n1-highmem-96"   = 624
+    "n1-megamem-96"   = 1433
+    "n2-highmem-32"   = 256
+    "n2-highmem-48"   = 386
+    "n2-highmem-64"   = 512
+    "n2-highmem-80"   = 640
+    "n1-ultramem-40"  = 961
+    "n1-ultramem-80"  = 1922
+    "n1-ultramem-160" = 3844
+    "m1-megamem-96"   = 1433
+    "m1-ultramem-40"  = 961
+    "m1-ultramem-80"  = 1922
+    "m1-ultramem-160" = 3844
+    "m2-ultramem-208" = 5916
+    "m2-megamem-416"  = 5916
+    "m2-ultramem-416" = 11832
   }
-  cpu_map = {
-    "n1-highmem-32": "Intel Broadwell",
-    "n1-highmem-64": "Intel Broadwell",
-    "n1-highmem-96": "Intel Skylake",
-    "n1-megamem-96": "Intel Skylake",
-    "m1-megamem-96": "Intel Skylake",
+  cpu_platform_map = {
+    "n1-highmem-32"   = "Intel Broadwell"
+    "n1-highmem-64"   = "Intel Broadwell"
+    "n1-highmem-96"   = "Intel Skylake"
+    "n1-megamem-96"   = "Intel Skylake"
+    "n2-highmem-32"   = "Automatic"
+    "n2-highmem-48"   = "Automatic"
+    "n2-highmem-64"   = "Automatic"
+    "n2-highmem-80"   = "Automatic"
+    "n1-ultramem-40"  = "Automatic"
+    "n1-ultramem-80"  = "Automatic"
+    "n1-ultramem-160" = "Automatic"
+    "m1-megamem-96"   = "Intel Skylake"
+    "m1-ultramem-40"  = "Automatic"
+    "m1-ultramem-80"  = "Automatic"
+    "m1-ultramem-160" = "Automatic"
+    "m2-ultramem-208" = "Automatic"
+    "m2-megamem-416"  = "Automatic"
+    "m2-ultramem-416" = "Automatic"
   }
-  mem_size = lookup(local.mem_map, var.machine_type, 256)
-  hana_log_size_min = min(512, max(64, local.mem_size / 2))
-  hana_data_size_min = local.mem_size * 12 / 10
-  # we double the log and data sizes if sap_hana_double_volume_size is true and mem_size != 208
-  hana_log_size = var.sap_hana_double_volume_size == true && local.mem_size != 208 ? local.hana_log_size_min * 2 : local.hana_log_size_min
-  hana_data_size = var.sap_hana_double_volume_size == true && local.mem_size != 208 ? local.hana_data_size_min * 2 : local.hana_data_size_min
-  pdssd_size = max(834, local.hana_log_size + local.hana_data_size + 1)
+  mem_size = lookup(local.mem_size_map, var.machine_type, 256)
+  sap_hana_log_size_min = min(512, max(64, local.mem_size / 2))
+  sap_hana_data_size_min = local.mem_size * 12 / 10
+
+  # doubles log and data size if sap_hana_double_volume_size == true; sap_hana_double_volume_size should work but is not used because of readiblity
+  sap_hana_log_size = local.sap_hana_log_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
+  sap_hana_data_size = local.sap_hana_data_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
+
   zone_split = split("-", var.zone)
-  shared_vpc = split("/", var.subnetwork)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
+  subnetwork_split = split("/", var.subnetwork)
+
+  pdssd_size = max(834, local.sap_hana_log_size + local.sap_hana_data_size + 1)
 }
 
 ################################################################################
 # disks
 ################################################################################
-resource "google_compute_disk" "hana_scaleout_pd_disks" {
-  # Need a pd disk for primary, worker nodes
-  count = var.sap_hana_worker_nodes + 1
-  name  = format("${var.instance_name}-mnt%05d", count.index + 1)
-  type  = "pd-ssd"
-  size = local.pdssd_size
-  zone = var.zone
-  project = var.project_id
-}
-
-resource "google_compute_disk" "hana_scaleout_boot_disks" {
+resource "google_compute_disk" "sap_hana_scaleout_boot_disks" {
   # Need a disk for primary, worker nodes, standby nodes
   count = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes + 1
   name  = count.index == 0 ? "${var.instance_name}-boot" : "${var.instance_name}w${count.index}-boot"
-  type  = "pd-balanced"
-  size = 45
-  image = "${var.linux_image_project}/${var.linux_image}"
+  type  = "pd-standard"
   zone = var.zone
+  size = 45
+  project = var.project_id
+  image = "${var.linux_image_project}/${var.linux_image}"
+}
+
+resource "google_compute_disk" "sap_hana_scaleout_pd_disks" {
+  # Need a pd disk for primary, worker nodes
+  count = var.sap_hana_worker_nodes + 1
+  name = format("${var.instance_name}-mnt%05d", count.index + 1)
+  type = "pd-ssd"
+  zone = var.zone
+  size = local.pdssd_size
   project = var.project_id
 }
 
 ################################################################################
 # instances
 ################################################################################
-resource "google_compute_instance" "hana_scaleout_primary" {
+resource "google_compute_instance" "sap_hana_scaleout_primary_instance" {
   # We will have a primary, worker nodes, and standby nodes
   name = var.instance_name
   machine_type = var.machine_type
-  min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
   zone = var.zone
   project = var.project_id
+
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
+
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source =  "projects/${var.project_id}/zones/${var.zone}/disks/${var.instance_name}-boot"
-  }
-  attached_disk {
-    # we only attach the PDs to the primary and workers
-    device_name = google_compute_disk.hana_scaleout_pd_disks[0].name
-    source = google_compute_disk.hana_scaleout_pd_disks[0].self_link
+    source = google_compute_disk.sap_hana_scaleout_boot_disks[0].self_link
   }
 
-  can_ip_forward = true
+  attached_disk {
+    # we only attach the PDs to the primary and workers
+    device_name = google_compute_disk.sap_hana_scaleout_pd_disks[0].name
+    source = google_compute_disk.sap_hana_scaleout_pd_disks[0].self_link
+  }
+
+  can_ip_forward = var.can_ip_forward
+
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
+    subnetwork = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
@@ -103,9 +127,11 @@ resource "google_compute_instance" "hana_scaleout_primary" {
       }
     }
   }
+
   tags = var.network_tags
+
   service_account {
-    # An empty string service account will default to the projects default compute engine service account
+    # The default empty service account string will use the projects default compute engine service account
     email = var.service_account
     scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
@@ -124,23 +150,23 @@ resource "google_compute_instance" "hana_scaleout_primary" {
   }
 
   metadata = {
-    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
-    sap_deployment_debug = var.sap_deployment_debug
+    startup-script = var.primary_startup_url
     post_deployment_script = var.post_deployment_script
+    sap_deployment_debug = var.sap_deployment_debug
+    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_original_role = "master"
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    # wording on system_password may be inconsitent with DM
     sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
-    sap_hana_shared_nfs = var.sap_hana_shared_nfs
-    sap_hana_backup_nfs = var.sap_hana_backup_nfs
     sap_hana_scaleout_nodes = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes
     sap_hana_worker_nodes = var.sap_hana_worker_nodes
     sap_hana_standby_nodes = var.sap_hana_standby_nodes
+    sap_hana_shared_nfs = var.sap_hana_shared_nfs
+    sap_hana_backup_nfs = var.sap_hana_backup_nfs
   }
-
-  metadata_startup_script = var.primary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
@@ -148,29 +174,33 @@ resource "google_compute_instance" "hana_scaleout_primary" {
   }
 }
 
-resource "google_compute_instance" "hana_scaleout_workers" {
+resource "google_compute_instance" "sap_hana_scaleout_worker_instances" {
   # We will have a primary, worker nodes, and standby nodes
   count = var.sap_hana_worker_nodes
   name = "${var.instance_name}w${count.index + 1}"
   machine_type = var.machine_type
-  min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
   zone = var.zone
   project = var.project_id
+
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
+
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source = "projects/${var.project_id}/zones/${var.zone}/disks/${var.instance_name}w${count.index + 1}-boot"
-  }
-  attached_disk {
-    # we only attach the PDs to the primary and workers
-    device_name = google_compute_disk.hana_scaleout_pd_disks[count.index + 1].name
-    source = google_compute_disk.hana_scaleout_pd_disks[count.index + 1].self_link
+    source = google_compute_disk.sap_hana_scaleout_boot_disks[count.index + 1].self_link
   }
 
-  can_ip_forward = true
+  attached_disk {
+    # we only attach the PDs to the primary and workers
+    device_name = google_compute_disk.sap_hana_scaleout_pd_disks[count.index + 1].name
+    source = google_compute_disk.sap_hana_scaleout_pd_disks[count.index + 1].self_link
+  }
+
+  can_ip_forward = var.can_ip_forward
+
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
+    subnetwork = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
@@ -180,7 +210,9 @@ resource "google_compute_instance" "hana_scaleout_workers" {
       }
     }
   }
+
   tags = var.network_tags
+
   service_account {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
@@ -201,23 +233,23 @@ resource "google_compute_instance" "hana_scaleout_workers" {
   }
 
   metadata = {
-    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
-    sap_deployment_debug = var.sap_deployment_debug
+    startup-script = var.secondary_startup_url
     post_deployment_script = var.post_deployment_script
-    sap_hana_original_role = "worker"
+    sap_deployment_debug = var.sap_deployment_debug
+    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
+    sap_hana_scaleout_nodes = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes
+
+    sap_hana_original_role = "worker"
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
     sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_shared_nfs = var.sap_hana_shared_nfs
     sap_hana_backup_nfs = var.sap_hana_backup_nfs
-    sap_hana_scaleout_nodes = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes
     sap_hana_worker_nodes = var.sap_hana_worker_nodes
     sap_hana_standby_nodes = var.sap_hana_standby_nodes
   }
-
-  metadata_startup_script = var.secondary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
@@ -225,28 +257,32 @@ resource "google_compute_instance" "hana_scaleout_workers" {
   }
 
   depends_on = [
-    google_compute_instance.hana_scaleout_primary,
+    google_compute_instance.sap_hana_scaleout_primary_instance,
   ]
 }
 
-resource "google_compute_instance" "hana_scaleout_standbys" {
+resource "google_compute_instance" "sap_hana_scaleout_standby_instances" {
   # We will have a primary, worker nodes, and standby nodes
   count = var.sap_hana_standby_nodes
   name = "${var.instance_name}w${count.index + var.sap_hana_worker_nodes + 1}"
   machine_type = var.machine_type
-  min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
   zone = var.zone
   project = var.project_id
+
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
+
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source = "projects/${var.project_id}/zones/${var.zone}/disks/${var.instance_name}w${count.index + var.sap_hana_worker_nodes + 1}-boot"
+    source = google_compute_disk.sap_hana_scaleout_boot_disks[count.index + var.sap_hana_worker_nodes + 1].self_link
   }
 
-  can_ip_forward = true
+
+  can_ip_forward = var.can_ip_forward
+
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
+    subnetwork = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
@@ -256,7 +292,9 @@ resource "google_compute_instance" "hana_scaleout_standbys" {
       }
     }
   }
+
   tags = var.network_tags
+
   service_account {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
@@ -277,23 +315,23 @@ resource "google_compute_instance" "hana_scaleout_standbys" {
   }
 
   metadata = {
-    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
-    sap_deployment_debug = var.sap_deployment_debug
+    startup-script = var.secondary_startup_url
     post_deployment_script = var.post_deployment_script
-    sap_hana_original_role = "standby"
+    sap_deployment_debug = var.sap_deployment_debug
+    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
+    sap_hana_scaleout_nodes = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes
+
+    sap_hana_original_role = "standby"
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
     sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_shared_nfs = var.sap_hana_shared_nfs
     sap_hana_backup_nfs = var.sap_hana_backup_nfs
-    sap_hana_scaleout_nodes = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes
     sap_hana_worker_nodes = var.sap_hana_worker_nodes
     sap_hana_standby_nodes = var.sap_hana_standby_nodes
   }
-
-  metadata_startup_script = var.secondary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
@@ -301,6 +339,6 @@ resource "google_compute_instance" "hana_scaleout_standbys" {
   }
 
   depends_on = [
-    google_compute_instance.hana_scaleout_primary,
+    google_compute_instance.sap_hana_scaleout_primary_instance,
   ]
 }
