@@ -1,4 +1,4 @@
-output "db2_instance" {
-  description = "DB2 instance"
-  value = google_compute_instance.db2_instance.self_link
+output "sap_db2_instance_self_link" {
+  description = "DB2 self-link for instance created"
+  value = google_compute_instance.sap_db2_instance.self_link
 }
