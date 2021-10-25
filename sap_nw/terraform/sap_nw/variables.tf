@@ -73,7 +73,7 @@ variable "network_tags" {
   default = []
 }
 
-variable "public_IP" {
+variable "public_ip" {
   type = bool
   description = "OPTIONAL - Defines whether a public IP address should be added to your VM. By default this is set to Yes. Note that if you set this to No without appropriate network nat and tags in place, there will be no route to the internet and thus the installation will fail."
   default = true
