@@ -55,10 +55,12 @@ if [[ "${1:-}" == "devoverwrite" ]]; then
 fi
 GCS_BUCKET="core-connect-dm-templates/${BUILD_DATE_FOR_BUCKET}"
 GCS_LATEST_BUCKET="cloudsapdeploy/deploymentmanager/latest"
+GCS_CONTINUOUS_BUCKET="cloudsapdeploytesting/continuous"
 RESOURCE_URL="gs://${GCS_BUCKET}"
 RESOURCE_URL_LATEST="gs://${GCS_BUCKET}"
 TERRAFORM_GCS_BUCKET="${GCS_BUCKET}"
 TERRAFORM_GCS_LATEST_BUCKET="${GCS_BUCKET}"
+TERRAFORM_GCS_CONTINUOUS_BUCKET="${GCS_BUCKET}"
 TERRAFORM_PREFIX="gcs::"
 # Note: these need to be the https://www.googleapis.com links when the
 #       TERRAFORM_PREFIX is gcs:: otherwise it can be storage.googleapis.com
@@ -71,7 +73,7 @@ GCE_STORAGE_REPO_SUFFIX=""
 PACEMAKER_ALIAS_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/alias"
 PACEMAKER_ROUTE_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/route"
 PACEMAKER_STONITH_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/gcpstonith"
-PACEMAKER_CHECKOUT="git clone https://partner-code.googlesource.com/sap-ext-pacemaker-gcp .build_pacemakergcp"
+PACEMAKER_CHECKOUT="git clone sso://partner-code/sap-ext-pacemaker-gcp .build_pacemakergcp"
 SED_CMD="sed -i"
 if [[ "$(uname)" == "Darwin" ]]; then
   SED_CMD="sed -i .bak"
@@ -133,6 +135,22 @@ if [[ "${1:-}" == "publicbeta" ]]; then
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
   TERRAFORM_GCS_BUCKET="cloudsapdeploy/terraform/${BUILD_DATE_FOR_BUCKET}"
+  TERRAFORM_GCS_LATEST_BUCKET="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  TERRAFORM_PREFIX=""
+  TERRAFORM_URL="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  TERRAFORM_URL_LATEST="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
+  GCE_STORAGE_REPO_SUFFIX=""
+  PACEMAKER_ALIAS_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/alias -o"
+  PACEMAKER_ROUTE_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/route -o"
+  PACEMAKER_STONITH_COPY="curl ${RESOURCE_URL}/pacemaker-gcp/gcpstonith -o"
+  GSUTIL_PUBLIC_OPT="-a public-read"
+fi
+
+if [[ "${1:-}" == "continuous" ]]; then
+  GCS_BUCKET="cloudsapdeploytesting/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
+  RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
+  RESOURCE_URL_LATEST="https://storage.googleapis.com/${GCS_BUCKET}"
+  TERRAFORM_GCS_BUCKET="cloudsapdeploytesting/terraform/${BUILD_DATE_FOR_BUCKET}"
   TERRAFORM_GCS_LATEST_BUCKET="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
   TERRAFORM_PREFIX=""
   TERRAFORM_URL="https://storage.googleapis.com/${TERRAFORM_GCS_BUCKET}"
@@ -292,6 +310,22 @@ deploy_latest() {
   echo "Deploying to latest folder complete"
 }
 
+deploy_latest_for_continuous_testing() {
+  echo "Deploying DM Templates to latest test folder gs://${GCS_CONTINUOUS_BUCKET}"
+  gsutil rm gs://${GCS_CONTINUOUS_BUCKET}/**
+  gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/* gs://${GCS_CONTINUOUS_BUCKET}/
+  echo "Resetting cache on gs://${GCS_CONTINUOUS_BUCKET}"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_CONTINUOUS_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${GCS_CONTINUOUS_BUCKET}/**" >/dev/null
+  echo "Deploying Terraform to latest folder gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}"
+  gsutil rm gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/**
+  gsutil -q -m cp -r -c -a public-read gs://"${TERRAFORM_GCS_BUCKET}"/* gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/
+  echo "Resetting cache on gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}"
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/**" >/dev/null
+  echo "Deploying to latest test folder complete"
+}
+
 cleanup_build() {
   echo "Cleanup build dirs"
   rm -fr .build_dmtemplates
@@ -373,6 +407,9 @@ sleep 1
 # if this is release then deploy_latest
 if [[ "${GCS_FOLDER}" == "release" ]]; then
   deploy_latest
+fi
+if [[ "${GCS_FOLDER}" == "continuous" ]]; then
+  deploy_latest_for_continuous_testing
 fi
 cleanup_build
 
