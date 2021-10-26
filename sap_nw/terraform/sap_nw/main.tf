@@ -80,7 +80,7 @@ resource "google_compute_instance" "sap_nw_instance" {
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source =  "projects/${var.project_id}/zones/${var.zone}/disks/${var.instance_name}-boot"
+    source = google_compute_disk.nw_boot_disk.self_link
   }
 
   # OPTIONAL - /usr/sap
