@@ -229,7 +229,7 @@ build() {
 
   echo "Building Terraform module zips"
   pushd .build_dmtemplates
-  pushd sap_hana_scaleout/terraform/hana_scaleout
+  pushd sap_hana_scaleout/terraform/sap_hana_scaleout
   zip ../../sap_hana_scaleout_module.zip *
   popd
   pushd sap_nw/terraform/sap_nw
