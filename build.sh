@@ -232,6 +232,12 @@ build() {
   pushd sap_hana_scaleout/terraform/hana_scaleout
   zip ../../sap_hana_scaleout_module.zip *
   popd
+  pushd sap_nw/terraform/sap_nw
+  zip ../../sap_nw_module.zip *
+  popd
+  pushd sap_nw-win/terraform/sap_nw_win
+  zip ../../sap_nw_win_module.zip *
+  popd
   pushd sap_nw_ha/terraform/sap_nw_ha
   zip ../../sap_nw_ha_module.zip *
   popd
