@@ -229,26 +229,11 @@ build() {
 
   echo "Building Terraform module zips"
   pushd .build_dmtemplates
-  pushd sap_hana_scaleout/terraform/sap_hana_scaleout
-  zip ../../sap_hana_scaleout_module.zip *
-  popd
-  pushd sap_nw/terraform/sap_nw
-  zip ../../sap_nw_module.zip *
-  popd
-  pushd sap_nw-win/terraform/sap_nw_win
-  zip ../../sap_nw_win_module.zip *
-  popd
-  pushd sap_nw_ha/terraform/sap_nw_ha
-  zip ../../sap_nw_ha_module.zip *
-  popd
   pushd sap_ase/terraform/sap_ase
   zip ../../sap_ase_module.zip *
   popd
   pushd sap_ase-win/terraform/sap_ase_win
   zip ../../sap_ase_win_module.zip *
-  popd
-  pushd sap_maxdb-win/terraform/sap_maxdb_win
-  zip ../../sap_maxdb_win_module.zip *
   popd
   pushd sap_db2/terraform/sap_db2
   zip ../../sap_db2_module.zip *
@@ -256,8 +241,29 @@ build() {
   pushd sap_db2-win/terraform/sap_db2_win
   zip ../../sap_db2_win_module.zip *
   popd
+  pushd sap_hana/terraform/sap_hana
+  zip ../../sap_hana_module.zip *
+  popd
+  pushd sap_hana_ha/terraform/sap_hana_ha
+  zip ../../sap_hana_ha_module.zip *
+  popd
+  pushd sap_hana_scaleout/terraform/sap_hana_scaleout
+  zip ../../sap_hana_scaleout_module.zip *
+  popd
   pushd sap_maxdb/terraform/sap_maxdb
   zip ../../sap_maxdb_module.zip *
+  popd
+  pushd sap_maxdb-win/terraform/sap_maxdb_win
+  zip ../../sap_maxdb_win_module.zip *
+  popd
+  pushd sap_nw/terraform/sap_nw
+  zip ../../sap_nw_module.zip *
+  popd
+  pushd sap_nw_ha/terraform/sap_nw_ha
+  zip ../../sap_nw_ha_module.zip *
+  popd
+  pushd sap_nw-win/terraform/sap_nw_win
+  zip ../../sap_nw_win_module.zip *
   popd
   popd
   echo "Finished building Terraform module zips"
