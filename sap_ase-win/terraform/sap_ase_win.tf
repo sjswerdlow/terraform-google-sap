@@ -45,4 +45,5 @@ module "sap_ase_win" {
   # service_account      = ""                      # default is an empty string
   # sap_deployment_debug = true_or_false           # default is false
   # use_reservation_name = ""                      # default is an empty string
+  # can_ip_forward       = true
 }
