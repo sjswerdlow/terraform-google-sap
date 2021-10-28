@@ -43,7 +43,7 @@ variable "swap_size" {
   default = 0
   validation {
     condition = var.swap_size >= 0
-    error_message = "Size of swap must be 0 or larger."
+    error_message = "The swap_size must be 0 or larger."
   }
 }
 
