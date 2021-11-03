@@ -18,7 +18,7 @@ locals {
 # disks
 ################################################################################
 resource "google_compute_disk" "sap_ase_boot_disk" {
-  name = "${var.instance_name}-boot"
+  name = "google-${var.instance_name}-boot"
   type = "pd-balanced"
   zone = var.zone
   size = 30 # GB
@@ -27,7 +27,7 @@ resource "google_compute_disk" "sap_ase_boot_disk" {
 }
 
 resource "google_compute_disk" "sap_ase_sid_disk" {
-  name = "${var.instance_name}-ase-sid"
+  name = "google-${var.instance_name}-asesid"
   type = "pd-balanced"
   zone = var.zone
   size = var.ase_sid_size
@@ -35,7 +35,7 @@ resource "google_compute_disk" "sap_ase_sid_disk" {
 }
 
 resource "google_compute_disk" "sap_ase_sap_temp_disk" {
-  name = "${var.instance_name}-ase-sap-temp"
+  name = "google-${var.instance_name}-asesaptemp"
   type = "pd-balanced"
   zone = var.zone
   size = var.ase_sap_temp_size
@@ -43,7 +43,7 @@ resource "google_compute_disk" "sap_ase_sap_temp_disk" {
 }
 
 resource "google_compute_disk" "sap_ase_log_disk" {
-  name = "${var.instance_name}-ase-log"
+  name = "google-${var.instance_name}-aselog"
   type = var.ase_log_ssd ? "pd-ssd" : "pd-balanced"
   zone = var.zone
   size = var.ase_log_size
@@ -51,7 +51,7 @@ resource "google_compute_disk" "sap_ase_log_disk" {
 }
 
 resource "google_compute_disk" "sap_ase_sap_data_disk" {
-  name = "${var.instance_name}-ase-sap-data"
+  name = "google-${var.instance_name}-asesapdata"
   type = var.ase_sap_data_ssd ? "pd-ssd" : "pd-balanced"
   zone = var.zone
   size = var.ase_sap_data_size
@@ -60,7 +60,7 @@ resource "google_compute_disk" "sap_ase_sap_data_disk" {
 
 resource "google_compute_disk" "sap_ase_backup_disk" {
   count = var.ase_backup_size > 0 ? 1 : 0
-  name = "${var.instance_name}-ase-backup"
+  name = "google-${var.instance_name}-asebackup"
   type = "pd-balanced"
   zone = var.zone
   size = var.ase_backup_size
@@ -68,7 +68,7 @@ resource "google_compute_disk" "sap_ase_backup_disk" {
 }
 
 resource "google_compute_disk" "sap_ase_diag_disk" {
-  name = "${var.instance_name}-ase-diag"
+  name = "google-${var.instance_name}-asesapdiag"
   type = "pd-balanced"
   zone = var.zone
   size = var.ase_diag_size
@@ -77,7 +77,7 @@ resource "google_compute_disk" "sap_ase_diag_disk" {
 
 resource "google_compute_disk" "sap_ase_usr_sap_disk" {
   count = var.usr_sap_size > 0 ? 1 : 0
-  name = "${var.instance_name}-ase-usr-sap"
+  name = "google-${var.instance_name}-aseusrsap"
   type = "pd-balanced"
   zone = var.zone
   size = var.usr_sap_size
@@ -86,7 +86,7 @@ resource "google_compute_disk" "sap_ase_usr_sap_disk" {
 
 resource "google_compute_disk" "sap_ase_swap_disk" {
   count = var.swap_size > 0 ? 1 : 0
-  name = "${var.instance_name}-ase-swap"
+  name = "google-${var.instance_name}-aseswap"
   type = "pd-balanced"
   zone = var.zone
   size = var.swap_size
@@ -95,7 +95,7 @@ resource "google_compute_disk" "sap_ase_swap_disk" {
 
 resource "google_compute_disk" "sap_ase_sap_mnt_disk" {
   count = var.sap_mnt_size > 0 ? 1 : 0
-  name = "${var.instance_name}-ase-sap-mnt"
+  name = "google-${var.instance_name}-asesapmnt"
   type = "pd-balanced"
   size = var.sap_mnt_size
   zone = var.zone
