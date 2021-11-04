@@ -147,7 +147,7 @@ if [[ "${1:-}" == "publicbeta" ]]; then
   GSUTIL_PUBLIC_OPT="-a public-read"
 fi
 
-if [[ "${1:-}" == "continuous" ]]; then
+if [[ "${1:-}" == "terraform_continuous_testing_build" ]]; then
   GCS_BUCKET="cloudsapdeploytesting/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_CONTINUOUS="https://storage.googleapis.com/cloudsapdeploytesting/deploymentmanager/continuous"
@@ -428,7 +428,7 @@ sleep 1
 if [[ "${GCS_FOLDER}" == "release" ]]; then
   deploy_latest
 fi
-if [[ "${GCS_FOLDER}" == "continuous" ]]; then
+if [[ "${GCS_FOLDER}" == "terraform_continuous_testing_build" ]]; then
   deploy_latest_for_continuous_testing
 fi
 cleanup_build
