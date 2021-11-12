@@ -185,6 +185,7 @@ main::create_filesystem() {
   local mount_point=${1}
   local device=${2}
   local filesystem=$3
+  local is_optional_file_system=${4}
 
   if [[ -h /dev/disk/by-id/google-"${HOSTNAME}"-"${device}" ]]; then
     main::errhandle_log_info "--- ${mount_point}"
@@ -195,6 +196,8 @@ main::create_filesystem() {
     if [[ "${mount_point}" != "swap" ]]; then
       main::check_mount "${mount_point}"
     fi
+  elif [[ ${is_optional_file_system:-"notOptional"} == "optional" ]]; then
+    main::errhandle_log_warn "Unable to create optional file system ${filesystem}."
   else
     main::errhandle_log_error "Unable to access ${device}"
   fi

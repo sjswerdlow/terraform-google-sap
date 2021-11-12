@@ -6,7 +6,8 @@ ase::create_filesystems() {
   main::create_filesystem /sybase/"${VM_METADATA[sap_ase_sid]}"/saplog_1 aselog xfs
   main::create_filesystem /sybase/"${VM_METADATA[sap_ase_sid]}"/saptemp asesaptemp xfs
   main::create_filesystem /sybase/"${VM_METADATA[sap_ase_sid]}"/sapdiag asesapdiag xfs
-  main::create_filesystem /sybasebackup asebackup xfs
+  main::create_filesystem /sybasebackup asebackup xfs optional
+
 }
 
 
