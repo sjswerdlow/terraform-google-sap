@@ -34,8 +34,8 @@ module "sap_hana" {
   # sap_hana_deployment_bucket   = "GCS_BUCKET"          # default is ""
   # sap_hana_sid                 = "SID"                 # default is "", otherwise must conform to [a-zA-Z][a-zA-Z0-9]{2}
   # sap_hana_instance_number     = INSTANCE_NUMBER       # default is 0, must be a 2 digit positive number
-  # sap_hana_sid_adm_password    = "SID_ADM_PASSWORD"    # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
-  # sap_hana_system_adm_password = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
+  # sap_hana_sidadm_password     = "SID_ADM_PASSWORD"    # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
+  # sap_hana_system_password     = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
   # sap_hana_scaleout_nodes      = SCALEOUT_NODES_NUM    # default is 0, minimum is 0
   # sap_hana_double_volume_size  = true_or_false         # default is false
   # sap_hana_backup_size         = BACKUP_DISK_SIZE      # default is 0, minimum is 0
