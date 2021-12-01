@@ -254,7 +254,7 @@ variable "install_monitoring_agent" {
   default = true
   description = "Automatically install the Google Cloud monitoring agent for SAP NetWeaver"
 }
-variable "use_reservation_name" {
+variable "reservation_name" {
   type = string
   default = ""
   description = <<-EOT

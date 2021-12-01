@@ -39,7 +39,7 @@ module "sap_nw" {
   # sap_deployment_debug       = false
   # post_deployment_script     = ""
   # primary_startup_url        = "curl -s BUILD.TERRA_SH_URL/sap_nw/startup.sh | bash -x -s BUILD.TERRA_SH_URL"
-  # use_reservation_name       = ""
+  # reservation_name           = ""
   # can_ip_forward             = true
 
 

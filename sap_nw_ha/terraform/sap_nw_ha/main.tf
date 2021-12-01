@@ -134,12 +134,12 @@ resource "google_compute_instance" "scs_instance" {
     ]
   }
   dynamic "reservation_affinity" {
-    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    for_each = length(var.reservation_name) > 1 ? [1] : []
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
         key = "compute.googleapis.com/reservation-name"
-        values = [var.use_reservation_name]
+        values = [var.reservation_name]
       }
     }
   }
@@ -234,12 +234,12 @@ resource "google_compute_instance" "ers_instance" {
     ]
   }
   dynamic "reservation_affinity" {
-    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    for_each = length(var.reservation_name) > 1 ? [1] : []
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
         key = "compute.googleapis.com/reservation-name"
-        values = [var.use_reservation_name]
+        values = [var.reservation_name]
       }
     }
   }

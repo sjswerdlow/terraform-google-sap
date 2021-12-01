@@ -73,5 +73,5 @@ module "sap_nw_ha" {
   # sap_deployment_debug       = false
   # install_monitoring_agent   = true
   # post_deployment_script     = ""
-  # use_reservation_name       = ""
+  # reservation_name           = ""
 }

@@ -44,7 +44,7 @@ module "maxdb" {
   # public_ip              = TRUE_OR_FALSE            # default is true
   # service_account        = "CUSTOM_SERVICE_ACCOUNT"
   # sap_deployment_debug   = TRUE_OR_FALSE            # default is false
-  # use_reservation_name   = "RESERVATION_NAME"
+  # reservation_name       = "RESERVATION_NAME"
 
   # Developer options
   # primary_startup_url    = "SCRIPT_URL"

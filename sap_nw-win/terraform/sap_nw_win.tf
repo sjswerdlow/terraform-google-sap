@@ -37,7 +37,7 @@ module "sap_nw_win" {
   # public_ip            = true_or_false           # default is true
   # service_account      = ""                      # default is an empty string
   # sap_deployment_debug = true_or_false           # default is false
-  # use_reservation_name = ""                      # default is an empty string
+  # reservation_name     = ""                      # default is an empty string
 
   # can_ip_forward             = true
 }

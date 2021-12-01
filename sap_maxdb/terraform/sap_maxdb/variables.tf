@@ -145,7 +145,7 @@ variable "service_account" {
   default = ""
 }
 
-variable "use_reservation_name" {
+variable "reservation_name" {
   description = "OPTIONAL - Ability to use a specified reservation"
   type = string
   default = ""

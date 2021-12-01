@@ -103,7 +103,7 @@ variable "primary_startup_url" {
   description = "Startup script to be executed when the VM boots, should not be overridden"
 }
 
-variable "use_reservation_name" {
+variable "reservation_name" {
   type = string
   description = "OPTIONAL - Ability to use a specified reservation"
   default = ""

@@ -153,7 +153,7 @@ variable "sap_deployment_debug" {
   default = false
 }
 
-variable "use_reservation_name" {
+variable "reservation_name" {
   type = string
   description = <<-EOT
   Use a reservation specified by RESERVATION_NAME.

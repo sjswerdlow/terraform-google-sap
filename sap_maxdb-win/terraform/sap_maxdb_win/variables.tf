@@ -116,7 +116,7 @@ variable "public_ip" {
   default = true
 }
 
-variable "use_reservation_name" {
+variable "reservation_name" {
   type = string
   description = "OPTIONAL - Ability to use a specified reservation."
   default = ""

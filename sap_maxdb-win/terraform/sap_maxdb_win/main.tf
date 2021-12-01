@@ -154,12 +154,12 @@ resource "google_compute_instance" "maxdb_win_instance" {
   tags = flatten(var.network_tags)
 
   dynamic "reservation_affinity" {
-    for_each = length(var.use_reservation_name) > 1 ? [1] : []
+    for_each = length(var.reservation_name) > 1 ? [1] : []
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
         key = "compute.googleapis.com/reservation-name"
-        values = [var.use_reservation_name]
+        values = [var.reservation_name]
       }
     }
   }

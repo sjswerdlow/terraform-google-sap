@@ -27,7 +27,7 @@ module "sap_ase" {
   # public_ip              = true_or_false
   # service_account        = "CUSTOM_SERVICE_ACCOUNT"
   # sap_deployment_debug   = true_or_false
-  # use_reservation_name   = "RESERVATION_NAME"
+  # reservation_name       = "RESERVATION_NAME"
   # can_ip_forward         = true_or_false
 
   # Developer options
