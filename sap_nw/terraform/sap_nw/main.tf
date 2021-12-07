@@ -1,68 +1,60 @@
 #
 # Terraform SAP NW for Google Cloud
 #
-#
 # Version:    BUILD.VERSION
 # Build Hash: BUILD.HASH
 #
-
 
 ################################################################################
 # Local variables
 ################################################################################
 locals {
-  shared_vpc = split("/", var.subnetwork)
   zone_split = split("-", var.zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
+  subnetwork_split = split("/", var.subnetwork)
 
   cpu_map = {
     "n1-highmem-96": "Intel Skylake",
     "n1-megamem-96": "Intel Skylake",
   }
-
 }
-
 
 ################################################################################
 # disks
 ################################################################################
-
-resource "google_compute_disk" "nw_boot_disk" {
-  name  = "${var.instance_name}-boot"
-  type  = "pd-balanced"
-  zone  = var.zone
-  size  = 30
+resource "google_compute_disk" "sap_nw_boot_disk" {
+  name = "${var.instance_name}-boot"
+  type = "pd-balanced"
+  zone = var.zone
+  size = 30 # GB
   project = var.project_id
   image = "${var.linux_image_project}/${var.linux_image}"
 }
 
-# OPTIONAL - /usr/sap
-resource "google_compute_disk" "nw_usrsap_disks" {
+resource "google_compute_disk" "sap_nw_usr_sap_disk" {
   count = var.usr_sap_size > 0 ? 1 : 0
-  name  = "${var.instance_name}-usrsap"
-  type  = "pd-balanced"
-  zone  = var.zone
-  size  = var.usr_sap_size
+  name = "${var.instance_name}-usrsap"
+  type = "pd-balanced"
+  zone = var.zone
+  size = var.usr_sap_size
   project = var.project_id
 }
 
-# OPTIONAL - /sapmnt
-resource "google_compute_disk" "nw_sapmnt_disks" {
-  count = var.sap_mnt_size > 0 ? 1 : 0
-  name  = "${var.instance_name}-sapmnt"
-  type  = "pd-balanced"
-  zone  = var.zone
-  size  = var.sap_mnt_size
-  project = var.project_id
-}
-
-# OPTIONAL - swap disk
-resource "google_compute_disk" "nw_swap_disks" {
+resource "google_compute_disk" "sap_nw_swap_disk" {
   count = var.swap_size > 0 ? 1 : 0
-  name  = "${var.instance_name}-swap"
-  type  = "pd-balanced"
-  zone  = var.zone
-  size  = var.swap_size
+  name = "${var.instance_name}-swap"
+  type = "pd-balanced"
+  zone = var.zone
+  size = var.swap_size
+  project = var.project_id
+}
+
+resource "google_compute_disk" "sap_nw_sap_mnt_disk" {
+  count = var.sap_mnt_size > 0 ? 1 : 0
+  name = "${var.instance_name}-sapmnt"
+  type = "pd-balanced"
+  size = var.sap_mnt_size
+  zone = var.zone
   project = var.project_id
 }
 
@@ -70,48 +62,47 @@ resource "google_compute_disk" "nw_swap_disks" {
 # instances
 ################################################################################
 resource "google_compute_instance" "sap_nw_instance" {
-  provider = google
   name = var.instance_name
-  project = var.project_id
-  zone = var.zone
   machine_type = var.machine_type
+  zone = var.zone
+  project = var.project_id
   min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
 
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source = google_compute_disk.nw_boot_disk.self_link
+    source = google_compute_disk.sap_nw_boot_disk.self_link
   }
 
-  # OPTIONAL - /usr/sap
   dynamic "attached_disk" {
     for_each = var.usr_sap_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.nw_usrsap_disks[0].name
-      source = google_compute_disk.nw_usrsap_disks[0].self_link
+      device_name = google_compute_disk.sap_nw_usrsap_disks[0].name
+      source = google_compute_disk.sap_nw_usrsap_disks[0].self_link
     }
   }
-  # OPTIONAL - /sapmnt
+
   dynamic "attached_disk" {
     for_each = var.sap_mnt_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.nw_sapmnt_disks[0].name
-      source = google_compute_disk.nw_sapmnt_disks[0].self_link
+      device_name = google_compute_disk.sap_nw_sapmnt_disks[0].name
+      source = google_compute_disk.sap_nw_sapmnt_disks[0].self_link
     }
   }
-  # OPTIONAL - swap disk
+
   dynamic "attached_disk" {
     for_each = var.swap_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.nw_swap_disks[0].name
-      source = google_compute_disk.nw_swap_disks[0].self_link
+      device_name = google_compute_disk.sap_nw_swap_disks[0].name
+      source = google_compute_disk.sap_nw_swap_disks[0].self_link
     }
   }
 
   can_ip_forward = var.can_ip_forward
+
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
+    subnetwork = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
@@ -121,7 +112,9 @@ resource "google_compute_instance" "sap_nw_instance" {
       }
     }
   }
+
   tags = var.network_tags
+
   service_account {
     # An empty string service account will default to the projects default compute engine service account
     email = var.service_account
@@ -142,16 +135,13 @@ resource "google_compute_instance" "sap_nw_instance" {
   }
 
   metadata = {
-    sap_deployment_debug = var.sap_deployment_debug
+    startup-script = var.primary_startup_url
     post_deployment_script = var.post_deployment_script
+    sap_deployment_debug = var.sap_deployment_debug
   }
-
-  metadata_startup_script = var.primary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
     ignore_changes = [metadata]
   }
-
 }
-
