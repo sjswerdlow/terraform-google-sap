@@ -33,7 +33,6 @@ resource "google_compute_disk" "sap_nw_win_boot_disk" {
 }
 
 resource "google_compute_disk" "sap_nw_win_usrsap_disk" {
-  count = var.usr_sap_size > 0 ? 1 : 0
   name = "${var.instance_name}-nw-usr-sap"
   type = "pd-balanced"
   zone = var.zone
@@ -42,7 +41,6 @@ resource "google_compute_disk" "sap_nw_win_usrsap_disk" {
 }
 
 resource "google_compute_disk" "sap_nw_win_swap_disk" {
-  count = var.swap_size > 0 ? 1 : 0
   name = "${var.instance_name}-nw-swap"
   type = "pd-balanced"
   zone = var.zone
@@ -66,20 +64,15 @@ resource "google_compute_instance" "sap_nw_win_instance" {
     source = google_compute_disk.sap_nw_win_boot_disk.self_link
   }
 
-  dynamic "attached_disk" {
-    for_each = var.usr_sap_size > 0 ? [1] : []
-    content {
-      device_name = google_compute_disk.sap_nw_win_usrsap_disk[0].name
-      source = google_compute_disk.sap_nw_win_usrsap_disk[0].self_link
-    }
+
+  attached_disk {
+    device_name = google_compute_disk.sap_nw_win_usrsap_disk.name
+    source = google_compute_disk.sap_nw_win_usrsap_disk.self_link
   }
 
-  dynamic "attached_disk" {
-    for_each = var.swap_size > 0 ? [1] : []
-    content {
-      device_name = google_compute_disk.sap_nw_win_swap_disk[0].name
-      source = google_compute_disk.sap_nw_win_swap_disk[0].self_link
-    }
+  attached_disk {
+    device_name = google_compute_disk.sap_nw_win_swap_disk.name
+    source = google_compute_disk.sap_nw_win_swap_disk.self_link
   }
 
   can_ip_forward = var.can_ip_forward

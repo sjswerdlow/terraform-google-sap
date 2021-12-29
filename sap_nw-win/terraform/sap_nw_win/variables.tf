@@ -37,13 +37,23 @@ variable "instance_name" {
   }
 }
 
+variable "usr_sap_size" {
+  type = number
+  description = "Size in GB of S:\\ (Sap)"
+  default = 20
+  validation {
+    condition = var.usr_sap_size >= 20
+    error_message = "The usr_sap_size must be 20 or larger."
+  }
+}
+
 variable "swap_size" {
   type = number
   description = "Size in GB of P:\\ (Pagefile)"
-  default = 0
+  default = 20
   validation {
-    condition = var.swap_size >= 0
-    error_message = "The swap_size must be 0 or larger."
+    condition = var.swap_size >= 20
+    error_message = "The swap_size must be 20 or larger."
   }
 }
 
@@ -101,7 +111,7 @@ variable "post_deployment_script" {
 variable "primary_startup_url" {
   type = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default = "https://storage.googleapis.com/BUILD.SH_URL/sap_ase-win/startup.ps1"
+  default = "BUILD.TERRA_SH_URL/sap_nw-win/startup.ps1"
 }
 
 variable "can_ip_forward" {
