@@ -72,7 +72,7 @@ ha::create_hdb_user
 ha::hdbuserstore
 hdb::backup /hanabackup/data/pre_ha_config
 ha::enable_hsr
-ha::enable_hdb_hadr_provider_hook  # RHEL only
+ha::enable_hdb_hadr_provider_hook
 ha::ready
 ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_primary

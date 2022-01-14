@@ -71,7 +71,7 @@ ha::download_scripts  # SLES only
 ha::create_hdb_user
 ha::hdbuserstore
 hdb::backup /hanabackup/data/pre_ha_config
-ha::enable_hdb_hadr_provider_hook  # RHEL only
+ha::enable_hdb_hadr_provider_hook
 ha::wait_for_primary
 ha::copy_hdb_ssfs_keys
 hdb::stop
