@@ -584,17 +584,22 @@ EOF
 
 
 ha::enable_hdb_hadr_provider_hook() {
-  # only used for RHEL and with HANA 2 SP3 +
-  if [ "${LINUX_DISTRO}" = "RHEL" ]; then
-    main::errhandle_log_info "Enabling HA/DR provider hook"
-    HANA_MAJOR_VERSION=$(su - "${VM_METADATA[sap_hana_sid],,}"adm HDB version | grep "version:" | awk '{ print $2 }' | awk -F "." '{ print $1 }')
-    HANA_MINOR_VERSION=$(expr $(su - "${VM_METADATA[sap_hana_sid],,}"adm HDB version | grep "version:" | awk '{ print $2 }' | awk -F "." '{ print $3 }') + 0)
-    if [ "${HANA_MAJOR_VERSION}" -ge 2 -a "${HANA_MINOR_VERSION}" -ge 30 ]; then
-      su - "${VM_METADATA[sap_hana_sid],,}"adm HDB stop
-      mkdir -p /hana/shared/myHooks
+  main::errhandle_log_info "Enabling HA/DR provider hook - checking HANA version"
+  HANA_MAJOR_VERSION=$(su - "${VM_METADATA[sap_hana_sid],,}"adm HDB version | grep "version:" | awk '{ print $2 }' | awk -F "." '{ print $1 }')
+  HANA_MINOR_VERSION=$(expr $(su - "${VM_METADATA[sap_hana_sid],,}"adm HDB version | grep "version:" | awk '{ print $2 }' | awk -F "." '{ print $3 }') + 0)
+  main::errhandle_log_info "SAP HANA version returned as ${HANA_MAJOR_VERSION}.${HANA_MINOR_VERSION}"
+  if [ "${HANA_MAJOR_VERSION}" -ge 2 -a "${HANA_MINOR_VERSION}" -ge 30 ]; then
+    # only used HANA 2 SP3 +
+    main::errhandle_log_info "Enabling HA/DR provider hook - HANA version checked"
+    su - "${VM_METADATA[sap_hana_sid],,}"adm HDB stop
+    mkdir -p /hana/shared/myHooks
+    [[ "${LINUX_DISTRO}" = "RHEL" ]] && \
       cp /usr/share/SAPHanaSR/srHook/SAPHanaSR.py /hana/shared/myHooks
-      chown -R "${VM_METADATA[sap_hana_sid],,}"adm:sapsys /hana/shared/myHooks
-      cat <<EOF >> /hana/shared/"${VM_METADATA[sap_hana_sid]}"/global/hdb/custom/config/global.ini
+    [[ "${LINUX_DISTRO}" = "SLES" ]] && \
+      cp /usr/share/SAPHanaSR/SAPHanaSR.py /hana/shared/myHooks
+    chown -R "${VM_METADATA[sap_hana_sid],,}"adm:sapsys /hana/shared/myHooks
+
+    cat <<EOF >> /hana/shared/"${VM_METADATA[sap_hana_sid]}"/global/hdb/custom/config/global.ini
 
 [ha_dr_provider_SAPHanaSR]
 provider = SAPHanaSR
@@ -604,13 +609,28 @@ execution_order = 1
 [trace]
 ha_dr_saphanasr = info
 EOF
-      cat <<EOF > /etc/sudoers.d/20-saphana
-Cmnd_Alias SOK   = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid]}_glob_srHook -v SOK -t crm_config -s SAPHanaSR
-Cmnd_Alias SFAIL = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid]}_glob_srHook -v SFAIL -t crm_config -s SAPHanaSR
-${VM_METADATA[sap_hana_sid],,}adm ALL=(ALL) NOPASSWD: SOK, SFAIL
+
+    [[ "${LINUX_DISTRO}" = "RHEL" ]] && cat <<EOF > /etc/sudoers.d/20-saphana
+Cmnd_Alias SITEA_SOK = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_primary_instance]} -v SOK -t crm_config -s SAPHanaSR
+Cmnd_Alias SITEA_SFAIL = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_primary_instance]} -v SFAIL -t crm_config -s SAPHanaSR
+Cmnd_Alias SITEB_SOK = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_secondary_instance]} -v SOK -t crm_config -s SAPHanaSR
+Cmnd_Alias SITEB_SFAIL = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_secondary_instance]} -v SFAIL -t crm_config -s SAPHanaSR
+${VM_METADATA[sap_hana_sid],,}adm ALL=(ALL) NOPASSWD: SITEA_SOK, SITEA_SFAIL, SITEB_SOK, SITEB_SFAIL
+# https://access.redhat.com/solutions/6315931
+Defaults!SITEA_SOK, SITEA_SFAIL, SITEB_SOK, SITEB_SFAIL !requiretty
 EOF
-      su - "${VM_METADATA[sap_hana_sid],,}"adm HDB start
-    fi
+
+    [[ "${LINUX_DISTRO}" = "SLES" ]] && cat <<EOF > /etc/sudoers.d/20-saphana
+# SAPHanaSR-ScaleUp entries for writing srHook cluster attribute
+Cmnd_Alias SOK_SITEA = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_primary_instance]} -v SOK -t crm_config -s SAPHanaSR
+Cmnd_Alias SFAIL_SITEA = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_primary_instance]} -v SFAIL -t crm_config -s SAPHanaSR
+Cmnd_Alias SOK_SITEB = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_secondary_instance]} -v SOK -t crm_config -s SAPHanaSR
+Cmnd_Alias SFAIL_SITEB = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_site_srHook_${VM_METADATA[sap_secondary_instance]} -v SFAIL -t crm_config -s SAPHanaSR
+${VM_METADATA[sap_hana_sid],,}adm ALL=(ALL) NOPASSWD: SOK_SITEA, SFAIL_SITEA, SOK_SITEB, SFAIL_SITEB
+EOF
+
+    su - "${VM_METADATA[sap_hana_sid],,}"adm HDB start
+    main::errhandle_log_info "Enabling HA/DR provider hook - configuration completed"
   fi
 }
 
