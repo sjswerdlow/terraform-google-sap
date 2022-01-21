@@ -62,7 +62,7 @@ locals {
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
 
-  pdssd_size = max(834, local.sap_hana_log_size + local.sap_hana_data_size + 1)
+  pdssd_size = ceil(max(834, local.sap_hana_log_size + local.sap_hana_data_size + 1))
 }
 
 ################################################################################

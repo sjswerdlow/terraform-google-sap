@@ -63,10 +63,10 @@ locals {
   pdhdd_size_default = var.sap_hana_scaleout_nodes > 0 ? 2 * local.mem_size * (var.sap_hana_scaleout_nodes + 1) : 0
 
   # ensure pd-ssd meets minimum size/performance ; 32 is the min allowed memery and + 1 is there to make sure no undersizing happens
-  pdssd_size = max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size + 32 + 1)
+  pdssd_size = ceil(max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size + 32 + 1))
 
   # ensure pd-hdd for backup is smaller than the maximum pd size
-  pdssd_size_worker = max(834, local.hana_log_size + local.hana_data_size + 32 + 1)
+  pdssd_size_worker = ceil(max(834, local.hana_log_size + local.hana_data_size + 32 + 1))
 
   # change PD-HDD size if a custom backup size has been set
   pdhdd_size = var.sap_hana_backup_size > 0 ? var.sap_hana_backup_size : local.pdhdd_size_default
