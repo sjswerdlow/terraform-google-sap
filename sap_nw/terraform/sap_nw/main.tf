@@ -77,24 +77,24 @@ resource "google_compute_instance" "sap_nw_instance" {
   dynamic "attached_disk" {
     for_each = var.usr_sap_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.sap_nw_usrsap_disks[0].name
-      source = google_compute_disk.sap_nw_usrsap_disks[0].self_link
+      device_name = google_compute_disk.sap_nw_usrsap_disk[0].name
+      source = google_compute_disk.sap_nw_usrsap_disk[0].self_link
     }
   }
 
   dynamic "attached_disk" {
     for_each = var.sap_mnt_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.sap_nw_sapmnt_disks[0].name
-      source = google_compute_disk.sap_nw_sapmnt_disks[0].self_link
+      device_name = google_compute_disk.sap_nw_sap_mnt_disk[0].name
+      source = google_compute_disk.sap_nw_sap_mnt_disk[0].self_link
     }
   }
 
   dynamic "attached_disk" {
     for_each = var.swap_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.sap_nw_swap_disks[0].name
-      source = google_compute_disk.sap_nw_swap_disks[0].self_link
+      device_name = google_compute_disk.sap_nw_swap_disk[0].name
+      source = google_compute_disk.sap_nw_swap_disk[0].self_link
     }
   }
 
