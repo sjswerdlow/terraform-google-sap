@@ -243,6 +243,7 @@ nw-ha::pacemaker_create_cluster_primary() {
   ha-cluster-init --name "${VM_METADATA[pacemaker_cluster_name]}" --yes --interface eth0 corosync
   main::errhandle_log_info "Configuring Corosync per Google recommendations."
   sed -i 's/token:.*/token: 20000/g' /etc/corosync/corosync.conf
+  sed -i '/consensus:/d' /etc/corosync/corosync.conf
   sed -i 's/join:.*/join: 60/g' /etc/corosync/corosync.conf
   sed -i 's/max_messages:.*/max_messages: 20/g' /etc/corosync/corosync.conf
   sed -i 's/token_retransmits_before_loss_const:.*/token_retransmits_before_loss_const: 10/g' /etc/corosync/corosync.conf
