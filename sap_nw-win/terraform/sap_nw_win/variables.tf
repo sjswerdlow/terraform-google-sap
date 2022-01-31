@@ -37,13 +37,23 @@ variable "instance_name" {
   }
 }
 
+variable "usr_sap_size" {
+  type = number
+  description = "Size in GB of S:\\ (Sap)"
+  default = 20
+  validation {
+    condition = var.usr_sap_size >= 20
+    error_message = "The usr_sap_size must be 20 or larger."
+  }
+}
+
 variable "swap_size" {
   type = number
   description = "Size in GB of P:\\ (Pagefile)"
-  default = 0
+  default = 20
   validation {
-    condition = var.swap_size >= 0
-    error_message = "The swap_size must be 0 or larger."
+    condition = var.swap_size >= 20
+    error_message = "The swap_size must be 20 or larger."
   }
 }
 
