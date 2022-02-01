@@ -18,16 +18,15 @@ module "sap_hana_ha" {
   ##############################################################################
   # General settings
   project_id                      = "PROJECT_ID"          # example: my-project-x
-  zone                            = "ZONE"                # example: us-east1-b
   machine_type                    = "MACHINE_TYPE"        # example: n1-highmem-32
   subnetwork                      = "SUBNETWORK"          # example: default
   linux_image                     = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
   linux_image_project             = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  primary_instance_name           = "PRIMARY_NAME"        # example: hana_ha_primary
+  primary_instance_name           = "PRIMARY_NAME"        # example: hana-ha-primary
   primary_zone                    = "PRIMARY_ZONE"        # example: us-east1-b, must be in the same region as secondary_zone
 
-  secondary_instance_name         = "SECONDARY_NAME"      # example: hana_ha_secondary
+  secondary_instance_name         = "SECONDARY_NAME"      # example: hana-ha-secondary
   secondary_zone                  = "SECONDARY_ZONE"      # example: us-east1-c, must be in the same region as primary_zone
 
   ##############################################################################

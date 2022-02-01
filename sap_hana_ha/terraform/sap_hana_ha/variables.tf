@@ -83,31 +83,31 @@ variable "sap_hana_instance_number" {
   }
 }
 
-variable "sap_hana_sid_adm_password" {
+variable "sap_hana_sidadm_password" {
   type = string
   description = "The linux sidadm login password. If this is not defined, the GCE instance will be provisioned without SAP HANA installed. Minimum requirement is 8 characters."
   default = ""
   validation {
-    condition = length(var.sap_hana_sid_adm_password) == 0 ||
-      (length(var.sap_hana_sid_adm_password) >= 8 &&
-       can(regex("[0-9]", var.sap_hana_sid_adm_password)) &&
-       can(regex("[a-z]", var.sap_hana_sid_adm_password)) &&
-       can(regex("[A-Z]", var.sap_hana_sid_adm_password)))
-    error_message = "The sap_hana_sid_adm_password must have at least 8 characters. Must contain at least one capitalized letter, one lowercase letter, and one number."
+    condition = (length(var.sap_hana_sidadm_password) == 0 ||
+      (length(var.sap_hana_sidadm_password) >= 8 &&
+       can(regex("[0-9]", var.sap_hana_sidadm_password)) &&
+       can(regex("[a-z]", var.sap_hana_sidadm_password)) &&
+       can(regex("[A-Z]", var.sap_hana_sidadm_password))))
+    error_message = "The sap_hanasidadm_password must have at least 8 characters. Must contain at least one capitalized letter, one lowercase letter, and one number."
   }
 }
 
-variable "sap_hana_system_adm_password" {
+variable "sap_hana_system_password" {
   type = string
   description = "The SAP HANA SYSTEM password. If this is not defined, the GCE instance will be provisioned without SAP HANA installed. Minimum requirement is 8 characters with at least 1 number."
   default = ""
   validation {
-    condition = length(var.sap_hana_system_adm_password == 0 ||
-      (length(var.sap_hana_system_adm_password >= 8 &&
-       can(regex("[0-9]", var.sap_hana_system_adm_password)) &&
-       can(regex("[a-z]", var.sap_hana_system_adm_password)) &&
-       can(regex("[A-Z]", var.sap_hana_system_adm_password)))
-    error_message = "The sap_hana_system_adm_password must have at least 8 characters. Must contain at least one capitalized letter, one lowercase letter, and one number."
+    condition = (length(var.sap_hana_system_password) == 0 ||
+      (length(var.sap_hana_system_password) >= 8 &&
+       can(regex("[0-9]", var.sap_hana_system_password)) &&
+       can(regex("[a-z]", var.sap_hana_system_password)) &&
+       can(regex("[A-Z]", var.sap_hana_system_password))))
+    error_message = "The sap_hana_system_password must have at least 8 characters. Must contain at least one capitalized letter, one lowercase letter, and one number."
   }
 }
 
@@ -229,12 +229,12 @@ variable "post_deployment_script" {
 variable "primary_startup_url" {
   type = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default = "curl -s BUILD.TERRA_SH_URL/sap_ase/startup.sh | bash -x -s BUILD.TERRA_SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -x -s BUILD.TERRA_SH_URL"
 }
 
 variable "secondary_startup_url" {
   type = string
-  default = "curl -s BUILD.SH_URL/sap_hana/startup_secondary.sh | bash -s BUILD.SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_secondary.sh | bash -s BUILD.TERRA_SH_URL"
   description = "DO NOT USE"
 }
 

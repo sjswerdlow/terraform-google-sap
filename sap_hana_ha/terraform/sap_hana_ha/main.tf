@@ -49,7 +49,7 @@ locals {
     "m2-megamem-416"  = "Automatic"
     "m2-ultramem-416" = "Automatic"
   }
-  mem_size = lookup(local.mem_map, var.machine_type, 640)
+  mem_size = lookup(local.mem_size_map, var.machine_type, 640)
   hana_log_size_min = min(512, max(64, local.mem_size / 2))
   hana_data_size_min = local.mem_size * 12 / 10
   hana_shared_size_min = min(1024, local.mem_size)
@@ -65,8 +65,11 @@ locals {
 
   pdhdd_size = var.sap_hana_backup_size > 0 ? var.sap_hana_backup_size : 2 * local.mem_size
 
+  # determine default log/data/shared sizes
+  hana_shared_size = min(1024, local.mem_size + 0)
+
   # ensure pd-ssd meets minimum size/performance
-  pdssd_size = ceil(max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size + 32 + 1))
+  pdssd_size = max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size + 32 + 1)
 
   sap_vip_solution = var.use_ilb_vip ? "ILB" : ""
   sap_hc_port = var.use_ilb_vip ? (60000 + var.sap_hana_instance_number) : 0
@@ -74,18 +77,18 @@ locals {
   # Note that you can not have default values refernce another variable value
   primary_instance_group_name = var.primary_instance_group_name != "" ? var.primary_instance_group_name : "ig-${var.primary_instance_name}"
   secondary_instance_group_name = var.secondary_instance_group_name != "" ? var.secondary_instance_group_name : "ig-${var.secondary_instance_name}"
-  loadbalancer_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${var.sap_hana_sid}"}-ilb"
-  loadbalancer_address_name = "lb-${var.sap_hana_sid}-address"
+  loadbalancer_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}-ilb"
+  loadbalancer_address_name = "lb-${lower(var.sap_hana_sid)}-address"
   loadbalancer_address = var.sap_vip
-  healthcheck_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${var.sap_hana_sid}"}-hc"
-  forwardingrule_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${var.sap_hana_sid}"}-fwr"
+  healthcheck_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}-hc"
+  forwardingrule_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}-fwr"
 
   split_network = split(var.network, ",")
   is_vpc_network = length(local.split_network) > 1
   is_basic_network = !local.is_vpc_network && length(var.network) > 1
 
   # Network: with Shared VPC option with ILB
-  is_shared_vpc = local.is_vpc_network
+  is_subnetwork_split = local.is_vpc_network
   possible_network = local.is_vpc_network ? (
     "https://www.googleapis.com/compute/v1/projects/${local.split_network[0]}/global/networks/${local.split_network[1]}"
     ) : (
@@ -96,7 +99,7 @@ locals {
     ) : local.possible_network
 
   # network config variables
-  zone_split = split("-", var.zone)
+  zone_split = split("-", var.primary_zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
 }
@@ -139,7 +142,7 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   zone = var.primary_zone
   project = var.project_id
 
-  min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
 
   boot_disk {
     auto_delete = true
@@ -160,8 +163,8 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   can_ip_forward = var.can_ip_forward
 
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
+    subnetwork = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
@@ -200,9 +203,9 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
-    sap_hana_sidadm_password = var.sap_hana_sid_adm_password
-    # wording on system_adm_password may be inconsitent with DM
-    sap_hana_system_password = var.sap_hana_system_adm_password
+    sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    # wording on system_password may be inconsitent with DM
+    sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_vip = var.sap_vip
@@ -259,7 +262,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   zone = var.secondary_zone
   project = var.project_id
 
-  min_cpu_platform = lookup(local.cpu_map, var.machine_type, "Automatic")
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
 
   boot_disk {
     auto_delete = true
@@ -320,9 +323,9 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
-    sap_hana_sid_adm_password = var.sap_hana_sid_adm_password
-    # wording on system_adm_password may be inconsitent with DM
-    sap_hana_system_password = var.sap_hana_system_adm_password
+    sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    # wording on system_password may be inconsitent with DM
+    sap_hana_system_password = var.sap_hana_system_password
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_vip = var.sap_vip
@@ -357,7 +360,7 @@ resource "google_compute_instance_group" "sap_hana_ha_secondary_instance_group" 
   count = var.use_ilb_vip ? 1 : 0
   name = local.secondary_instance_group_name
   zone = var.secondary_zone
-  instances = [google_compute_instance.sap_rhana_ha_secondary_instance.id]
+  instances = [google_compute_instance.sap_hana_ha_secondary_instance.id]
   project = var.project_id
 }
 
