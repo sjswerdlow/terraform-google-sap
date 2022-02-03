@@ -202,13 +202,21 @@ variable "swap_size" {
 #
 variable "sap_scs_instance_number" {
   type = string
-  default = ""
+  default = "10"
   description = "SCS instance number"
+  validation {
+    condition     = length(var.sap_scs_instance_number) == 2 && tonumber(var.sap_scs_instance_number) >= 0
+    error_message = "The length of sap_scs_instance_number must be 2. If you'd like a single digit (x) then enter it as (0x)."
+  }
 }
 variable "sap_ers_instance_number" {
   type = string
-  default = ""
+  default = "00"
   description = "ERS instance number"
+  validation {
+    condition     = length(var.sap_ers_instance_number) == 2 && tonumber(var.sap_ers_instance_number) >= 0
+    error_message = "The length of sap_ers_instance_number must be 2. If you'd like a single digit (x) then enter it as (0x)."
+  }
 }
 variable "sap_nw_abap" {
   type = bool
