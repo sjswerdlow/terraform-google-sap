@@ -31,7 +31,7 @@ resource "google_compute_disk" "sap_nw_boot_disk" {
   image = "${var.linux_image_project}/${var.linux_image}"
 }
 
-resource "google_compute_disk" "sap_nw_usr_sap_disk" {
+resource "google_compute_disk" "sap_nw_usrsap_disk" {
   count = var.usr_sap_size > 0 ? 1 : 0
   name = "${var.instance_name}-usrsap"
   type = "pd-balanced"
@@ -49,7 +49,7 @@ resource "google_compute_disk" "sap_nw_swap_disk" {
   project = var.project_id
 }
 
-resource "google_compute_disk" "sap_nw_sap_mnt_disk" {
+resource "google_compute_disk" "sap_nw_sapmnt_disk" {
   count = var.sap_mnt_size > 0 ? 1 : 0
   name = "${var.instance_name}-sapmnt"
   type = "pd-balanced"
@@ -85,8 +85,8 @@ resource "google_compute_instance" "sap_nw_instance" {
   dynamic "attached_disk" {
     for_each = var.sap_mnt_size > 0 ? [1] : []
     content {
-      device_name = google_compute_disk.sap_nw_sap_mnt_disk[0].name
-      source = google_compute_disk.sap_nw_sap_mnt_disk[0].self_link
+      device_name = google_compute_disk.sap_nw_sapmnt_disk[0].name
+      source = google_compute_disk.sap_nw_sapmnt_disk[0].self_link
     }
   }
 
