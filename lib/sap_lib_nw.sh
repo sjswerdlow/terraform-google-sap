@@ -363,7 +363,7 @@ nw-ha::create_health_check_resources() {
     op monitor timeout=20s interval=10s \
     op_params depth=0
 
-  crm configure primitive "health-check-${VM_METADATA[sap_sid]}-ERS${VM_METADATA[sap_ers_instance_number]}" anything \
+  crm -F configure primitive "health-check-${VM_METADATA[sap_sid]}-ERS${VM_METADATA[sap_ers_instance_number]}" anything \
     params binfile="/usr/bin/socat" \
     cmdline_options="-U TCP-LISTEN:${VM_METADATA[ers_hc_port]},backlog=10,fork,reuseaddr /dev/null" \
     op monitor timeout=20s interval=10s \
