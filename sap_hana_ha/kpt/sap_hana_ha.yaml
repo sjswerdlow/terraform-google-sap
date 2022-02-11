@@ -1,0 +1,217 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeDisk
+metadata:
+  name: df-krm-primary-pdssd-disk
+spec:
+  size: 60
+  type: pd-ssd
+  location: us-central1-c
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeDisk
+metadata:
+  name: df-krm-primary-backup-disk
+spec:
+  size: 30
+  type: pd-standard
+  location: us-central1-c
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstance
+metadata:
+  annotations:
+    cnrm.cloud.google.com/allow-stopping-for-update: "true"
+  name: df-krm-primary-instance
+  labels:
+    created-from: "image"
+spec:
+  machineType: n1-highmem-32
+  zone: us-central1-c
+  minCpuPlatform: Automatic
+  bootDisk:
+    initializeParams:
+      size: 30
+      type: pd-balanced
+      sourceImageRef:
+        external: debian-cloud/debian-9
+  attachedDisk:
+    - deviceName: df-krm-primary-pdssd-disk
+      sourceDiskRef:
+        name: df-krm-primary-pdssd-disk
+    - deviceName: df-krm-primary-backup-disk
+      sourceDiskRef:
+        name: df-krm-primary-backup-disk
+  networkInterface:
+    - networkRef:
+        external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/global/networks/default
+  serviceAccount:
+    scopes:
+      - https://www.googleapis.com/auth/cloud-platform
+    serviceAccountRef:
+      external: kube-testing@core-connect-dev.iam.gserviceaccount.com
+  # tags:
+  # -
+  # reservationAffinity:
+  #   type:
+  #   specificReservation:
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeDisk
+metadata:
+  name: df-krm-secondary-pdssd-disk
+spec:
+  size: 60
+  type: pd-ssd
+  location: us-central1-a
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeDisk
+metadata:
+  name: df-krm-secondary-backup-disk
+spec:
+  size: 30
+  type: pd-standard
+  location: us-central1-a
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstance
+metadata:
+  annotations:
+    cnrm.cloud.google.com/allow-stopping-for-update: "true"
+  name: df-krm-secondary-instance
+  labels:
+    created-from: "image"
+spec:
+  machineType: n1-highmem-32
+  zone: us-central1-a
+  minCpuPlatform: Automatic
+  bootDisk:
+    autoDelete: True
+    deviceName: df-krm-secondary-instance-boot
+    initializeParams:
+      size: 30
+      type: pd-balanced
+      sourceImageRef:
+        external: debian-cloud/debian-9
+  attachedDisk:
+    - deviceName: df-krm-secondary-pdssd-disk
+      sourceDiskRef:
+        name: df-krm-secondary-pdssd-disk
+    - deviceName: df-krm-secondary-backup-disk
+      sourceDiskRef:
+        name: df-krm-secondary-backup-disk
+  networkInterface:
+    - networkRef:
+        external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/global/networks/default
+  serviceAccount:
+    scopes:
+      - https://www.googleapis.com/auth/cloud-platform
+    serviceAccountRef:
+      external: kube-testing@core-connect-dev.iam.gserviceaccount.com
+  # tags:
+  # -
+  # reservationAffinity:
+  #   type:
+  #   specificReservation:
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstanceGroup
+metadata:
+  name: df-krm-primary-instance-group
+spec:
+  instances:
+    - name: df-krm-primary-instance
+  zone: us-central1-c
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstanceGroup
+metadata:
+  name: df-krm-secondary-instance-group
+spec:
+  instances:
+    - name: df-krm-secondary-instance
+  zone: us-central1-a
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeHealthCheck
+metadata:
+  name: lb-hc
+spec:
+  tcpHealthCheck:
+    port: 60000
+  checkIntervalSec: 10
+  healthyThreshold: 2
+  timeoutSec: 10
+  unhealthyThreshold: 2
+  location: us-central1
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeAddress
+metadata:
+  name: lb-addr
+spec:
+  addressType: INTERNAL
+  location: us-central1
+  subnetworkRef:
+    external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/regions/us-central1/subnetworks/default
+  address: 10.128.0.188
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeBackendService
+metadata:
+  name: hana-lb
+spec:
+  networkRef:
+    external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/global/networks/default
+  healthChecks:
+    - healthCheckRef:
+        name: lb-hc
+  backend:
+    - group:
+        instanceGroupRef:
+          name: df-krm-primary-instance-group
+    - group:
+        instanceGroupRef:
+          name: df-krm-secondary-instance-group
+  protocol: TCP
+  loadBalancingScheme: INTERNAL
+  failoverPolicy:
+    failoverRatio: 1
+    dropTrafficIfUnhealthy: true
+    disableConnectionDrainOnFailover: true
+  location: us-central1
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeForwardingRule
+metadata:
+  name: lb-fwr
+spec:
+  allPorts: true
+  networkRef:
+    external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/global/networks/default
+  subnetworkRef:
+    external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/regions/us-central1/subnetworks/default
+  location: us-central1
+  backendServiceRef:
+    name: hana-lb
+  loadBalancingScheme: INTERNAL
+  ipAddress:
+    addressRef:
+      name: lb-addr
+---
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeFirewall
+metadata:
+  name: lb-firewall
+spec:
+  networkRef:
+    external: https://www.googleapis.com/compute/v1/projects/core-connect-dev/global/networks/default
+  sourceRanges:
+    - 130.211.0.0/22
+    - 35.191.0.0/16
+  targetTags:
+    - sap-lb-hc-port
+  allow:
+    - ports:
+        - "60000"
+      protocol: TCP
