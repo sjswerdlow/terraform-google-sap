@@ -1,6 +1,8 @@
 
 set +e
 
+BUILD_VERSION=BUILD.VERSION
+
 main::set_boot_parameters() {
   main::errhandle_log_info 'Checking boot paramaters'
 
@@ -68,6 +70,9 @@ main::errhandle_log_error() {
   if [[ -n "${GCLOUD}" ]]; then
     ${GCLOUD}	--quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"${log_entry}\"" --severity=ERROR
   fi
+
+  # Send metrics
+  metrics::send_metric -s "ERROR"  -e "${log_entry}"
 
   main::complete error
 }
@@ -324,6 +329,13 @@ main::get_settings() {
     main::remove_metadata startup-script
   fi
 
+  # remove metrics info
+  if [[ -n "${VM_METADATA[template-type]}" ]]; then
+    main::remove_metadata template-type
+  else
+    VM_METADATA[template-type]="UNKNOWN"
+  fi
+
   ## if the startup script has previously completed, abort execution.
   if [[ -n "${VM_METADATA[status]}" ]]; then
     main::errhandle_log_info "Startup script has previously been run. Aborting execution."
@@ -440,6 +452,8 @@ main::complete() {
   if [[ -z "${on_error}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
   ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "status=completed" --zone "${CLOUDSDK_COMPUTE_ZONE}"
+
+    metrics::send_metric -s "CONFIGURED"
   fi
 
   ## prepare advanced logs
@@ -481,4 +495,8 @@ main::complete() {
     else
     exit 1
   fi
+}
+
+main::send_start_metrics() {
+  metrics::send_metric -s "STARTED"
 }

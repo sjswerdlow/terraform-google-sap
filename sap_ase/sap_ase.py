@@ -299,6 +299,10 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_deployment_debug',
                       'value': sap_deployment_debug
+                  },
+                  {
+                      'key': 'template-type',
+                      'value': "DEPLOYMENTMANAGER"
                   }]
               },
               'canIpForward': True,

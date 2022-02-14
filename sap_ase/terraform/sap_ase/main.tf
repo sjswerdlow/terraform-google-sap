@@ -217,6 +217,7 @@ resource "google_compute_instance" "sap_ase_instance" {
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_ase_sid = var.ase_sid
+    template-type = "TERRAFORM"
   }
 
   lifecycle {

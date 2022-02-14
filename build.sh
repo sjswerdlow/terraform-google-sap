@@ -214,6 +214,7 @@ build() {
   grep -rl SAP_LIB_MAXDB_SH . | xargs ${SED_CMD} -e '/SAP_LIB_MAXDB_SH/{r lib/sap_lib_maxdb.sh' -e 'd' -e '}'
   grep -rl SAP_LIB_NFS_SH . | xargs ${SED_CMD} -e '/SAP_LIB_NFS_SH/{r lib/sap_lib_nfs.sh' -e 'd' -e '}'
   grep -rl SAP_LIB_NW_SH . | xargs ${SED_CMD} -e '/SAP_LIB_NW_SH/{r lib/sap_lib_nw.sh' -e 'd' -e '}'
+  grep -rl SAP_LIB_METRICS . | xargs ${SED_CMD} -e '/SAP_LIB_METRICS/{r lib/sap_lib_metrics.sh' -e 'd' -e '}'
   # remove any .bak files, will only affect mac
   find . -name "*.bak" -type f -delete
   popd
