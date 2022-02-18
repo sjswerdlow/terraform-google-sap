@@ -28,12 +28,18 @@ else
 fi
 
 ##########################################################################
+## Start constants
+##########################################################################
+TEMPLATE_NAME="NW_HA_ERS"
+
+##########################################################################
 ## Start includes
 ##########################################################################
 
 SAP_LIB_MAIN_SH
 SAP_LIB_HA_SH
 SAP_LIB_NW_SH
+SAP_LIB_METRICS
 
 ##########################################################################
 ## End includes
@@ -47,6 +53,7 @@ main::set_boot_parameters
 main::install_packages
 main::config_ssh
 main::get_settings
+main::send_start_metrics
 main::create_static_ip
 
 ## Prepare for NetWeaver

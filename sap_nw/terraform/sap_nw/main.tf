@@ -138,6 +138,7 @@ resource "google_compute_instance" "sap_nw_instance" {
     startup-script = var.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
+    template-type = "TERRAFORM"
   }
 
   lifecycle {

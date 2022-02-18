@@ -26,6 +26,10 @@ if [[ "${1}" ]]; then
 else
   readonly DEPLOY_URL="BUILD.SH_URL"
 fi
+#########################################################################
+## Start constants
+##########################################################################
+TEMPLATE_NAME="SAP_HANA_SCALEOUT_SECONDARY"
 
 ##########################################################################
 ## Start includes
@@ -34,6 +38,7 @@ fi
 SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
 SAP_LIB_HDBSO_SH
+SAP_LIB_METRICS
 
 ##########################################################################
 ## End includes

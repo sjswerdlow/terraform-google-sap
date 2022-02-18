@@ -72,7 +72,7 @@ main::errhandle_log_error() {
   fi
 
   # Send metrics
-  metrics::send_metric -s "ERROR"  -e "${log_entry}"
+  metrics::send_metric -s "ERROR"  -e "1"
 
   main::complete error
 }
@@ -452,8 +452,6 @@ main::complete() {
   if [[ -z "${on_error}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
   ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "status=completed" --zone "${CLOUDSDK_COMPUTE_ZONE}"
-
-    metrics::send_metric -s "CONFIGURED"
   fi
 
   ## prepare advanced logs
@@ -498,5 +496,6 @@ main::complete() {
 }
 
 main::send_start_metrics() {
-  metrics::send_metric -s "STARTED"
+  metrics::send_metric -s "RUNNING"
+  metrics::send_metric -s "TEMPLATEID"
 }

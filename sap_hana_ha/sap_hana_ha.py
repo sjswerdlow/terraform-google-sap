@@ -329,6 +329,10 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_vip_secondary_range',
                       'value': sap_vip_secondary_range
+                  },
+                  {
+                      'key': 'template-type',
+                      'value': "DEPLOYMENTMANAGER"
                   }]
               },
               "tags": network_tags,
@@ -479,6 +483,10 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_vip_secondary_range',
                       'value': sap_vip_secondary_range
+                  },
+                  {
+                      'key': 'template-type',
+                      'value': "DEPLOYMENTMANAGER"
                   }]
               },
               "tags": network_tags,

@@ -28,12 +28,18 @@ else
 fi
 
 ##########################################################################
+## Start constants
+##########################################################################
+TEMPLATE_NAME="SAP_HANA_HA_PRIMARY"
+
+##########################################################################
 ## Start includes
 ##########################################################################
 
 SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
 SAP_LIB_HA_SH
+SAP_LIB_METRICS
 
 ##########################################################################
 ## End includes
@@ -46,6 +52,7 @@ main::set_boot_parameters
 main::install_packages
 main::config_ssh
 main::get_settings
+main::send_start_metrics
 main::create_static_ip
 
 ##prepare for SAP HANA

@@ -14,26 +14,17 @@ metrics::send_metric() {(  #Exits will only exit the sub-shell.
 
     while getopts 's:n:v:e:u:c:p:' argv; do
         case "${argv}" in
-
-            s) status="${OPTARG}";;
-            n) product_name="${OPTARG}";;
-            v) current_version="${OPTARG}";;
-            e) error_message="${OPTARG}";;
-            u) updated_version="${OPTARG}";;
-            c) custom_data="${OPTARG}";;
+        s) status="${OPTARG}";;
+        e) error_id="${OPTARG}";;
+        u) updated_version="${OPTARG}";;
+        c) custom_data="${OPTARG}";;
         esac
     done
 
-    if [[ -z "${product_name}" ]]; then
-        product_name="accelerator-template"
-    fi
-    if [[ -z "${current_version}" ]]; then
-        current_version=${BUILD_VERSION}
-    fi
     if [[ -z "${VM_METADATA[template-type]}" ]]; then
         VM_METADATA[template-type]="UNKNOWN"
     fi
-    if [[ -z "${TEMPLATE_NAME}" ]]; then # Template Name should be set in the startup file.
+    if [[ -z "${TEMPLATE_NAME}" ]]; then
         TEMPLATE_NAME="UNSET"
     fi
 
@@ -47,28 +38,27 @@ metrics::send_metric() {(  #Exits will only exit the sub-shell.
     local template_id="${VM_METADATA[template-type]}-${TEMPLATE_NAME}"
     case $status in
     RUNNING|STARTED|STOPPED|CONFIGURED|MISCONFIGURED|INSTALLED|UNINSTALLED)
-        user_agent="sap-core-eng/${product_name}/${current_version}/${VM_IMAGE}/${status}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}"
         ;;
     ERROR)
-        metrics::validate "${error_message}" "'ERROR' statuses require the error message (-e) argument."
-        user_agent="sap-core-eng/${product_name}/${current_version}/${VM_IMAGE}/${status}/${error_message}"
+        metrics::validate "${error_id}" "'ERROR' statuses require the error message (-e) argument."
+        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}/${error_id}-${template_id}"
         ;;
     UPDATED)
         metrics::validate "${updated_version}" "'UPDATED' statuses require the updated version (-u) argument."
-        user_agent="sap-core-eng/${product_name}/${current_version}/${VM_IMAGE}/${status}/${updated_version}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}/${updated_version}"
         ;;
     CUSTOM)
         metrics::validate "${custom_data}" "'CUSTOM' statuses require the custom data (-c) argument."
-        user_agent="sap-core-eng/${product_name}/${current_version}/${VM_IMAGE}/${status}/${custom_data}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}/${custom_data}"
+        ;;
+    TEMPLATEID)
+        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/CUSTOM/${template_id}"
         ;;
     *)
         echo "Error, valid status must be provided."
         exit 2
     esac
-
-    if [[ ${product_name} -eq "accelerator-template" ]]; then
-        user_agent+="/${template_id}"
-    fi
 
     local curlToken=$(metrics::get_token)
     curl --fail -H "Authorization: Bearer ${curlToken}" -A "${user_agent}" "${METADATA_URL}"

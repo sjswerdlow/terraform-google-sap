@@ -174,6 +174,7 @@ resource "google_compute_instance" "scs_instance" {
     sap_deployment_debug       = var.sap_deployment_debug ? "True" : "False"
     install_monitoring_agent   = var.install_monitoring_agent
     post_deployment_script     = var.post_deployment_script
+    template-type              = "TERRAFORM"
   }
 
   metadata_startup_script = var.primary_startup_url
@@ -274,6 +275,7 @@ resource "google_compute_instance" "ers_instance" {
     sap_deployment_debug       = var.sap_deployment_debug ? "True" : "False"
     install_monitoring_agent   = var.install_monitoring_agent
     post_deployment_script     = var.post_deployment_script
+    template-type              = "TERRAFORM"
   }
 
   metadata_startup_script = var.secondary_startup_url

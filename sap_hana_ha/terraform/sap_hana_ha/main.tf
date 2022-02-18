@@ -216,6 +216,7 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
     sap_secondary_instance = var.secondary_instance_name
     sap_primary_zone = var.primary_zone
     sap_secondary_zone = var.secondary_zone
+    template-type = "TERRAFORM"
   }
 
   lifecycle {
@@ -336,6 +337,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
     sap_secondary_instance = var.secondary_instance_name
     sap_primary_zone = var.primary_zone
     sap_secondary_zone = var.secondary_zone
+    template-type = "TERRAFORM"
   }
 
   lifecycle {

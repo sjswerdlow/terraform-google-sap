@@ -252,6 +252,10 @@ def GenerateConfig(context):
                   {
                       'key': 'sap_hana_standby_nodes',
                       'value': sap_hana_standby_nodes
+                  },
+                  {
+                      'key': 'template-type',
+                      'value': "DEPLOYMENTMANAGER"
                   }]
               },
               "tags": network_tags,
@@ -366,6 +370,10 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_deployment_debug',
                               'value': sap_deployment_debug
+                          },
+                          {
+                              'key': 'template-type',
+                              'value': "DEPLOYMENTMANAGER"
                           }]
                       },
                       "tags": network_tags,
@@ -468,6 +476,10 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_deployment_debug',
                               'value': sap_deployment_debug
+                          },
+                          {
+                              'key': 'template-type',
+                              'value': "DEPLOYMENTMANAGER"
                           }]
                       },
                       "tags": network_tags,

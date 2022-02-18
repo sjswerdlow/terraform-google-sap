@@ -184,6 +184,7 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_hana_scaleout_nodes = var.sap_hana_scaleout_nodes
+    template-type = "TERRAFORM"
   }
 
   lifecycle {
@@ -261,6 +262,7 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_hana_scaleout_nodes = var.sap_hana_scaleout_nodes
+    template-type = "TERRAFORM"
   }
 
   lifecycle {
