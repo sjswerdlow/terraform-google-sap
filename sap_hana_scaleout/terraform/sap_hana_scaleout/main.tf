@@ -158,8 +158,10 @@ resource "google_compute_instance" "sap_hana_scaleout_primary_instance" {
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
     # wording on system_password may be inconsitent with DM
     sap_hana_system_password = var.sap_hana_system_password
+    sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_scaleout_nodes = var.sap_hana_worker_nodes + var.sap_hana_standby_nodes
     sap_hana_worker_nodes = var.sap_hana_worker_nodes
@@ -244,7 +246,9 @@ resource "google_compute_instance" "sap_hana_scaleout_worker_instances" {
 
     sap_hana_original_role = "worker"
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
     sap_hana_system_password = var.sap_hana_system_password
+    sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_shared_nfs = var.sap_hana_shared_nfs
     sap_hana_backup_nfs = var.sap_hana_backup_nfs
@@ -327,7 +331,9 @@ resource "google_compute_instance" "sap_hana_scaleout_standby_instances" {
 
     sap_hana_original_role = "standby"
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
     sap_hana_system_password = var.sap_hana_system_password
+    sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_shared_nfs = var.sap_hana_shared_nfs
     sap_hana_backup_nfs = var.sap_hana_backup_nfs

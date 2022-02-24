@@ -204,8 +204,10 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
     # wording on system_password may be inconsitent with DM
     sap_hana_system_password = var.sap_hana_system_password
+    sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_vip = var.sap_vip
@@ -325,8 +327,10 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
     sap_hana_sid = var.sap_hana_sid
     sap_hana_instance_number = var.sap_hana_instance_number
     sap_hana_sidadm_password = var.sap_hana_sidadm_password
+    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
     # wording on system_password may be inconsitent with DM
     sap_hana_system_password = var.sap_hana_system_password
+    sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_vip = var.sap_vip
