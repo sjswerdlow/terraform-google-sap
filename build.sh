@@ -44,6 +44,13 @@
 set -eu -o pipefail
 
 #
+# Kokoro sets the GCS_FOLDER or by the user as the single command line arg
+#
+if [[ -z "${GCS_FOLDER:=}" ]] ; then
+  GCS_FOLDER="${1:-}"
+fi;
+
+#
 # NOTE: Minor version should be bumped for any push to the public bucket
 #
 VERSION=1.1
@@ -147,7 +154,7 @@ if [[ "${1:-}" == "publicbeta" ]]; then
   GSUTIL_PUBLIC_OPT="-a public-read"
 fi
 
-if [[ "${1:-}" =~ ^("build_continuous_testing"|"nightly")$ ]]; then
+if [[ "${GCS_FOLDER}" =~ ^("build_continuous_testing"|"nightly")$ ]]; then
   GCS_BUCKET="cloudsapdeploytesting/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_CONTINUOUS="https://storage.googleapis.com/cloudsapdeploytesting/deploymentmanager/continuous"
@@ -357,12 +364,7 @@ if [[ ! "$(dirname "$0")" = "." ]]; then
   echo "Error: build.sh must be executed from the root of the package"
   exit 1
 fi
-#
-# Kokoro sets the GCS_FOLDER or by the user as the single command line arg
-#
-if [[ -z "${GCS_FOLDER:=}" ]] ; then
-  GCS_FOLDER="${1:-}"
-fi;
+
 [[ -z "${GCS_FOLDER}" ]] && \
   echo "ERROR: GCS_FOLDER environment variable or argument must be provided" \
   && exit 1
