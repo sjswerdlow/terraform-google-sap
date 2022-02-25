@@ -496,6 +496,6 @@ main::complete() {
 }
 
 main::send_start_metrics() {
-  metrics::send_metric -s "RUNNING"
+  metrics::send_metric -s "STARTED"
   metrics::send_metric -s "TEMPLATEID"
 }
