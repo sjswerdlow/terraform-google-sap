@@ -18,6 +18,8 @@ locals {
     "n2-highmem-48"   = 386
     "n2-highmem-64"   = 512
     "n2-highmem-80"   = 640
+    "n2-highmem-96"   = 768
+    "n2-highmem-128"  = 864
     "n1-ultramem-40"  = 961
     "n1-ultramem-80"  = 1922
     "n1-ultramem-160" = 3844
@@ -38,6 +40,8 @@ locals {
     "n2-highmem-48"   = "Automatic"
     "n2-highmem-64"   = "Automatic"
     "n2-highmem-80"   = "Automatic"
+    "n2-highmem-96"   = "Automatic"
+    "n2-highmem-128"  = "Automatic"
     "n1-ultramem-40"  = "Automatic"
     "n1-ultramem-80"  = "Automatic"
     "n1-ultramem-160" = "Automatic"
