@@ -157,6 +157,12 @@ def GenerateConfig(context):
   elif context.properties['instanceType'] == 'n2-highmem-80':
       mem_size=640
       cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'n2-highmem-96':
+      mem_size=768
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'n2-highmem-128':
+      mem_size=864
+      cpu_platform = "Automatic"
   elif context.properties['instanceType'] == 'n1-ultramem-40':
       mem_size=961
       cpu_platform = "Automatic"
