@@ -432,7 +432,7 @@ resource "google_compute_forwarding_rule" "sap_hana_ha_forwarding_rule" {
 }
 
 resource "google_compute_firewall" "sap_hana_ha_vpc_firewall" {
-  count = local.is_shared_vpc ? 1 : 0
+  count = local.is_subnetwork_split ? 1 : 0
   name = "${local.healthcheck_name}-allow-firewall-rule"
   project = var.project_id
   network = local.processed_network
