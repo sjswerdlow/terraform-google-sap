@@ -312,16 +312,34 @@ main::get_settings() {
   local value
   local key
   declare -g -A VM_METADATA
+  local uses_secret_password="false"
 
   for key in $(curl --fail -sH'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/attributes/ | grep -v ssh-keys); do
     value=$(main::get_metadata "${key}")
-    VM_METADATA[$key]="${value}"
 
     if [[ "${key}" = *"password"* ]]; then
       main::errhandle_log_info "${key} determined to be *********"
     else
       main::errhandle_log_info "${key} determined to be '${value}'"
     fi
+
+
+    if [[ ${uses_secret_password}=="true" ]] && [[ "${key}" = *"password"* ]]; then
+      continue;
+    fi
+
+    if [[ "${key}" = *"password_secret"* ]]; then
+      if [[ -z ${value} ]]; then
+        continue;
+      fi
+      uses_secret_password="true"
+      pass_key=${key::-7} # strips off _secret
+      secret_ret=$(${GCLOUD} secrets versions access latest --secret="${value}")
+      VM_METADATA[$pass_key]="${secret_ret}"
+    else
+      VM_METADATA[$key]="${value}"
+    fi
+
   done
 
   # remove startup script

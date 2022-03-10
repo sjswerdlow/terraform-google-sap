@@ -97,6 +97,12 @@ variable "sap_hana_sidadm_password" {
   }
 }
 
+variable "sap_hana_sidadm_password_secret" {
+  type = string
+  description = "The secret key used to retrieve the linux sidadm login from Secret Manager (https://cloud.google.com/secret-manager). The Secret Manager password will overwrite the clear text password from sap_hana_sidadm_password if both are set."
+  default = ""
+}
+
 variable "sap_hana_system_password" {
   type = string
   description = "The SAP HANA SYSTEM password. If this is not defined, the GCE instance will be provisioned without SAP HANA installed. Minimum requirement is 8 characters with at least 1 number."
@@ -109,6 +115,12 @@ variable "sap_hana_system_password" {
        can(regex("[A-Z]", var.sap_hana_system_password))))
     error_message = "The sap_hana_system_password must have at least 8 characters. Must contain at least one capitalized letter, one lowercase letter, and one number."
   }
+}
+
+variable "sap_hana_system_password_secret" {
+  type = string
+  description = "The secret key used to retrieve the SAP HANA SYSTEM login from Secret Manager (https://cloud.google.com/secret-manager). The Secret Manager password will overwrite the clear text password from sap_hana_system_password if both are set."
+  default = ""
 }
 
 variable "sap_hana_backup_size" {
