@@ -33,22 +33,24 @@ module "hana_scaleout" {
   ##   - default values will be determined/calculated
   ##############################################################################
   # HANA settings
-  # sap_hana_deployment_bucket   = "GCS_BUCKET"          # default is ""
-  # sap_hana_sid                 = "SID"                 # default is "", otherwise must conform to [a-zA-Z][a-zA-Z0-9]{2}
-  # sap_hana_instance_number     = INSTANCE_NUMBER       # default is 0, must be a 2 digit positive number
-  # sap_hana_sidadm_password     = "SID_ADM_PASSWORD"    # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
-  # sap_hana_system_password     = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
-  # sap_hana_double_volume_size  = true_or_false         # default is false
-  # sap_hana_sidadm_uid          = HANA_SIDADM_UID       # default is 900
-  # sap_hana_sapsys_gid          = HANA_SAPSYS_GID       # default is 79
+  # sap_hana_deployment_bucket      = "GCS_BUCKET"          # default is ""
+  # sap_hana_sid                    = "SID"                 # default is "", otherwise must conform to [a-zA-Z][a-zA-Z0-9]{2}
+  # sap_hana_instance_number        = INSTANCE_NUMBER       # default is 0, must be a 2 digit positive number
+  # sap_hana_sidadm_password        = "SID_ADM_PASSWORD"    # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
+  # sap_hana_sidadm_password_secret = "SID_ADM_SECRET"      # default is "", otherwise must be the name of a secret in Secret Manager. The secret has the same constraints as "sap_hana_sidadm_password"
+  # sap_hana_system_password        = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
+  # sap_hana_system_password_secret = "SYSTEM_SECRET"       # default is "", otherwise must be the name of a secret in Secret Manager that has the same constraints as "sap_hana_system_password"
+  # sap_hana_double_volume_size     = true_or_false         # default is false
+  # sap_hana_sidadm_uid             = HANA_SIDADM_UID       # default is 900
+  # sap_hana_sapsys_gid             = HANA_SAPSYS_GID       # default is 79
 
   # Scaleout settings
-  # sap_hana_worker_nodes        = WORKER_NODES_NUM        # default is 1, must be at least 1, at most 15
-  # sap_hana_standby_nodes       = STANDBY_NODES_NUM       # default is 1, must be at least 1, at most 3
+  # sap_hana_worker_nodes           = WORKER_NODES_NUM      # default is 1, must be at least 1, at most 15
+  # sap_hana_standby_nodes          = STANDBY_NODES_NUM     # default is 1, must be at least 1, at most 3
 
-  # network_tags                 = []                    # default is an empty list
-  # public_ip                    = true_or_false         # default is true
-  # service_account              = ""                    # default is an empty string
-  # sap_deployment_debug         = true_or_false         # default is false
-  # reservation_name             = ""                    # default is an empty string
+  # network_tags                    = []                    # default is an empty list
+  # public_ip                       = true_or_false         # default is true
+  # service_account                 = ""                    # default is an empty string
+  # sap_deployment_debug            = true_or_false         # default is false
+  # reservation_name                = ""                    # default is an empty string
 }
