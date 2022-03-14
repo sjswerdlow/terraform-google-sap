@@ -69,11 +69,8 @@ locals {
 
   pdhdd_size = var.sap_hana_backup_size > 0 ? var.sap_hana_backup_size : 2 * local.mem_size
 
-  # determine default log/data/shared sizes
-  hana_shared_size = min(1024, local.mem_size + 0)
-
   # ensure pd-ssd meets minimum size/performance
-  pdssd_size = ceil(max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size + 32 + 1))
+  pdssd_size = ceil(max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size_min + 32 + 1))
 
   sap_vip_solution = var.use_ilb_vip ? "ILB" : ""
   sap_hc_port = var.use_ilb_vip ? (60000 + var.sap_hana_instance_number) : 0
