@@ -26,11 +26,11 @@ nw::install_agent() {
         rpm --import https://packages.cloud.google.com/yum/doc/yum-key.gpg
         zypper --no-gpg-checks --gpg-auto-import-keys ref -f
         if timeout 300 zypper -n --no-gpg-checks install "google-sapnetweavermonitoring-agent"; then
+          main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
+        else
           local MSG1="SAP NetWeaver monitoring agent did not install correctly."
           local MSG2="Try to install it manually."
           main::errhandle_log_info "${MSG1} ${MSG2}"
-        else
-          main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
         fi
       elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
         # RHEL
@@ -46,11 +46,11 @@ gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
       https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
         if timeout 300 yum install -y "google-sapnetweavermonitoring-agent"; then
+          main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
+        else
           local MSG1="SAP NetWeaver monitoring agent did not install correctly."
           local MSG2="Try to install it manually."
           main::errhandle_log_info "${MSG1} ${MSG2}"
-        else
-          main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
         fi
       fi
       set +e
