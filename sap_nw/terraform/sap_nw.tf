@@ -9,7 +9,7 @@ module "sap_nw" {
   # for SAP ona Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
-  # source = "TERRAFORM_PREFIXTERRAFORM_URL/terraform/sap_ase/sap_ase_module.zip"
+  # source = "TERRAFORM_PREFIXTERRAFORM_URL/terraform/sap_nw/sap_nw_module.zip"
   #
   # Fill in the information below
   #
