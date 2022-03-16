@@ -41,22 +41,22 @@ metrics::send_metric() {(  #Exits will only exit the sub-shell.
     local template_id="${VM_METADATA[template-type]}-${TEMPLATE_NAME}"
     case $status in
     RUNNING|STARTED|STOPPED|CONFIGURED|MISCONFIGURED|INSTALLED|UNINSTALLED)
-        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD.VERSION}/${VM_IMAGE}/${status}"
         ;;
     ERROR)
         metrics::validate "${error_id}" "'ERROR' statuses require the error message (-e) argument."
-        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}/${error_id}-${template_id}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD.VERSION}/${VM_IMAGE}/${status}/${error_id}-${template_id}"
         ;;
     UPDATED)
         metrics::validate "${updated_version}" "'UPDATED' statuses require the updated version (-u) argument."
-        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}/${updated_version}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD.VERSION}/${VM_IMAGE}/${status}/${updated_version}"
         ;;
     CUSTOM)
         metrics::validate "${custom_data}" "'CUSTOM' statuses require the custom data (-c) argument."
-        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/${status}/${custom_data}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD.VERSION}/${VM_IMAGE}/${status}/${custom_data}"
         ;;
     TEMPLATEID)
-        user_agent="sap-core-eng/accelerator-template/${BUILD_VERSION}/${VM_IMAGE}/CUSTOM/${template_id}"
+        user_agent="sap-core-eng/accelerator-template/${BUILD.VERSION}/${VM_IMAGE}/CUSTOM/${template_id}"
         ;;
     *)
         echo "Error, valid status must be provided."

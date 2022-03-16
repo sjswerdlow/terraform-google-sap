@@ -1,8 +1,6 @@
 
 set +e
 
-BUILD_VERSION=BUILD.VERSION
-
 main::set_boot_parameters() {
   main::errhandle_log_info 'Checking boot paramaters'
 
