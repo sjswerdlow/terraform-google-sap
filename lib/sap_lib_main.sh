@@ -310,7 +310,8 @@ main::get_settings() {
   local value
   local key
   declare -g -A VM_METADATA
-  local uses_secret_password="false"
+  local uses_secret_password
+  uses_secret_password="false"
 
   for key in $(curl --fail -sH'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/attributes/ | grep -v ssh-keys); do
     value=$(main::get_metadata "${key}")
@@ -322,7 +323,7 @@ main::get_settings() {
     fi
 
 
-    if [[ ${uses_secret_password}=="true" ]] && [[ "${key}" = *"password"* ]]; then
+    if [[ ${uses_secret_password} == "true" ]] && [[ "${key}" = *"password"* ]]; then
       continue;
     fi
 
