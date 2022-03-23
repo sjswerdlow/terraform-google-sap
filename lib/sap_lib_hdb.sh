@@ -592,6 +592,7 @@ hdb::install_worker_sshkeys() {
     for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       while ! ${GCLOUD} --quiet compute instances add-metadata "${hana_master_node}"w"${worker}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)"; do
           ## if gcloud returns an error, keep trying.
+          count=$((count +1))
           main::errhandle_log_info "--- Unable to add keys to ${hana_master_node}w${worker}. Waiting 10 seconds then trying again"
           sleep 10s
           ## if more than 60 failures, give up

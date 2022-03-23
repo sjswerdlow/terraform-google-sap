@@ -104,7 +104,19 @@ main::install_ssh_key(){
 
   host_zone=$(${GCLOUD} compute instances list --filter="name=('${host}')" --format "value(zone)")
   main::errhandle_log_info "Installing ${HOSTNAME} SSH key on ${host}"
-  ${GCLOUD} --quiet compute instances add-metadata "${host}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)"  --zone "${host_zone}"
+
+  local count=0
+  local max_count=10
+
+  while ! ${GCLOUD} --quiet compute instances add-metadata "${host}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)" --zone "${host_zone}"; do
+    count=$((count +1))
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "Failed to install ${HOSTNAME} SSH key on ${host}, aborting installation."
+    else
+      main::errhandle_log_info "Failed to install ${HOSTNAME} SSH key on ${host}, trying again in 5 seconds."
+      sleep 5s
+    fi
+  done
 }
 
 
@@ -468,7 +480,20 @@ main::complete() {
 
   if [[ -z "${on_error}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
-  ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "status=completed" --zone "${CLOUDSDK_COMPUTE_ZONE}"
+
+    local count=0
+    local max_count=10
+
+    while ! ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "status=completed" --zone "${CLOUDSDK_COMPUTE_ZONE}"; do
+      count=$((count +1))
+      if [ ${count} -gt ${max_count} ]; then
+        main::errhandle_log_info "Failed to update script complete status, continuing."
+        continue
+      else
+        main::errhandle_log_info "Failed to update script complete status, trying again in 5 seconds."
+        sleep 5s
+      fi
+    done
   fi
 
   ## prepare advanced logs

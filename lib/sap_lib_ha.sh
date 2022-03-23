@@ -79,14 +79,39 @@ ha::hdbuserstore() {
 
 ha::install_secondary_sshkeys() {
   main::errhandle_log_info "Adding ${VM_METADATA[sap_primary_instance]} ssh keys to ${VM_METADATA[sap_secondary_instance]}"
-  gcloud compute instances add-metadata "${VM_METADATA[sap_secondary_instance]}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)" --zone "${VM_METADATA[sap_secondary_zone]}"
+
+  local count=0
+  local max_count=10
+
+  while ! gcloud compute instances add-metadata "${VM_METADATA[sap_secondary_instance]}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)" --zone "${VM_METADATA[sap_secondary_zone]}"; do
+    count=$((count +1))
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "Failed to add ${VM_METADATA[sap_primary_instance]} ssh keys to ${VM_METADATA[sap_secondary_instance]}, aborting installation."
+    else
+      main::errhandle_log_info "Failed to to add ${VM_METADATA[sap_primary_instance]} ssh keys to ${VM_METADATA[sap_secondary_instance]}, trying again in 5 seconds."
+      sleep 5s
+    fi
+  done
+
   cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 }
 
 
 ha::install_primary_sshkeys() {
   main::errhandle_log_info "Adding ${VM_METADATA[sap_secondary_instance]} ssh keys to ${VM_METADATA[sap_primary_instance]}"
-  gcloud compute instances add-metadata "${VM_METADATA[sap_primary_instance]}" --metadata "ssh-keys=root:$(cat /root/.ssh/id_rsa.pub)" --zone "${VM_METADATA[sap_primary_zone]}"
+
+  local count=0
+  local max_count=10
+
+  while ! gcloud compute instances add-metadata "${VM_METADATA[sap_primary_instance]}" --metadata "ssh-keys=root:$(cat /root/.ssh/id_rsa.pub)" --zone "${VM_METADATA[sap_primary_zone]}"; do
+    count=$((count +1))
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "Failed to add ${VM_METADATA[sap_secondary_instance]} ssh keys to ${VM_METADATA[sap_primary_instance]}, aborting installation."
+    else
+      main::errhandle_log_info "Failed to add  ${VM_METADATA[sap_secondary_instance]} ssh keys to ${VM_METADATA[sap_primary_instance]}, trying again in 5 seconds."
+      sleep 5s
+    fi
+  done
   cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 }
 

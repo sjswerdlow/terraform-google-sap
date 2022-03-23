@@ -125,17 +125,23 @@ EOF
   sysctl -p
 
   main::errhandle_log_info "Setting startup script with IP settings."
-  ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" \
-            --metadata-from-file=startup-script="${local_startup_script}"
-  rc=$?
-  if [[ "${rc}" -eq 0 ]]; then
-    main::errhandle_log_info "Startup script successfully set. Applying IP settings to running instance."
-    chmod +x "${local_startup_script}"
-    ./"${local_startup_script}"
-    main::errhandle_log_info "IP settings applied to running instance."
-  else
-    main::errhandle_log_error "Error setting startup script. Aborting installation."
-  fi
+
+  local count=0
+  local max_count=10
+  while ! ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata-from-file=startup-script="${local_startup_script}"; do
+    count=$((count +1))
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "Error setting startup script. Aborting installation."
+    else
+      main::errhandle_log_info "Error setting startup script, trying again in 5 seconds."
+      sleep 5s
+    fi
+  done
+
+  main::errhandle_log_info "Startup script successfully set. Applying IP settings to running instance."
+  chmod +x "${local_startup_script}"
+  ./"${local_startup_script}"
+  main::errhandle_log_info "IP settings applied to running instance."
 }
 
 
