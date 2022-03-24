@@ -256,7 +256,7 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
   }
 
   metadata = {
-    startup-script = var.primary_startup_url
+    startup-script = var.secondary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
