@@ -530,7 +530,7 @@ hdb::start_nowait(){
 
 hdb::install_backint() {
   main::errhandle_log_info "Installing SAP HANA Backint for Google Cloud Storage"
-  su - "${VM_METADATA[sap_hana_sid],,}"adm -c "curl https://storage.googleapis.com/sapdeploy/backint-gcs/install.sh | bash"
+  su - "${VM_METADATA[sap_hana_sid],,}"adm -c "curl https://storage.googleapis.com/cloudsapdeploy/backint-gcs/install.sh | bash"
 }
 
 
