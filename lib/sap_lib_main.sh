@@ -134,15 +134,23 @@ main::install_packages() {
   fi
 
   ## packages to install
-  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1"
+  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune"
   local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 joe resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 compat-sap-c++-10 libatomic unzip libsss_autofs python2-pip langpacks-en langpacks-de glibc-all-langpacks libnsl libssh2 wget lsof jq"
 
   ## install packages
   if [[ ${LINUX_DISTRO} = "SLES" ]]; then
-    for package in ${sles_packages}; do
-        zypper in -y "${package}"
+    for package in ${sles_packages}; do # Bash only splits unquoted.
+        local count=0;
+        local max_count=3;
+        while ! sudo ZYPP_LOCK_TIMEOUT=60 zypper in -y "${package}"; do
+          count=$((count +1))
+          sleep 3
+          if [[ ${count} -gt ${max_count} ]]; then
+            main::errhandle_log_warning "Failed to install ${package}, continuing installation."
+            break
+          fi
+        done
     done
-    zypper in -y sapconf saptune
     # making sure we refresh the bash env
     . /etc/bash.bashrc
     # boto.cfg has spaces in 15sp2, getting rid of them (b/172181835)
@@ -151,7 +159,16 @@ main::install_packages() {
     fi
   elif [[ ${LINUX_DISTRO} = "RHEL" ]]; then
     for package in $rhel_packages; do
-        yum -y install "${package}"
+        local count=0;
+        local max_count = 10;
+        while ! yum -y install "${package}"; do
+          count=$((count +1))
+          sleep 5
+          if [[ ${count} -gt ${max_count} ]]; then
+            main::errhandle_log_warning "Failed to install ${package}, continuing installation."
+            break
+          fi
+        done
     done
     # check for python interpreter - RHEL 8 does not have "python"
     main::errhandle_log_info 'Checking for python interpreter'
