@@ -172,7 +172,7 @@ main::install_packages() {
   elif [[ ${LINUX_DISTRO} = "RHEL" ]]; then
     for package in $rhel_packages; do
         local count=0;
-        local max_count = 10;
+        local max_count=10;
         while ! yum -y install "${package}"; do
           count=$((count +1))
           sleep 5
