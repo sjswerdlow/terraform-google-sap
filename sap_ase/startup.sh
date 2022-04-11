@@ -53,7 +53,6 @@ main::install_packages
 main::config_ssh
 main::get_settings
 main::send_start_metrics
-main::create_static_ip
 
 ## Prepare for ASE
 ase::create_filesystems

@@ -12,6 +12,9 @@ locals {
   zone_split = split("-", var.zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
+  subnetwork_uri = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
+      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
 }
 
 ################################################################################
@@ -102,7 +105,18 @@ resource "google_compute_disk" "sap_ase_sap_mnt_disk" {
   zone = var.zone
   project = var.project_id
 }
+################################################################################
+# VIPs
+################################################################################
 
+resource "google_compute_address" "vm_ip" {
+  count        = var.public_ip ? 1 : 0
+  name         = "${var.instance_name}"
+  subnetwork   = local.subnetwork_uri
+  address_type = "INTERNAL"
+  region       = local.region
+  project      = var.project_id
+}
 ################################################################################
 # instances
 ################################################################################
@@ -179,9 +193,9 @@ resource "google_compute_instance" "sap_ase_instance" {
   can_ip_forward = var.can_ip_forward
 
   network_interface {
-    subnetwork = length(local.subnetwork_split) > 1 ? (
-      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.vm_ip.0.address
+
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
