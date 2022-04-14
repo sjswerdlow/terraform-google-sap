@@ -104,6 +104,25 @@ locals {
   zone_split = split("-", var.primary_zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
+
+  os_full_name = "${var.linux_image_project}/${var.linux_image}"
+
+  # WLM Information
+  wlm_labels = var.is_work_load_management_deployment ? (
+    { goog-workload = var.wlm_deployment_name
+      sap-ha = "sap-ha"
+      sap-nw = "sap-nw"
+      sap-hana = "sap-hana"
+     } ) : ( {}
+  )
+
+  wlm_metadata = var.is_work_load_management_deployment ? (
+    {
+      goog-wl-sap-product = "sap-hana-ha-v1"
+      goog-wl-sap-sid = var.sap_hana_sid
+      goog-wl-os = local.os_full_name
+
+    } ) : {}
 }
 
 ################################################################################
@@ -118,7 +137,7 @@ resource "google_compute_disk" "sap_hana_ha_primary_boot_disk" {
   zone = var.primary_zone
   size = local.default_boot_size
   project = var.project_id
-  image = "${var.linux_image_project}/${var.linux_image}"
+  image = local.os_full_name
 }
 resource "google_compute_disk" "sap_hana_ha_primary_pdssd_disk" {
   name = "${var.primary_instance_name}-pdssd"
@@ -198,30 +217,37 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
     }
   }
 
-  metadata = {
-    startup-script = var.primary_startup_url
-    post_deployment_script = var.post_deployment_script
-    sap_deployment_debug = var.sap_deployment_debug
-    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
-    sap_hana_sid = var.sap_hana_sid
-    sap_hana_instance_number = var.sap_hana_instance_number
-    sap_hana_sidadm_password = var.sap_hana_sidadm_password
-    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
-    # wording on system_password may be inconsitent with DM
-    sap_hana_system_password = var.sap_hana_system_password
-    sap_hana_system_password_secret = var.sap_hana_system_password_secret
-    sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
-    sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
-    sap_vip = var.sap_vip
-    sap_vip_solution = local.sap_vip_solution
-    sap_hc_port = local.sap_hc_port
-    sap_vip_secondary_range = var.sap_vip_secondary_range
-    sap_primary_instance = var.primary_instance_name
-    sap_secondary_instance = var.secondary_instance_name
-    sap_primary_zone = var.primary_zone
-    sap_secondary_zone = var.secondary_zone
-    template-type = "TERRAFORM"
-  }
+  labels = local.wlm_labels
+
+  metadata = merge(
+    {
+      startup-script = var.primary_startup_url
+      post_deployment_script = var.post_deployment_script
+      sap_deployment_debug = var.sap_deployment_debug
+      sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
+      sap_hana_sid = var.sap_hana_sid
+      sap_hana_instance_number = var.sap_hana_instance_number
+      sap_hana_sidadm_password = var.sap_hana_sidadm_password
+      sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
+      # wording on system_password may be inconsitent with DM
+      sap_hana_system_password = var.sap_hana_system_password
+      sap_hana_system_password_secret = var.sap_hana_system_password_secret
+      sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
+      sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
+      sap_vip = var.sap_vip
+      sap_vip_solution = local.sap_vip_solution
+      sap_hc_port = local.sap_hc_port
+      sap_vip_secondary_range = var.sap_vip_secondary_range
+      sap_primary_instance = var.primary_instance_name
+      sap_secondary_instance = var.secondary_instance_name
+      sap_primary_zone = var.primary_zone
+      sap_secondary_zone = var.secondary_zone
+      template-type = "TERRAFORM"
+      install_monitoring_agent   = var.install_monitoring_agent
+      install_cloud_ops_agent   = var.install_cloud_ops_agent
+    },
+    local.wlm_metadata
+  )
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
@@ -241,7 +267,7 @@ resource "google_compute_disk" "sap_hana_ha_secondary_boot_disk" {
   zone = var.secondary_zone
   size = local.default_boot_size
   project = var.project_id
-  image = "${var.linux_image_project}/${var.linux_image}"
+  image = local.os_full_name
 }
 resource "google_compute_disk" "sap_hana_ha_secondary_pdssd_disk" {
   name = "${var.secondary_instance_name}-pdssd"
@@ -321,30 +347,37 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
     }
   }
 
-  metadata = {
-    startup-script = var.secondary_startup_url
-    post_deployment_script = var.post_deployment_script
-    sap_deployment_debug = var.sap_deployment_debug
-    sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
-    sap_hana_sid = var.sap_hana_sid
-    sap_hana_instance_number = var.sap_hana_instance_number
-    sap_hana_sidadm_password = var.sap_hana_sidadm_password
-    sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
-    # wording on system_password may be inconsitent with DM
-    sap_hana_system_password = var.sap_hana_system_password
-    sap_hana_system_password_secret = var.sap_hana_system_password_secret
-    sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
-    sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
-    sap_vip = var.sap_vip
-    sap_vip_solution = local.sap_vip_solution
-    sap_hc_port = local.sap_hc_port
-    sap_vip_secondary_range = var.sap_vip_secondary_range
-    sap_primary_instance = var.primary_instance_name
-    sap_secondary_instance = var.secondary_instance_name
-    sap_primary_zone = var.primary_zone
-    sap_secondary_zone = var.secondary_zone
-    template-type = "TERRAFORM"
-  }
+  labels = local.wlm_labels
+
+  metadata = merge(
+    {
+      startup-script = var.primary_startup_url
+      post_deployment_script = var.post_deployment_script
+      sap_deployment_debug = var.sap_deployment_debug
+      sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
+      sap_hana_sid = var.sap_hana_sid
+      sap_hana_instance_number = var.sap_hana_instance_number
+      sap_hana_sidadm_password = var.sap_hana_sidadm_password
+      sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
+      # wording on system_password may be inconsitent with DM
+      sap_hana_system_password = var.sap_hana_system_password
+      sap_hana_system_password_secret = var.sap_hana_system_password_secret
+      sap_hana_sidadm_uid = var.sap_hana_sidadm_uid
+      sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
+      sap_vip = var.sap_vip
+      sap_vip_solution = local.sap_vip_solution
+      sap_hc_port = local.sap_hc_port
+      sap_vip_secondary_range = var.sap_vip_secondary_range
+      sap_primary_instance = var.primary_instance_name
+      sap_secondary_instance = var.secondary_instance_name
+      sap_primary_zone = var.primary_zone
+      sap_secondary_zone = var.secondary_zone
+      template-type = "TERRAFORM"
+      install_monitoring_agent   = var.install_monitoring_agent
+      install_cloud_ops_agent   = var.install_cloud_ops_agent
+    },
+    local.wlm_metadata
+  )
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
