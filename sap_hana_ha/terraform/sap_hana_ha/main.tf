@@ -78,11 +78,12 @@ locals {
   # Note that you can not have default values refernce another variable value
   primary_instance_group_name = var.primary_instance_group_name != "" ? var.primary_instance_group_name : "ig-${var.primary_instance_name}"
   secondary_instance_group_name = var.secondary_instance_group_name != "" ? var.secondary_instance_group_name : "ig-${var.secondary_instance_name}"
-  loadbalancer_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}-ilb"
-  loadbalancer_address_name = "lb-${lower(var.sap_hana_sid)}-address"
+  loadbalancer_name_prefix = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}"
+  loadbalancer_name = "${local.loadbalancer_name_prefix}-ilb"
+  loadbalancer_address_name = "${local.loadbalancer_name_prefix}-address"
   loadbalancer_address = var.sap_vip
-  healthcheck_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}-hc"
-  forwardingrule_name = "${var.loadbalancer_name != "" ? var.loadbalancer_name : "lb-${lower(var.sap_hana_sid)}"}-fwr"
+  healthcheck_name = "${local.loadbalancer_name_prefix}-hc"
+  forwardingrule_name = "${local.loadbalancer_name_prefix}-fwr"
 
   split_network = split(var.network, ",")
   is_vpc_network = length(local.split_network) > 1
