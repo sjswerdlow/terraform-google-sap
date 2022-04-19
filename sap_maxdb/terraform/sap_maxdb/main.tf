@@ -70,20 +70,20 @@ resource "google_compute_disk" "max_db_backup_disk" {
 
 # OPTIONAL - /usr/sap
 resource "google_compute_disk" "max_db_usr_disk" {
-  count = var.usrsap_size > 0 ? 1 : 0
+  count = var.usr_sap_size> 0 ? 1 : 0
   name = "${var.instance_name}-usrsap"
   type = "pd-balanced"
-  size = var.usrsap_size
+  size = var.usr_sap_size
   zone = var.zone
   project = var.project_id
 }
 
 # OPTIONAL - /sapmnt
 resource "google_compute_disk" "max_db_sapmnt" {
-  count = var.sapmnt_size > 0 ? 1 : 0
+  count = var.sap_mnt_size > 0 ? 1 : 0
   name = "${var.instance_name}-sapmnt"
   type = "pd-balanced"
-  size = var.sapmnt_size
+  size = var.sap_mnt_size
   zone = var.zone
   project = var.project_id
 }
@@ -134,14 +134,14 @@ resource "google_compute_instance" "sap_maxdb" {
   }
 
   dynamic "attached_disk" {
-    for_each = var.usrsap_size > 0 ? [1] : []
+    for_each = var.usr_sap_size> 0 ? [1] : []
     content {
       device_name = google_compute_disk.max_db_usr_disk.name
       source = google_compute_disk.max_db_usr_disk.self_link
     }
   }
   dynamic "attached_disk" {
-    for_each = var.sapmnt_size > 0 ? [1] : []
+    for_each = var.sap_mnt_size > 0 ? [1] : []
     content {
       device_name = google_compute_disk.max_db_sapmnt.name
       source = google_compute_disk.max_db_sapmnt.self_link

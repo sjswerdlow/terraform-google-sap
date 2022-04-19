@@ -91,13 +91,13 @@ variable "maxdb_backup_size" {
   default = 0
 }
 
-variable "usrsap_size" {
+variable "usr_sap_size" {
   description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created"
   type = number
   default = 0
 }
 
-variable "sapmnt_size" {
+variable "sap_mnt_size" {
   description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created"
   type = number
   default = 0

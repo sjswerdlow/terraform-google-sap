@@ -45,8 +45,8 @@ module "sap_nw_ha" {
   ers_backend_svc_name       = ""
   ers_forw_rule_name         = ""
 
-  usrsap_size                = 8
-  sapmnt_size                = 8
+  usr_sap_size               = 8
+  sap_mnt_size               = 8
   swap_size                  = 8
 
   sap_scs_instance_number    = ""
