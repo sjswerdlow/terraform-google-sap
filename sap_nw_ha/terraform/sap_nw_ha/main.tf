@@ -12,7 +12,7 @@ locals {
   primary_region          = regex("[a-z]*-[a-z1-9]*", var.sap_primary_zone)
   secondary_region        = regex("[a-z]*-[a-z1-9]*", var.sap_secondary_zone)
   region                  = local.primary_region
-  shared_vpc              = split("/", var.subnetwork)
+  subnetwork_split        = split("/", var.subnetwork)
   ascs                    = var.sap_nw_abap == true ? "A" : ""
 
   sid                     = lower(var.sap_sid)
@@ -39,6 +39,10 @@ locals {
   ers_forw_rule_name      = var.ers_forw_rule_name == "" ? "${local.sid}-ers-fwd-rule" : var.ers_forw_rule_name
 
   pacemaker_cluster_name  = var.pacemaker_cluster_name == "" ? "${local.sid}-cluster" : var.pacemaker_cluster_name
+  subnetwork_uri = length(local.subnetwork_split) > 1 ? (
+    "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
+    "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+
 }
 
 ################################################################################
@@ -82,6 +86,19 @@ resource "google_compute_disk" "nw_swap_disks" {
 }
 
 ################################################################################
+# VM VIPs
+################################################################################
+
+resource "google_compute_address" "sap_nw_vm_ip" {
+  count        = 2
+  name         = "${var.instance_name}-${count.index}"
+  subnetwork   = local.subnetwork_uri
+  address_type = "INTERNAL"
+  region       = local.region
+  project      = var.project_id
+}
+
+################################################################################
 # instances
 ################################################################################
 resource "google_compute_instance" "scs_instance" {
@@ -114,9 +131,8 @@ resource "google_compute_instance" "scs_instance" {
 
   can_ip_forward = true
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.sap_nw_vm_ip.0.address
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
@@ -214,9 +230,8 @@ resource "google_compute_instance" "ers_instance" {
 
   can_ip_forward = true
   network_interface {
-    subnetwork = length(local.shared_vpc) > 1 ? (
-      "projects/${local.shared_vpc[0]}/regions/${local.region}/subnetworks/${local.shared_vpc[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.sap_nw_vm_ip.1.address
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
@@ -284,7 +299,7 @@ resource "google_compute_instance" "ers_instance" {
   }
 }
 ################################################################################
-# VIPs
+# NW VIPs
 ################################################################################
 resource "google_compute_address" "nw_vips" {
   count        = 2

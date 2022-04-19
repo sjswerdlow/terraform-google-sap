@@ -104,6 +104,10 @@ locals {
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
 
+  subnetwork_uri = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
+      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+
   os_full_name = "${var.linux_image_project}/${var.linux_image}"
 
   # WLM Information
@@ -123,6 +127,20 @@ locals {
 
     } ) : {}
 }
+
+################################################################################
+# VIPs
+################################################################################
+
+resource "google_compute_address" "sap_hana_ha_vm_ip" {
+  count        = 2
+  name         = "${var.instance_name}-${count.index}"
+  subnetwork   = local.subnetwork_uri
+  address_type = "INTERNAL"
+  region       = local.region
+  project      = var.project_id
+}
+
 
 ################################################################################
 # Primary Instance
@@ -183,9 +201,9 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   can_ip_forward = var.can_ip_forward
 
   network_interface {
-    subnetwork = length(local.subnetwork_split) > 1 ? (
-      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.sap_hana_ha_vm_ip.0.address
+
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
@@ -310,9 +328,8 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   can_ip_forward = var.can_ip_forward
 
   network_interface {
-    subnetwork = length(local.subnetwork_split) > 1 ? (
-      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.sap_hana_ha_vm_ip.1.address
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {

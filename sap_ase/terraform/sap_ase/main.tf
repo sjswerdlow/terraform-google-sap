@@ -109,8 +109,7 @@ resource "google_compute_disk" "sap_ase_sap_mnt_disk" {
 # VIPs
 ################################################################################
 
-resource "google_compute_address" "vm_ip" {
-  count        = var.public_ip ? 1 : 0
+resource "google_compute_address" "sap_ase_vm_ip" {
   name         = "${var.instance_name}"
   subnetwork   = local.subnetwork_uri
   address_type = "INTERNAL"
@@ -194,7 +193,7 @@ resource "google_compute_instance" "sap_ase_instance" {
 
   network_interface {
     subnetwork = local.subnetwork_uri
-    network_ip = google_compute_address.vm_ip.0.address
+    network_ip = google_compute_address.sap_ase_vm_ip.address
 
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip

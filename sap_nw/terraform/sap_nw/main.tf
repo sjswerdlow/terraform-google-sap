@@ -12,6 +12,10 @@ locals {
   zone_split = split("-", var.zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
+  subnetwork_uri = length(local.subnetwork_split) > 1 ? (
+      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
+      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+
 
   cpu_map = {
     "n1-highmem-96": "Intel Skylake",
@@ -59,6 +63,16 @@ resource "google_compute_disk" "sap_nw_sapmnt_disk" {
 }
 
 ################################################################################
+# VIPs
+################################################################################
+resource "google_compute_address" "sap_nw_vm_ip" {
+  name         = "${var.instance_name}"
+  subnetwork   = local.subnetwork_uri
+  address_type = "INTERNAL"
+  region       = local.region
+  project      = var.project_id
+}
+################################################################################
 # instances
 ################################################################################
 resource "google_compute_instance" "sap_nw_instance" {
@@ -101,9 +115,9 @@ resource "google_compute_instance" "sap_nw_instance" {
   can_ip_forward = var.can_ip_forward
 
   network_interface {
-    subnetwork = length(local.subnetwork_split) > 1 ? (
-      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.sap_nw_vm_ip.address
+
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
