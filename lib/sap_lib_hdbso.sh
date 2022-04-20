@@ -243,12 +243,6 @@ hdbso::install_scaleout_nodes() {
     done
   done
 
-  ## get passwords from install file
-  local hana_xml="<?xml version=\"1.0\" encoding=\"UTF-8\"?><Passwords>"
-  hana_xml+="<password><![CDATA[$(grep password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | grep -v sapadm | grep -v system | cut -d"=" -f2 | head -1)]]></password>"
-  hana_xml+="<sapadm_password><![CDATA[$(grep sapadm_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2)]]></sapadm_password>"
-  hana_xml+="<system_user_password><![CDATA[$(grep system_user_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2 | head -1)]]></system_user_password></Passwords>"
-
   cd /hana/shared/"${VM_METADATA[sap_hana_sid]}"/hdblcm || main::errhandle_log_error "Unable to access HANA Lifecycle Manager. Additional HANA nodes will not be installed"
 
   ## Install Worker Nodes
@@ -257,7 +251,7 @@ hdbso::install_scaleout_nodes() {
     ## ssh into each worker node and start SAP HANA
     for worker in $(seq 1 "${VM_METADATA[sap_hana_worker_nodes]}"); do
       main::errhandle_log_info "--- ${HOSTNAME}w${worker}"
-      echo "${hana_xml}" | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b
+      echo $(hdb::build_pw_xml) | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b
     done
   fi
 
@@ -265,7 +259,7 @@ hdbso::install_scaleout_nodes() {
     main::errhandle_log_info "Installing ${VM_METADATA[sap_hana_standby_nodes]} standby nodes"
     for worker in $(seq $((VM_METADATA[sap_hana_worker_nodes]+1)) "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       main::errhandle_log_info "--- ${HOSTNAME}w${worker}"
-      echo "${hana_xml}" | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}":role=standby --root_user=root --listen_interface=global --read_password_from_stdin=xml -b
+      echo $(hdb::build_pw_xml) | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}":role=standby --root_user=root --listen_interface=global --read_password_from_stdin=xml -b
     done
   fi
 
@@ -278,8 +272,8 @@ hdbso::install_scaleout_nodes() {
   ## configure masters
   main::errhandle_log_info "Updating SAP HANA configured roles"
   echo "call SYS.UPDATE_LANDSCAPE_CONFIGURATION('deploy','{\"HOSTS\":{\"${HOSTNAME}w1\":{\"WORKER_CONFIG_GROUPS\":\"default\",\"FAILOVER_CONFIG_GROUP\":\"default\",\"INDEXSERVER_CONFIG_ROLE\":\"WORKER\",\"NAMESERVER_CONFIG_ROLE\":\"MASTER 2\"},\"${HOSTNAME}w$((VM_METADATA[sap_hana_worker_nodes]+1))\":{\"WORKER_CONFIG_GROUPS\":\"default\",\"FAILOVER_CONFIG_GROUP\":\"default\",\"INDEXSERVER_CONFIG_ROLE\":\"STANDBY\",\"NAMESERVER_CONFIG_ROLE\":\"MASTER 3\"}}}')" > /root/.deploy/hdbconfig.sql
-  bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -d SYSTEMDB -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
-  bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
+  bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -d SYSTEMDB -u SYSTEM -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
+  bash -c "source /usr/sap/*/home/.sapenv.sh && hdbsql -u SYSTEM -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} -I /root/.deploy/hdbconfig.sql -O /dev/null"
 
   ## enable fencing
   hdb::set_parameters global.ini storage partition_*_*__fencing enabled

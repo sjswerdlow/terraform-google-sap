@@ -197,9 +197,6 @@ hdb::create_install_cfg() {
     echo "[Server]" >/root/.deploy/"${HOSTNAME}"_hana_install.cfg
     echo "sid=${VM_METADATA[sap_hana_sid]}"
     echo "number=${VM_METADATA[sap_hana_instance_number]}"
-    echo "sapadm_password=${VM_METADATA[sap_hana_sidadm_password]}"
-    echo "password=${VM_METADATA[sap_hana_sidadm_password]}"
-    echo "system_user_password=${VM_METADATA[sap_hana_system_password]}"
     echo "userid=${VM_METADATA[sap_hana_sidadm_uid]}"
     echo "groupid=${VM_METADATA[sap_hana_sapsys_gid]}"
   } >>/root/.deploy/"${HOSTNAME}"_hana_install.cfg
@@ -218,6 +215,23 @@ hdb::create_install_cfg() {
 
 }
 
+hdb::build_pw_xml() {
+  if [ -n "${VM_METADATA[sap_hana_system_password]}" ] || [ -n "${VM_METADATA[sap_hana_sidadm_password]}" ]; then
+    ## set password for stdin use with hdblcm --read_password_from_stdin=xml
+    ## single quotes required for ! as special character
+    local hana_xml='<?xml version="1.0" encoding="UTF-8"?><Passwords>'
+    hana_xml+='<password><![CDATA['
+    hana_xml+=${VM_METADATA[sap_hana_sidadm_password]}
+    hana_xml+=']]></password><sapadm_password><![CDATA['
+    hana_xml+=${VM_METADATA[sap_hana_sidadm_password]}
+    hana_xml+=']]></sapadm_password><system_user_password><![CDATA['
+    hana_xml+=${VM_METADATA[sap_hana_system_password]}
+    hana_xml+=']]></system_user_password></Passwords>'
+    echo ${hana_xml}
+  else
+    main::errhandle_log_error "Required passwords could not be retrieved. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
+  fi
+}
 
 hdb::extract_media() {
   main::errhandle_log_info "Extracting SAP HANA media"
@@ -257,7 +271,7 @@ hdb::install() {
     main::errhandle_log_warning "--- User ${VM_METADATA[sap_hana_sid],,}adm already exists on the system. This may prevent SAP HANA from installing correctly. If this occurs, ensure that you are using a clean image and that ${VM_METADATA[sap_hana_sid],,}adm doesn't exist in the project ssh-keys metadata"
   fi
 
-  if ! /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg -b; then
+  if ! echo $(hdb::build_pw_xml) | /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/DATA_UNITS/HDB_LCM_LINUX_X86_64/hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg --read_password_from_stdin=xml -b; then
     main::errhandle_log_error "HANA Installation Failed. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required"
   fi
 
@@ -276,7 +290,7 @@ hdb::upgrade(){
     /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/SAPCAR -xvf "IMDB_SERVER*.SAR"
     cd SAP_HANA_DATABASE || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
     main::errhandle_log_info "--- Upgrading Database"
-    if ! ./hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg --action=update --ignore=check_signature_file --update_execution_mode=optimized --batch; then
+    if ! echo $(hdb::build_pw_xml) | ./hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg --action=update --ignore=check_signature_file --update_execution_mode=optimized --read_password_from_stdin=xml --batch; then
         main::errhandle_log_warning "SAP HANA Database revision upgrade failed to install."
     fi
   fi
@@ -304,13 +318,13 @@ hdb::set_parameters() {
   local setting=${3}
   local value=${4}
   local tenant=${5}
-
+  main::errhandle_log_info "--- Setting database parameters for ${section}:${setting}"
   # if tenant specified, run it on that tenant. Else do it in SYSTEMDB. If that fails (HANA 2.0 SP0 <) then run it without specifying a tenant
   if [[ -n ${tenant} ]]; then
-    bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -d ${tenant} -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} \"ALTER SYSTEM ALTER CONFIGURATION ('$inifile', 'SYSTEM') SET ('$section','$setting') = '$value' with reconfigure\""
+    bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -d ${tenant} -u SYSTEM -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} \"ALTER SYSTEM ALTER CONFIGURATION ('$inifile', 'SYSTEM') SET ('$section','$setting') = '$value' with reconfigure\""
   else
-    if ! bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -d SYSTEMDB -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} \"ALTER SYSTEM ALTER CONFIGURATION ('$inifile', 'SYSTEM') SET ('$section','$setting') = '$value' with reconfigure\""; then
-      bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u SYSTEM -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} \"ALTER SYSTEM ALTER CONFIGURATION ('$inifile', 'SYSTEM') SET ('$section','$setting') = '$value' with reconfigure\""
+    if ! bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -d SYSTEMDB -u SYSTEM -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} \"ALTER SYSTEM ALTER CONFIGURATION ('$inifile', 'SYSTEM') SET ('$section','$setting') = '$value' with reconfigure\""; then
+      bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u SYSTEM -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} \"ALTER SYSTEM ALTER CONFIGURATION ('$inifile', 'SYSTEM') SET ('$section','$setting') = '$value' with reconfigure\""
     fi
   fi
 }
@@ -433,17 +447,11 @@ hdb::install_scaleout_nodes() {
       done
     done
 
-    ## get passwords from install file
-    local hana_xml="<?xml version=\"1.0\" encoding=\"UTF-8\"?><Passwords>"
-    hana_xml+="<password><![CDATA[$(grep password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | grep -v sapadm | grep -v system | cut -d"=" -f2 | head -1)]]></password>"
-    hana_xml+="<sapadm_password><![CDATA[$(grep sapadm_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2)]]></sapadm_password>"
-    hana_xml+="<system_user_password><![CDATA[$(grep system_user_password /root/.deploy/"${HOSTNAME}"_hana_install.cfg | cut -d"=" -f2 | head -1)]]></system_user_password></Passwords>"
-
     cd /hana/shared/"${VM_METADATA[sap_hana_sid]}"/hdblcm || main::errhandle_log_info "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
 
     for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       main::errhandle_log_info "--- Adding node ${HOSTNAME}w${worker}"
-      if ! echo "$hana_xml" | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b; then
+      if ! echo $(hdb::build_pw_xml) | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b; then
         main::errhandle_log_error "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
       fi
     done
@@ -483,24 +491,12 @@ hdb::backup() {
 
   main::errhandle_log_info "Creating HANA backup ${backup_name}"
   PATH="$PATH:/usr/sap/${VM_METADATA[sap_hana_sid]}/HDB${VM_METADATA[sap_hana_instance_number]}/exe"
-
+  
   ## Call bash with source script to avoid RHEL library errors
-  bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u system -p ${VM_METADATA[sap_hana_system_password]} -i ${VM_METADATA[sap_hana_instance_number]} \"BACKUP DATA USING FILE ('${backup_name}')\""
-  bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u system -p ${VM_METADATA[sap_hana_system_password]} -d SYSTEMDB -i ${VM_METADATA[sap_hana_instance_number]} \"BACKUP DATA for SYSTEMDB USING FILE ('${backup_name}_SYSTEMDB')\""
+  bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u system -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} \"BACKUP DATA USING FILE ('${backup_name}')\""
+  bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u system -p '"${VM_METADATA[sap_hana_system_password]}"' -d SYSTEMDB -i ${VM_METADATA[sap_hana_instance_number]} \"BACKUP DATA for SYSTEMDB USING FILE ('${backup_name}_SYSTEMDB')\""
 }
 
-
-hdb::execute_sql() {
-  local host="${0}"
-  local instance_number="${0}"
-  local sid="${0}"
-  local user="${1}"
-  local password="${2}"
-  local tenant="${3}"
-  local statement="${4}"
-
-  /usr/sap/"${sid}"/HDB"${instance_number}"/exe/hdbsql -d "${tenant}" -n "${host}" -i "${instance_number}" -u "${user}" -p "${password}" "${statement}"
-}
 
 
 hdb::stop() {
