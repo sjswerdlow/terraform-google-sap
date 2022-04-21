@@ -59,7 +59,7 @@ resource "google_compute_disk" "nw_usr_sap_disks" {
   name    = count.index == 0 ? "${var.sap_primary_instance}-usrsap" : "${var.sap_secondary_instance}-usrsap"
   type    = "pd-balanced"
   zone    = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
-  size    = var.usrsap_size
+  size    = var.usr_sap_size
   project = var.project_id
 }
 
@@ -68,7 +68,7 @@ resource "google_compute_disk" "nw_sapmnt_disks" {
   name    = count.index == 0 ? "${var.sap_primary_instance}-sapmnt" : "${var.sap_secondary_instance}-sapmnt"
   type    = "pd-balanced"
   zone    = count.index == 0 ? var.sap_primary_zone : var.sap_secondary_zone
-  size    = var.sapmnt_size
+  size    = var.sap_mnt_size
   project = var.project_id
 }
 

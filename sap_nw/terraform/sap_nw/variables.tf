@@ -39,31 +39,31 @@ variable "instance_name" {
 
 variable "usr_sap_size" {
   type = number
-  description = "Size in GB of /usr/sap disk"
-  default = 0
+  description = "Size of /usr/sap in GB"
+  default = 8
   validation {
-    condition = var.usr_sap_size >= 8 || var.usr_sap_size == 0
-    error_message = "The usr_sap_size must be larger than 7 GB or zero (default)."
+    condition     = var.usr_sap_size>= 8
+    error_message = "Size of /usr/sap must be larger than 8 GB."
   }
 }
 
 variable "sap_mnt_size" {
   type = number
-  description = "Size in GB of /sap/mnt disk"
-  default = 0
+  description = "Size of /sapmnt in GB"
+  default = 8
   validation {
-    condition = var.sap_mnt_size >= 8 || var.sap_mnt_size == 0
-    error_message = "The sap_mnt_size must be larger than 7 GB or zero (default)."
+    condition     = var.sap_mnt_size >= 8
+    error_message = "Size of /sapmnt must be larger than 8 GB."
   }
 }
 
 variable "swap_size" {
   type = number
   description = "Size in GB of swap volume"
-  default = 0
+  default = 8
   validation {
-    condition = var.swap_size >= 0
-    error_message = "The swap_size must be positive or 0."
+    condition     = var.swap_size >= 8
+    error_message = "Size of swap must be larger than 8 GB."
   }
 }
 

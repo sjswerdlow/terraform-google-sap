@@ -35,8 +35,8 @@ module "maxdb" {
   # Optional advanced options
 
   # maxdb_backup_size         = BACKUP_DISK_SIZE  # in GB, default is 0 and will not be created
-  # usrsap_size               = USR_DISK_SIZE # Required if SAP NetWeaver is on same VM in GB, default is 0 and will not be created
-  # sapmnt_size               = MNT_DISK_SIZE # Required if SAP NetWeaver is on same VM in GB, default is 0 and will not be created
+  # usr_sap_size              = USR_DISK_SIZE # Required if SAP NetWeaver is on same VM in GB, default is 0 and will not be created
+  # sap_mnt_size               = MNT_DISK_SIZE # Required if SAP NetWeaver is on same VM in GB, default is 0 and will not be created
   # swap_size                 = SWAP_DISK_SIZE # Required if SAP NetWeaver is on same VM in GB, default is 0 and will not be created
 
   # Optional advanced options

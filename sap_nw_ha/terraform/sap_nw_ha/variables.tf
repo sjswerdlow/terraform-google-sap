@@ -168,33 +168,33 @@ variable "ers_forw_rule_name" {
 #
 # File system settings
 #
-variable "usrsap_size" {
+variable "usr_sap_size" {
   type = number
   default = 8
   description = "Size of /usr/sap in GB"
   validation {
-    condition     = var.usrsap_size >= 8
+    condition     = var.usr_sap_size>= 8
     error_message = "Size of /usr/sap must be larger than 8 GB."
   }
 }
-variable "sapmnt_size" {
+variable "sap_mnt_size" {
   type = number
   default = 8
   description = "Size of /sapmnt in GB"
 
   validation {
-    condition     = var.sapmnt_size >= 8
+    condition     = var.sap_mnt_size >= 8
     error_message = "Size of /sapmnt must be larger than 8 GB."
   }
 }
 variable "swap_size" {
   type = number
   default = 8
-  description = "Size of swap in GB"
+  description = "Size in GB of swap volume"
 
   validation {
-    condition     = var.swap_size >= 0
-    error_message = "Size of swap must be 0 or larger."
+    condition     = var.swap_size >= 8
+    error_message = "Size of swap must be larger than 8 GB."
   }
 }
 #
@@ -202,7 +202,7 @@ variable "swap_size" {
 #
 variable "sap_scs_instance_number" {
   type = string
-  default = "10"
+  default = "00"
   description = "SCS instance number"
   validation {
     condition     = length(var.sap_scs_instance_number) == 2 && tonumber(var.sap_scs_instance_number) >= 0
@@ -211,7 +211,7 @@ variable "sap_scs_instance_number" {
 }
 variable "sap_ers_instance_number" {
   type = string
-  default = "00"
+  default = "10"
   description = "ERS instance number"
   validation {
     condition     = length(var.sap_ers_instance_number) == 2 && tonumber(var.sap_ers_instance_number) >= 0

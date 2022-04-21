@@ -57,8 +57,8 @@ module "sap_nw_ha" {
   # ers_backend_svc_name       = "[SID]-ers-backend-svc"
   # ers_forw_rule_name         = "[SID]-ers-fwd-rule"
 
-  # usrsap_size                = 8
-  # sapmnt_size                = 8
+  # usr_sap_size               = 8
+  # sap_mnt_size               = 8
   # swap_size                  = 8
 
   # sap_scs_instance_number    = "00"
