@@ -6,7 +6,7 @@ module "sap_nw" {
   source = "TERRAFORM_PREFIXTERRAFORM_URL_LATEST/terraform/sap_nw/sap_nw_module.zip"
   #
   # By default, this source file uses the latest release of the terraform module
-  # for SAP ona Google Cloud.  To fix your deployments to a specific release
+  # for SAP on a Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
   # source = "TERRAFORM_PREFIXTERRAFORM_URL/terraform/sap_nw/sap_nw_module.zip"
