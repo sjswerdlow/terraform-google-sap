@@ -30,6 +30,8 @@ main::set_boot_parameters() {
       echo "GRUB_CMDLINE_LINUX_DEFAULT=\"${cmdline} transparent_hugepage=never intel_idle.max_cstate=1 processor.max_cstate=1 intel_iommu=off tsx=on\"" >>/etc/default/grub
     else
       echo "GRUB_CMDLINE_LINUX_DEFAULT=\"${cmdline} transparent_hugepage=never intel_idle.max_cstate=1 processor.max_cstate=1 intel_iommu=off\"" >>/etc/default/grub
+      echo "GRUB_ENABLE_LINUX_LABEL=true" >>/etc/default/grub
+      echo "GRUB_DEVICE=\"LABEL=ROOT\"" >>/etc/default/grub
     fi
     grub2-mkconfig -o /boot/grub2/grub.cfg
     echo "${HOSTNAME}" >/etc/hostname
