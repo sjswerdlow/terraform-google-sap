@@ -235,9 +235,33 @@ variable "post_deployment_script" {
   default = ""
 }
 
+variable "install_monitoring_agent" {
+  type = bool
+  description = "OPTIONAL - If this value is set to true, the Google SAP Monitoring Agent (aka the Net Weaver Monitoring agent) will be installed."
+  default = true
+}
+
+variable "install_cloud_ops_agent" {
+  type = bool
+  description = "OPTIONAL - If this value is set to true, the Google Cloud Ops Agent (https://cloud.google.com/stackdriver/docs/solutions/agents/ops-agent) will be installed."
+  default = true
+}
+
 #
 # DO NOT MODIFY unless you know what you are doing
 #
+variable "wlm_deployment_name" {
+  type = string
+  description = "Deployment name to be used for integrating into Work Load Management."
+  default = ""
+}
+
+variable "is_work_load_management_deployment" {
+  type = bool
+  description = "If set the necessary tags and labels will be added to resoucres to support WLM."
+  default = false
+}
+
 variable "primary_startup_url" {
   type = string
   description = "Startup script to be executed when the VM boots, should not be overridden."

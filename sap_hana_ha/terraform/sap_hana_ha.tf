@@ -59,4 +59,6 @@ module "sap_hana_ha" {
   # service_account                 = ""                    # default is an empty string
   # sap_deployment_debug            = true_or_false         # default is false
   # reservation_name                = ""                    # default is an empty string
+  # install_monitoring_agent        = true_or_false         # default is true
+  # install_cloud_ops_agent         = true_or_false         # default is true
 }

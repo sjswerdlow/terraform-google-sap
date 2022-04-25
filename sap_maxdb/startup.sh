@@ -53,7 +53,7 @@ maxdb::create_filesystems
 
 ## Prepare for NetWeaver
 nw::create_filesystems
-nw::install_agent
+main::install_monitoring_agent
 
 ## clean up
 main::complete

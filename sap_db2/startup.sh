@@ -58,7 +58,7 @@ fi
 
 ## Prepare for NetWeaver
 nw::create_filesystems
-nw::install_agent
+main::install_monitoring_agent
 
 ## Clean up
 main::complete
