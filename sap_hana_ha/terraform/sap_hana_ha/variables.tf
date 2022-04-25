@@ -235,12 +235,6 @@ variable "post_deployment_script" {
   default = ""
 }
 
-variable "install_monitoring_agent" {
-  type = bool
-  description = "OPTIONAL - If this value is set to true, the Google SAP Monitoring Agent (aka the Net Weaver Monitoring agent) will be installed."
-  default = true
-}
-
 variable "install_cloud_ops_agent" {
   type = bool
   description = "OPTIONAL - If this value is set to true, the Google Cloud Ops Agent (https://cloud.google.com/stackdriver/docs/solutions/agents/ops-agent) will be installed."

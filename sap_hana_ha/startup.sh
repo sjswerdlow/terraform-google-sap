@@ -63,7 +63,7 @@ hdb::create_shared_volume
 hdb::create_sap_data_log_volumes
 hdb::create_backup_volume
 
-## Install optional monitoring agents
+## Install monitoring agents
 main::install_monitoring_agent
 main::install_ops_agent
 

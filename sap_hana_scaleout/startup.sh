@@ -56,6 +56,9 @@ main::get_settings
 main::send_start_metrics
 main::create_static_ip
 
+## Install monitoring agent
+main::install_monitoring_agent
+
 ## Prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters

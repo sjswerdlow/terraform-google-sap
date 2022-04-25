@@ -257,11 +257,6 @@ variable "sap_deployment_debug" {
   default = false
   description = "Debug log level for deployment"
 }
-variable "install_monitoring_agent" {
-  type = bool
-  default = true
-  description = "Automatically install the Google Cloud monitoring agent for SAP NetWeaver"
-}
 variable "reservation_name" {
   type = string
   default = ""

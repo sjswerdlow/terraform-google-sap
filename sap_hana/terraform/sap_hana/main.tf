@@ -191,6 +191,7 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_hana_scaleout_nodes = var.sap_hana_scaleout_nodes
     template-type = "TERRAFORM"
+    install_monitoring_agent   = var.install_monitoring_agent
   }
 
   lifecycle {
@@ -271,6 +272,7 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
     sap_hana_sapsys_gid = var.sap_hana_sapsys_gid
     sap_hana_scaleout_nodes = var.sap_hana_scaleout_nodes
     template-type = "TERRAFORM"
+    install_monitoring_agent   = var.install_monitoring_agent
   }
 
   lifecycle {

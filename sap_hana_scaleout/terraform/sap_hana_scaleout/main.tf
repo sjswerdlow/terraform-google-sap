@@ -169,6 +169,7 @@ resource "google_compute_instance" "sap_hana_scaleout_primary_instance" {
     sap_hana_shared_nfs = var.sap_hana_shared_nfs
     sap_hana_backup_nfs = var.sap_hana_backup_nfs
     template-type = "TERRAFORM"
+    install_monitoring_agent   = var.install_monitoring_agent
   }
 
   lifecycle {
@@ -255,6 +256,7 @@ resource "google_compute_instance" "sap_hana_scaleout_worker_instances" {
     sap_hana_worker_nodes = var.sap_hana_worker_nodes
     sap_hana_standby_nodes = var.sap_hana_standby_nodes
     template-type = "TERRAFORM"
+    install_monitoring_agent   = var.install_monitoring_agent
   }
 
   lifecycle {
@@ -340,6 +342,7 @@ resource "google_compute_instance" "sap_hana_scaleout_standby_instances" {
     sap_hana_worker_nodes = var.sap_hana_worker_nodes
     sap_hana_standby_nodes = var.sap_hana_standby_nodes
     template-type = "TERRAFORM"
+    install_monitoring_agent   = var.install_monitoring_agent
   }
 
   lifecycle {

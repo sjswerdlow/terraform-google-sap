@@ -53,6 +53,9 @@ main::config_ssh
 main::get_settings
 main::create_static_ip
 
+## Install monitoring agent
+main::install_monitoring_agent
+
 ## prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
