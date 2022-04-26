@@ -71,7 +71,6 @@ module "sap_nw_ha" {
   # service_account            = ""
   # network_tags               = []
   # sap_deployment_debug       = false
-  # install_monitoring_agent   = true
   # post_deployment_script     = ""
   # reservation_name           = ""
 }
