@@ -36,7 +36,6 @@ module "sap_nw" {
   # network_tags         = []                    # default is an empty list
   # public_ip            = true_or_false         # default is true
   # service_account      = ""                    # default is an empty string
-  # sap_deployment_debug = true_or_false         # default is false
   # reservation_name     = ""                    # default is an empty string
   # can_ip_forward       = true_or_false         # default is true
 }

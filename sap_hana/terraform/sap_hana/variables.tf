@@ -53,12 +53,6 @@ variable "sap_hana_sid" {
   }
 }
 
-variable "sap_hana_double_volume_size" {
-  type = bool
-  description = "If this is set to Yes or True, the GCE instance will be provisioned with double the amount of disk space to support multiple SAP instances."
-  default = false
-}
-
 variable "sap_hana_instance_number" {
   type = number
   description = "The SAP instance number. If this is not defined, the GCE instance will be provisioned without SAP HANA installed."

@@ -54,9 +54,8 @@ locals {
   sap_hana_log_size_min = min(512, max(64, local.mem_size / 2))
   sap_hana_data_size_min = local.mem_size * 12 / 10
 
-  # doubles log and data size if sap_hana_double_volume_size == true; sap_hana_double_volume_size should work but is not used because of readiblity
-  sap_hana_log_size = local.sap_hana_log_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
-  sap_hana_data_size = local.sap_hana_data_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
+  sap_hana_log_size = local.sap_hana_log_size_min
+  sap_hana_data_size = local.sap_hana_data_size_min
 
   zone_split = split("-", var.zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"

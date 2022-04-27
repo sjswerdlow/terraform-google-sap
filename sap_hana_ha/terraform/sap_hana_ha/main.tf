@@ -60,20 +60,19 @@ locals {
 
   default_boot_size = 30
 
-  # doubles log and data size if sap_hana_double_volume_size == true; sap_hana_double_volume_size should work but is not used because of readiblity
-  hana_log_size = local.hana_log_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
-  hana_data_size = local.hana_data_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
+  hana_log_size = local.hana_log_size_min
+  hana_data_size = local.hana_data_size_min
 
   all_network_tag_items = concat(var.network_tags, ["sap-${local.healthcheck_name}-port"])
-  network_tags = var.use_ilb_vip ? local.all_network_tag_items : var.network_tags
+  network_tags = local.all_network_tag_items
 
   pdhdd_size = var.sap_hana_backup_size > 0 ? var.sap_hana_backup_size : 2 * local.mem_size
 
   # ensure pd-ssd meets minimum size/performance
   pdssd_size = ceil(max(834, local.hana_log_size + local.hana_data_size + local.hana_shared_size_min + 32 + 1))
 
-  sap_vip_solution = var.use_ilb_vip ? "ILB" : ""
-  sap_hc_port = var.use_ilb_vip ? (60000 + var.sap_hana_instance_number) : 0
+  sap_vip_solution = "ILB"
+  sap_hc_port = 60000 + var.sap_hana_instance_number
 
   # Note that you can not have default values refernce another variable value
   primary_instance_group_name = var.primary_instance_group_name != "" ? var.primary_instance_group_name : "ig-${var.primary_instance_name}"
@@ -237,7 +236,6 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
       sap_vip = var.sap_vip
       sap_vip_solution = local.sap_vip_solution
       sap_hc_port = local.sap_hc_port
-      sap_vip_secondary_range = var.sap_vip_secondary_range
       sap_primary_instance = var.primary_instance_name
       sap_secondary_instance = var.secondary_instance_name
       sap_primary_zone = var.primary_zone
@@ -365,7 +363,6 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
       sap_vip = var.sap_vip
       sap_vip_solution = local.sap_vip_solution
       sap_hc_port = local.sap_hc_port
-      sap_vip_secondary_range = var.sap_vip_secondary_range
       sap_primary_instance = var.primary_instance_name
       sap_secondary_instance = var.secondary_instance_name
       sap_primary_zone = var.primary_zone
@@ -386,7 +383,6 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
 # Optional ILB for VIP
 ################################################################################
 resource "google_compute_instance_group" "sap_hana_ha_primary_instance_group" {
-  count = var.use_ilb_vip ? 1 : 0
   name = local.primary_instance_group_name
   zone = var.primary_zone
   instances = [google_compute_instance.sap_hana_ha_primary_instance.id]
@@ -394,7 +390,6 @@ resource "google_compute_instance_group" "sap_hana_ha_primary_instance_group" {
 }
 
 resource "google_compute_instance_group" "sap_hana_ha_secondary_instance_group" {
-  count = var.use_ilb_vip ? 1 : 0
   name = local.secondary_instance_group_name
   zone = var.secondary_zone
   instances = [google_compute_instance.sap_hana_ha_secondary_instance.id]
@@ -402,7 +397,6 @@ resource "google_compute_instance_group" "sap_hana_ha_secondary_instance_group" 
 }
 
 resource "google_compute_region_backend_service" "sap_hana_ha_loadbalancer" {
-  count = var.use_ilb_vip ? 1 : 0
   name = local.loadbalancer_name
   region = local.region
   project = var.project_id
@@ -427,7 +421,6 @@ resource "google_compute_region_backend_service" "sap_hana_ha_loadbalancer" {
 }
 
 resource "google_compute_health_check" "sap_hana_ha_loadbalancer_hc" {
-  count = var.use_ilb_vip ? 1 : 0
   name = local.healthcheck_name
   project = var.project_id
   tcp_health_check {
@@ -440,7 +433,6 @@ resource "google_compute_health_check" "sap_hana_ha_loadbalancer_hc" {
 }
 
 resource "google_compute_address" "sap_hana_ha_loadbalancer_address" {
-  count = var.use_ilb_vip ? 1 : 0
   name = local.loadbalancer_address_name
   project = var.project_id
   address_type = "INTERNAL"
@@ -450,7 +442,6 @@ resource "google_compute_address" "sap_hana_ha_loadbalancer_address" {
 }
 
 resource "google_compute_forwarding_rule" "sap_hana_ha_forwarding_rule" {
-  count = var.use_ilb_vip ? 1 : 0
   name = local.forwardingrule_name
   project = var.project_id
   all_ports = true

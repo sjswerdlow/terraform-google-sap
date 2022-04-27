@@ -121,7 +121,7 @@ variable "post_deployment_script" {
 variable "primary_startup_url" {
   type = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default = "curl -s BUILD.TERRA_SH_URL/sap_nw/startup.sh | bash -x -s BUILD.TERRA_SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_nw/startup.sh | bash -s BUILD.TERRA_SH_URL"
 }
 
 variable "can_ip_forward" {

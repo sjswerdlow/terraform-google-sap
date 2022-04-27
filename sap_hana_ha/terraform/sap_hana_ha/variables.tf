@@ -67,12 +67,6 @@ variable "sap_hana_sid" {
   }
 }
 
-variable "sap_hana_double_volume_size" {
-  type = bool
-  description = "If this is set to Yes or True, the GCE instance will be provisioned with double the amount of disk space to support multiple SAP instances."
-  default = false
-}
-
 variable "sap_hana_instance_number" {
   type = number
   description = "The SAP instance number. If this is not defined, the GCE instance will be provisioned without SAP HANA installed."
@@ -145,22 +139,10 @@ variable "sap_hana_sapsys_gid" {
   default = 79
 }
 
-variable "sap_vip_secondary_range" {
-  type = string
-  description = "OPTIONAL - Specifies the secondary IP range that the VM's virtual IP address will be added to."
-  default = ""
-}
-
 variable "sap_vip" {
   type = string
   description = "OPTIONAL - The virtual IP address of the alias/route pointing towards the active SAP HANA instance. For a route based solution this IP must sit outside of any defined networks."
   default = ""
-}
-
-variable "use_ilb_vip" {
-  type = bool
-  description = "OPTIONAL - Use the Google Internal TCP Load Balancer to manage the virtual IP for the primary resource"
-  default = true
 }
 
 variable "primary_instance_group_name" {
@@ -253,7 +235,7 @@ variable "is_work_load_management_deployment" {
 variable "primary_startup_url" {
   type = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -x -s BUILD.TERRA_SH_URL"
+  default = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -s BUILD.TERRA_SH_URL"
 }
 
 variable "secondary_startup_url" {

@@ -58,9 +58,8 @@ locals {
   hana_data_size_min = local.mem_size * 12 / 10
   hana_shared_size_min = min(1024, local.mem_size)
 
-  # doubles log and data size if sap_hana_double_volume_size == true; sap_hana_double_volume_size should work but is not used because of readiblity
-  hana_log_size = local.hana_log_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
-  hana_data_size = local.hana_data_size_min * (var.sap_hana_double_volume_size == true ? 2 : 1)
+  hana_log_size = local.hana_log_size_min
+  hana_data_size = local.hana_data_size_min
 
   # scaleout_nodes > 0 then hana_shared_size and pdhdd is changed; assumes that sap_hana_scaleout_nodes is an interger
   hana_shared_size = local.hana_shared_size_min * (var.sap_hana_scaleout_nodes > 0 ? ceil(var.sap_hana_scaleout_nodes / 4) : 1)

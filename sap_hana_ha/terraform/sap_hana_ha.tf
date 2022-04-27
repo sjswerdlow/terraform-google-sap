@@ -41,14 +41,11 @@ module "sap_hana_ha" {
   # sap_hana_sidadm_password_secret = "SID_ADM_SECRET"      # default is "", otherwise must be the name of a secret in Secret Manager. The secret has the same constraints as "sap_hana_sidadm_password"
   # sap_hana_system_password        = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
   # sap_hana_system_password_secret = "SYSTEM_SECRET"       # default is "", otherwise must be the name of a secret in Secret Manager. The secret has the same constraints as "sap_hana_system_password"
-  # sap_hana_double_volume_size     = true_or_false         # default is false
   # sap_hana_backup_size            = BACKUP_DISK_SIZE      # default is 0, minimum is 0
   # sap_hana_sidadm_uid             = HANA_SIDADM_UID       # default is 900
   # sap_hana_sapsys_gid             = HANA_SAPSYS_GID       # default is 79
 
-  # sap_vip_secondary_range         = VIP_SECONDARY_RANGE   # default is ""
   # sap_vip                         = IP_ADDRESS            # default is ""
-  # use_ilb_vip                     = true_or_false         # default is true
   # primary_instance_group_name     = GROUP_NAME            # default is ""
   # secondary_instance_group_name   = GROUP_NAME            # default is ""
   # network                         = NETWORK               # default is ""
@@ -57,6 +54,5 @@ module "sap_hana_ha" {
   # network_tags                    = []                    # default is an empty list
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
-  # sap_deployment_debug            = true_or_false         # default is false
   # reservation_name                = ""                    # default is an empty string
 }
