@@ -65,7 +65,6 @@ hdb::create_backup_volume
 
 ## Install monitoring agents
 main::install_monitoring_agent
-main::install_ops_agent
 
 ## Install SAP HANA
 hdb::create_install_cfg

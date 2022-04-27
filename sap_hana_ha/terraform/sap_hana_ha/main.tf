@@ -243,7 +243,6 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
       sap_primary_zone = var.primary_zone
       sap_secondary_zone = var.secondary_zone
       template-type = "TERRAFORM"
-      install_cloud_ops_agent   = var.install_cloud_ops_agent
     },
     local.wlm_metadata
   )
@@ -350,7 +349,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
 
   metadata = merge(
     {
-      startup-script = var.primary_startup_url
+      startup-script = var.secondary_startup_url
       post_deployment_script = var.post_deployment_script
       sap_deployment_debug = var.sap_deployment_debug
       sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
@@ -372,7 +371,6 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
       sap_primary_zone = var.primary_zone
       sap_secondary_zone = var.secondary_zone
       template-type = "TERRAFORM"
-      install_cloud_ops_agent   = var.install_cloud_ops_agent
     },
     local.wlm_metadata
   )
