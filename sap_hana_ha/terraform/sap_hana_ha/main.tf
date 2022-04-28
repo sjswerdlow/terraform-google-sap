@@ -401,14 +401,14 @@ resource "google_compute_region_backend_service" "sap_hana_ha_loadbalancer" {
   region = local.region
   project = var.project_id
   network = local.processed_network
-  health_checks = [google_compute_health_check.sap_hana_ha_loadbalancer_hc[0].self_link]
+  health_checks = [google_compute_health_check.sap_hana_ha_loadbalancer_hc.self_link]
 
   backend {
-      group = google_compute_instance_group.sap_hana_ha_primary_instance_group[0].self_link
+      group = google_compute_instance_group.sap_hana_ha_primary_instance_group.self_link
   }
 
   backend {
-      group = google_compute_instance_group.sap_hana_ha_secondary_instance_group[0].self_link
+      group = google_compute_instance_group.sap_hana_ha_secondary_instance_group.self_link
   }
 
   protocol = "TCP"
@@ -448,9 +448,9 @@ resource "google_compute_forwarding_rule" "sap_hana_ha_forwarding_rule" {
   network = local.processed_network
   subnetwork = var.subnetwork
   region = local.region
-  backend_service = google_compute_region_backend_service.sap_hana_ha_loadbalancer[0].id
+  backend_service = google_compute_region_backend_service.sap_hana_ha_loadbalancer.id
   load_balancing_scheme = "INTERNAL"
-  ip_address = google_compute_address.sap_hana_ha_loadbalancer_address[0].address
+  ip_address = google_compute_address.sap_hana_ha_loadbalancer_address.address
 }
 
 resource "google_compute_firewall" "sap_hana_ha_vpc_firewall" {
