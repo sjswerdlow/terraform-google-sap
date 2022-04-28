@@ -106,7 +106,6 @@ nw-ha::create_nfs_directories() {
   directories="
     /mnt/nfs/sapmnt${VM_METADATA[sap_sid]}
     /mnt/nfs/usrsaptrans
-    /mnt/nfs/usrsap${VM_METADATA[sap_sid]}SYS
     /mnt/nfs/usrsap${VM_METADATA[sap_sid]}${VM_METADATA[sap_ascs]}SCS${VM_METADATA[sap_scs_instance_number]}
     /mnt/nfs/usrsap${VM_METADATA[sap_sid]}"ERS"${VM_METADATA[sap_ers_instance_number]}"
 
@@ -145,14 +144,12 @@ nw-ha::configure_shared_file_system() {
   main::errhandle_log_info "Configuring shared file system."
   mkdir -p /sapmnt/"${VM_METADATA[sap_sid]}"
   mkdir -p /usr/sap/trans
-  mkdir -p /usr/sap/"${VM_METADATA[sap_sid]}"/SYS
   mkdir -p /usr/sap/"${VM_METADATA[sap_sid]}"/"${VM_METADATA[sap_ascs]}"SCS"${VM_METADATA[sap_scs_instance_number]}"
   mkdir -p /usr/sap/"${VM_METADATA[sap_sid]}"/ERS"${VM_METADATA[sap_ers_instance_number]}"
 
   echo "/- /etc/auto.sap" | tee -a /etc/auto.master
   echo "/sapmnt/${VM_METADATA[sap_sid]} $nfs_opts ${VM_METADATA[nfs_path]}/sapmnt${VM_METADATA[sap_sid]}" | tee -a /etc/auto.sap
   echo "/usr/sap/trans $nfs_opts ${VM_METADATA[nfs_path]}/usrsaptrans" | tee -a /etc/auto.sap
-  echo "/usr/sap/${VM_METADATA[sap_sid]}/SYS $nfs_opts ${VM_METADATA[nfs_path]}/usrsap${VM_METADATA[sap_sid]}SYS" | tee -a /etc/auto.sap
 
   systemctl enable autofs
   systemctl restart autofs
@@ -160,7 +157,6 @@ nw-ha::configure_shared_file_system() {
 
   cd /sapmnt/${VM_METADATA[sap_sid]}
   cd /usr/sap/trans
-  cd /usr/sap/${VM_METADATA[sap_sid]}/SYS
   main::errhandle_log_info "Shared file system configured."
 }
 
