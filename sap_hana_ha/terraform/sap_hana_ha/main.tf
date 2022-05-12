@@ -134,7 +134,7 @@ locals {
 
 resource "google_compute_address" "sap_hana_ha_vm_ip" {
   count        = 2
-  name         = "${var.instance_name}-${count.index}"
+  name         = count.index == 0 ? "${var.primary_instance_name}-ip" : "${var.secondary_instance_name}-ip"
   subnetwork   = local.subnetwork_uri
   address_type = "INTERNAL"
   region       = local.region
