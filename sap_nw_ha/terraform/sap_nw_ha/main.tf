@@ -91,7 +91,7 @@ resource "google_compute_disk" "nw_swap_disks" {
 
 resource "google_compute_address" "sap_nw_vm_ip" {
   count        = 2
-  name         =  "${var.sap_primary_instance}-ip" : "${var.sap_secondary_instance}-ip"
+  name         = count.index == 0 ? "${var.sap_primary_instance}-ip" : "${var.sap_secondary_instance}-ip"
   subnetwork   = local.subnetwork_uri
   address_type = "INTERNAL"
   region       = local.region
