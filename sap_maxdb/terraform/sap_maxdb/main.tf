@@ -186,6 +186,7 @@ resource "google_compute_instance" "sap_maxdb" {
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     maxdb_sid = var.maxdb_sid
+    template-type = "TERRAFORM"
   }
 
   metadata_startup_script = var.primary_startup_url

@@ -229,6 +229,7 @@ resource "google_compute_instance" "sap_db2_instance" {
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_db2_sid = var.db2_sid
+    template-type = "TERRAFORM"
   }
 
   lifecycle {
