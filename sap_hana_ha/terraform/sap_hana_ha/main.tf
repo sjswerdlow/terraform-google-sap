@@ -84,7 +84,7 @@ locals {
   healthcheck_name = "${local.loadbalancer_name_prefix}-hc"
   forwardingrule_name = "${local.loadbalancer_name_prefix}-fwr"
 
-  split_network = split(var.network, ",")
+  split_network = split("/", var.network)
   is_vpc_network = length(local.split_network) > 1
   is_basic_network = !local.is_vpc_network && length(var.network) > 1
 
@@ -96,17 +96,17 @@ locals {
     "https://www.googleapis.com/compute/v1/projects/${var.project_id}/global/networks/${var.network}"
   )
   processed_network = local.is_basic_network ? (
+    local.possible_network ) : (
     "https://www.googleapis.com/compute/v1/projects/${var.project_id}/global/networks/default"
-    ) : local.possible_network
-
+  )
   # network config variables
   zone_split = split("-", var.primary_zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
 
   subnetwork_uri = length(local.subnetwork_split) > 1 ? (
-      "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
-      "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+      "https://www.googleapis.com/compute/v1/projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
+      "https://www.googleapis.com/compute/v1/projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
 
   os_full_name = "${var.linux_image_project}/${var.linux_image}"
 
@@ -453,7 +453,7 @@ resource "google_compute_address" "sap_hana_ha_loadbalancer_address" {
   name = local.loadbalancer_address_name
   project = var.project_id
   address_type = "INTERNAL"
-  subnetwork = var.subnetwork
+  subnetwork = local.subnetwork_uri
   region = local.region
   address = local.loadbalancer_address
 }
@@ -463,7 +463,7 @@ resource "google_compute_forwarding_rule" "sap_hana_ha_forwarding_rule" {
   project = var.project_id
   all_ports = true
   network = local.processed_network
-  subnetwork = var.subnetwork
+  subnetwork = local.subnetwork_uri
   region = local.region
   backend_service = google_compute_region_backend_service.sap_hana_ha_loadbalancer.id
   load_balancing_scheme = "INTERNAL"

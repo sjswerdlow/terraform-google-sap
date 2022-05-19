@@ -159,8 +159,7 @@ variable "secondary_instance_group_name" {
 
 variable "network" {
   type = string
-  description = "OPTIONAL - Network in which the ILB resides including resources like firewall rules."
-  default = ""
+  description = "Network in which the ILB resides including resources like firewall rules."
 }
 
 variable "loadbalancer_name" {
