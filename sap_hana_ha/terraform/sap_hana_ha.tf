@@ -19,6 +19,7 @@ module "sap_hana_ha" {
   # General settings
   project_id                      = "PROJECT_ID"          # example: my-project-x
   machine_type                    = "MACHINE_TYPE"        # example: n1-highmem-32
+  network                         = "NETWORK"             # example: default
   subnetwork                      = "SUBNETWORK"          # example: default
   linux_image                     = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
   linux_image_project             = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
@@ -48,7 +49,6 @@ module "sap_hana_ha" {
   # sap_vip                         = IP_ADDRESS            # default is ""
   # primary_instance_group_name     = GROUP_NAME            # default is ""
   # secondary_instance_group_name   = GROUP_NAME            # default is ""
-  # network                         = NETWORK               # default is ""
   # loadbalancer_name               = LB_NAME               # default is ""
 
   # network_tags                    = []                    # default is an empty list
