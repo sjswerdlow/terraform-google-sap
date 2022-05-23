@@ -21,13 +21,13 @@ resource "google_compute_disk" "sap_db2_boot_disk" {
   name = "${var.instance_name}-boot"
   type = "pd-balanced"
   zone = var.zone
-  size = 64 # GB
+  size = 30 # GB
   project = var.project_id
   image = "${var.windows_image_project}/${var.windows_image}"
 }
 
 resource "google_compute_disk" "sap_db2_sid_disk" {
-  name = "${var.instance_name}-db2-sid"
+  name = "${var.instance_name}-db2sid"
   type = "pd-balanced"
   zone = var.zone
   size = var.db2_sid_size
@@ -35,7 +35,7 @@ resource "google_compute_disk" "sap_db2_sid_disk" {
 }
 
 resource "google_compute_disk" "sap_db2_sap_temp_disk" {
-  name = "${var.instance_name}-db2-sap-temp"
+  name = "${var.instance_name}-db2saptmp"
   type = "pd-balanced"
   zone = var.zone
   size = var.db2_sap_temp_size
@@ -43,7 +43,7 @@ resource "google_compute_disk" "sap_db2_sap_temp_disk" {
 }
 
 resource "google_compute_disk" "sap_db2_log_disk" {
-  name = "${var.instance_name}-db2-log"
+  name = "${var.instance_name}-db2log"
   type = var.db2_log_ssd ? "pd-ssd" : "pd-balanced"
   zone = var.zone
   size = var.db2_log_size
@@ -51,7 +51,7 @@ resource "google_compute_disk" "sap_db2_log_disk" {
 }
 
 resource "google_compute_disk" "sap_db2_sap_data_disk" {
-  name = "${var.instance_name}-db2-sap-data"
+  name = "${var.instance_name}-db2sapdata"
   type = var.db2_sap_data_ssd ? "pd-ssd" : "pd-balanced"
   zone = var.zone
   size = var.db2_sap_data_size
@@ -60,16 +60,32 @@ resource "google_compute_disk" "sap_db2_sap_data_disk" {
 
 resource "google_compute_disk" "sap_db2_backup_disk" {
   count = var.db2_backup_size > 0 ? 1 : 0
-  name = "${var.instance_name}-db2-backup"
+  name = "${var.instance_name}-db2backup"
   type = "pd-balanced"
   zone = var.zone
   size = var.db2_backup_size
   project = var.project_id
 }
 
+resource "google_compute_disk" "sap_db2_dump_disk" {
+  name = "${var.instance_name}-db2dump"
+  type = "pd-balanced"
+  zone = var.zone
+  size = var.db2_dump_size
+  project = var.project_id
+}
+
+resource "google_compute_disk" "sap_db2_home_disk" {
+  name = "${var.instance_name}-db2home"
+  type = "pd-balanced"
+  zone = var.zone
+  size = var.db2_home_size
+  project = var.project_id
+}
+
 resource "google_compute_disk" "sap_db2_usr_sap_disk" {
   count = var.usr_sap_size > 0 ? 1 : 0
-  name = "${var.instance_name}-db2-usr-sap"
+  name = "${var.instance_name}-usrsap"
   type = "pd-balanced"
   zone = var.zone
   size = var.usr_sap_size
@@ -78,10 +94,19 @@ resource "google_compute_disk" "sap_db2_usr_sap_disk" {
 
 resource "google_compute_disk" "sap_db2_swap_disk" {
   count = var.swap_size > 0 ? 1 : 0
-  name = "${var.instance_name}-db2-swap"
+  name = "${var.instance_name}-swap"
   type = "pd-balanced"
   zone = var.zone
   size = var.swap_size
+  project = var.project_id
+}
+
+resource "google_compute_disk" "sap_db2_sap_mnt_disk" {
+  count = var.sap_mnt_size > 0 ? 1 : 0
+  name = "${var.instance_name}-sapmnt"
+  type = "pd-balanced"
+  size = var.sap_mnt_size
+  zone = var.zone
   project = var.project_id
 }
 
