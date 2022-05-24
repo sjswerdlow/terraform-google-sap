@@ -86,19 +86,14 @@ locals {
 
   split_network = split("/", var.network)
   is_vpc_network = length(local.split_network) > 1
-  is_basic_network = !local.is_vpc_network && length(var.network) > 1
 
   # Network: with Shared VPC option with ILB
-  is_subnetwork_split = local.is_vpc_network
-  possible_network = local.is_vpc_network ? (
+  processed_network = local.is_vpc_network ? (
     "https://www.googleapis.com/compute/v1/projects/${local.split_network[0]}/global/networks/${local.split_network[1]}"
     ) : (
     "https://www.googleapis.com/compute/v1/projects/${var.project_id}/global/networks/${var.network}"
   )
-  processed_network = local.is_basic_network ? (
-    local.possible_network ) : (
-    "https://www.googleapis.com/compute/v1/projects/${var.project_id}/global/networks/default"
-  )
+
   # network config variables
   zone_split = split("-", var.primary_zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
@@ -471,7 +466,7 @@ resource "google_compute_forwarding_rule" "sap_hana_ha_forwarding_rule" {
 }
 
 resource "google_compute_firewall" "sap_hana_ha_vpc_firewall" {
-  count = local.is_subnetwork_split ? 1 : 0
+  count = local.is_vpc_network ? 0 : 1
   name = "${local.healthcheck_name}-allow-firewall-rule"
   project = var.project_id
   network = local.processed_network
