@@ -52,9 +52,6 @@ main::get_settings
 main::send_start_metrics
 main::create_static_ip
 
-## Install monitoring agent
-main::install_monitoring_agent
-
 ##prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
@@ -62,6 +59,9 @@ hdb::calculate_volume_sizes
 hdb::create_shared_volume
 hdb::create_sap_data_log_volumes
 hdb::create_backup_volume
+
+## Install monitoring agent
+main::install_monitoring_agent
 
 ## scaleout config
 hdb::install_worker_sshkeys
