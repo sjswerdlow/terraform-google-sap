@@ -12,6 +12,29 @@ locals {
   zone_split = split("-", var.zone)
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   subnetwork_split = split("/", var.subnetwork)
+
+  cpu_platform_map = {
+    "n1-highmem-32"   = "Intel Broadwell"
+    "n1-highmem-64"   = "Intel Broadwell"
+    "n1-highmem-96"   = "Intel Skylake"
+    "n1-megamem-96"   = "Intel Skylake"
+    "n2-highmem-32"   = "Automatic"
+    "n2-highmem-48"   = "Automatic"
+    "n2-highmem-64"   = "Automatic"
+    "n2-highmem-80"   = "Automatic"
+    "n2-highmem-96"   = "Automatic"
+    "n2-highmem-128"  = "Automatic"
+    "n1-ultramem-40"  = "Automatic"
+    "n1-ultramem-80"  = "Automatic"
+    "n1-ultramem-160" = "Automatic"
+    "m1-megamem-96"   = "Intel Skylake"
+    "m1-ultramem-40"  = "Automatic"
+    "m1-ultramem-80"  = "Automatic"
+    "m1-ultramem-160" = "Automatic"
+    "m2-ultramem-208" = "Automatic"
+    "m2-megamem-416"  = "Automatic"
+    "m2-ultramem-416" = "Automatic"
+  }
 }
 
 ################################################################################
@@ -118,7 +141,7 @@ resource "google_compute_instance" "sap_db2_instance" {
   machine_type = var.machine_type
   zone = var.zone
   project = var.project_id
-  min_cpu_platform = "Automatic"
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
 
   boot_disk {
     auto_delete = true
@@ -228,7 +251,7 @@ resource "google_compute_instance" "sap_db2_instance" {
     startup-script = var.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
-    sap_db2_sid = var.db2_sid
+    sap_ibm_db2_sid = var.db2_sid
     template-type = "TERRAFORM"
   }
 

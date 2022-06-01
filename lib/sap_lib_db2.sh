@@ -15,5 +15,5 @@ db2::create_filesystems() {
   main::create_filesystem /db2/"${VM_METADATA[sap_ibm_db2_sid]}"/saptmp db2saptmp xfs
   main::create_filesystem /db2/"${VM_METADATA[sap_ibm_db2_sid]}"/log_dir db2log xfs
   main::create_filesystem /db2/db2"${VM_METADATA[sap_ibm_db2_sid],,}" db2home xfs
-  main::create_filesystem /db2backup db2backup xfs
+  main::create_filesystem /db2backup db2backup xfs "optional"
 }
