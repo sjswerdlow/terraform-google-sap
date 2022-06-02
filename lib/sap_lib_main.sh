@@ -360,7 +360,7 @@ main::get_settings() {
     fi
 
 
-    if [[ ${uses_secret_password} == "true" ]] && [[ "${key}" = *"password"* ]]; then
+    if [[ ${uses_secret_password} == "true" ]] && [[ "${key}" = *"password" ]]; then
       continue;
     fi
 
