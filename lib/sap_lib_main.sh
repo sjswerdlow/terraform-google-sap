@@ -238,7 +238,7 @@ main::create_filesystem() {
       main::check_mount "${mount_point}"
     fi
   elif [[ ${is_optional_file_system:-"notOptional"} == "optional" ]]; then
-    main::errhandle_log_warn "Unable to create optional file system ${filesystem}."
+    main::errhandle_log_warning "Unable to create optional file system ${filesystem}."
   else
     main::errhandle_log_error "Unable to access ${device}"
   fi
@@ -262,7 +262,7 @@ main::check_mount() {
         ;;
 
       warning)
-        main::errhandle_log_warn "Unable to mount ${mount_point}"
+        main::errhandle_log_warning "Unable to mount ${mount_point}"
         ;;
 
       *)

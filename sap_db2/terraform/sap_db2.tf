@@ -41,9 +41,9 @@ module "sap_db2" {
   # db2_log_ssd          = true_or_false         # default is true
   # db2_backup_size      = BACKUP_DISK_SIZE      # default is 0, minimum is 0
 
-  # usr_sap_size         = USR_SAP_DISK_SIZE     # default is 0, minimum is 0
-  # sap_mnt_size         = SAP_MNT_DISK_SIZE     # default is 0, minimum is 0
-  # swap_size            = SWAP_SIZE             # default is 0, minimum is 0
+  # usr_sap_size         = USR_SAP_DISK_SIZE     # default is 8, minimum is 8
+  # sap_mnt_size         = SAP_MNT_DISK_SIZE     # default is 8, minimum is 8
+  # swap_size            = SWAP_SIZE             # default is 8, minimum is 8
   # network_tags         = []                    # default is an empty list
   # public_ip            = true_or_false         # default is true
   # service_account      = ""                    # default is an empty string
