@@ -28,12 +28,18 @@ else
 fi
 
 ##########################################################################
+## Start constants
+##########################################################################
+TEMPLATE_NAME="SAP_HANA_HA_PRIMARY"
+
+##########################################################################
 ## Start includes
 ##########################################################################
 
 SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
 SAP_LIB_HA_SH
+SAP_LIB_METRICS
 
 ##########################################################################
 ## End includes
@@ -46,15 +52,19 @@ main::set_boot_parameters
 main::install_packages
 main::config_ssh
 main::get_settings
+main::send_start_metrics
 main::create_static_ip
 
-##prepare for SAP HANA
+## Prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
 hdb::calculate_volume_sizes
 hdb::create_shared_volume
 hdb::create_sap_data_log_volumes
 hdb::create_backup_volume
+
+## Install monitoring agents
+main::install_monitoring_agent
 
 ## Install SAP HANA
 hdb::create_install_cfg
@@ -67,23 +77,27 @@ hdb::config_backup
 ## Setup HA
 ha::check_settings
 ha::install_secondary_sshkeys
-ha::download_scripts  # SLES only
+ha::download_scripts
 ha::create_hdb_user
 ha::hdbuserstore
 hdb::backup /hanabackup/data/pre_ha_config
 ha::enable_hsr
-ha::enable_hdb_hadr_provider_hook
 ha::ready
 ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_primary
 ha::check_cluster
-ha::pacemaker_maintenance true  # SLES only
+ha::pacemaker_maintenance true
 ha::pacemaker_add_stonith
 ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
 ha::pacemaker_add_hana
 ha::check_hdb_replication
-ha::pacemaker_maintenance false  # SLES only
+ha::pacemaker_maintenance false
+## Allow Pacemaker to reconcile replication status before enabling hook
+ha::check_hdb_replication
+ha::pacemaker_maintenance true
+ha::enable_hdb_hadr_provider_hook
+ha::pacemaker_maintenance false
 
 ## Post deployment & installation cleanup
 main::complete

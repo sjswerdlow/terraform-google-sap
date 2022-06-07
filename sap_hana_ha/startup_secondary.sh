@@ -20,7 +20,7 @@
 #
 # ------------------------------------------------------------------------
 
-## Check to see if a custom script path was provieded by the template
+## Check to see if a custom script path was provided by the template
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
@@ -45,7 +45,7 @@ SAP_LIB_METRICS
 ## End includes
 ##########################################################################
 
-### Base GCP and OS Configuration
+## Base GCP and OS Configuration
 main::get_os_version
 main::install_gsdk /usr/local
 main::set_boot_parameters
@@ -54,7 +54,7 @@ main::config_ssh
 main::get_settings
 main::create_static_ip
 
-##prepare for SAP HANA
+## Prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
 hdb::calculate_volume_sizes
@@ -85,6 +85,8 @@ ha::copy_hdb_ssfs_keys
 hdb::stop
 ha::config_hsr
 hdb::start_nowait
+ha::enable_hdb_hadr_provider_hook
+ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_secondary
 
 ## Post deployment & installation cleanup

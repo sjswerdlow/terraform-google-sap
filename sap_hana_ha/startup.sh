@@ -20,7 +20,7 @@
 #
 # ------------------------------------------------------------------------
 
-## Check to see if a custom script path was provieded by the template
+## Check to see if a custom script path was provided by the template
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
@@ -45,7 +45,7 @@ SAP_LIB_METRICS
 ## End includes
 ##########################################################################
 
-### Base main:: and OS Configuration
+## Base main:: and OS Configuration
 main::get_os_version
 main::install_gsdk /usr/local
 main::set_boot_parameters
@@ -55,7 +55,7 @@ main::get_settings
 main::send_start_metrics
 main::create_static_ip
 
-##prepare for SAP HANA
+## Prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
 hdb::calculate_volume_sizes
@@ -83,6 +83,7 @@ ha::hdbuserstore
 hdb::backup /hanabackup/data/pre_ha_config
 ha::enable_hsr
 ha::ready
+ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_primary
 ha::check_cluster
 ha::pacemaker_maintenance true
@@ -91,6 +92,11 @@ ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
 ha::pacemaker_add_hana
 ha::check_hdb_replication
+ha::pacemaker_maintenance false
+## Allow Pacemaker to reconcile replication status before enabling hook
+ha::check_hdb_replication
+ha::pacemaker_maintenance true
+ha::enable_hdb_hadr_provider_hook
 ha::pacemaker_maintenance false
 
 ## Post deployment & installation cleanup

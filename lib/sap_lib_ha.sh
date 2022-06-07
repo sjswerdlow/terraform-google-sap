@@ -376,6 +376,7 @@ ha::pacemaker_maintenance() {
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Setting cluster maintenance mode to ${mode}"
     crm configure property maintenance-mode="${mode}"
+    crm resource cleanup
   fi
   # not needed for RHEL during setup - might have to implement it later if needed
 }
@@ -411,7 +412,6 @@ ha::config_pacemaker_secondary() {
     echo ${PRIMARY_NODE_IP} " " ${VM_METADATA[sap_primary_instance]}"."`hostname -d`" "${VM_METADATA[sap_primary_instance]} >> /etc/hosts
   fi
 
-  main::complete
 }
 
 

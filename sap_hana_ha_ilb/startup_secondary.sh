@@ -28,12 +28,18 @@ else
 fi
 
 ##########################################################################
+## Start constants
+##########################################################################
+TEMPLATE_NAME="SAP_HANA_HA_SECONDARY"
+
+##########################################################################
 ## Start includes
 ##########################################################################
 
 SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
 SAP_LIB_HA_SH
+SAP_LIB_METRICS
 
 ##########################################################################
 ## End includes
@@ -56,6 +62,9 @@ hdb::create_shared_volume
 hdb::create_sap_data_log_volumes
 hdb::create_backup_volume
 
+## Install monitoring agents
+main::install_monitoring_agent
+
 ## Install SAP HANA
 hdb::create_install_cfg
 hdb::download_media
@@ -67,16 +76,16 @@ hdb::config_backup
 ## Setup HA
 ha::check_settings
 ha::install_primary_sshkeys
-ha::download_scripts  # SLES only
+ha::download_scripts
 ha::create_hdb_user
 ha::hdbuserstore
 hdb::backup /hanabackup/data/pre_ha_config
-ha::enable_hdb_hadr_provider_hook
 ha::wait_for_primary
 ha::copy_hdb_ssfs_keys
 hdb::stop
 ha::config_hsr
 hdb::start_nowait
+ha::enable_hdb_hadr_provider_hook
 ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_secondary
 
