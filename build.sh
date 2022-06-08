@@ -283,8 +283,8 @@ deploy_dmtemplates() {
   echo "Deploying DM Templates to gs://${deploy_url}"
   gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
   echo "Resetting cache on gs://${deploy_url}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${deploy_url}/*/**.sh" >/dev/null
-  gsutil -q -m setmeta -r -h "Content-Type:text/plain" "gs://${deploy_url}/*/**.tf" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${deploy_url}/**/*.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/plain" "gs://${deploy_url}/**/*.tf" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${deploy_url}/**" >/dev/null
   popd
   echo "Deploying DM Templates complete"
@@ -300,8 +300,8 @@ deploy_terraform() {
   echo "Deploying Terraform to gs://${deploy_url}"
   gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
   echo "Resetting cache on gs://${deploy_url}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${deploy_url}/*/**.sh" >/dev/null
-  gsutil -q -m setmeta -r -h "Content-Type:text/plain" "gs://${deploy_url}/*/**.tf" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${deploy_url}/**/*.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/plain" "gs://${deploy_url}/**/*.tf" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${deploy_url}/**" >/dev/null
   popd
   echo "Deploying Terraform complete"
@@ -323,13 +323,13 @@ deploy_latest() {
   gsutil rm gs://${GCS_LATEST_BUCKET}/**
   gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/* gs://${GCS_LATEST_BUCKET}/
   echo "Resetting cache on gs://${GCS_LATEST_BUCKET}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_LATEST_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_LATEST_BUCKET}/**/*.sh" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${GCS_LATEST_BUCKET}/**" >/dev/null
   echo "Deploying Terraform to latest folder gs://${TERRAFORM_GCS_LATEST_BUCKET}"
   gsutil rm gs://${TERRAFORM_GCS_LATEST_BUCKET}/**
   gsutil -q -m cp -r -c -a public-read gs://"${TERRAFORM_GCS_BUCKET}"/* gs://${TERRAFORM_GCS_LATEST_BUCKET}/
   echo "Resetting cache on gs://${TERRAFORM_GCS_LATEST_BUCKET}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${TERRAFORM_GCS_LATEST_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${TERRAFORM_GCS_LATEST_BUCKET}/**/*.sh" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${TERRAFORM_GCS_LATEST_BUCKET}/**" >/dev/null
   echo "Deploying to latest folder complete"
 }
@@ -339,13 +339,13 @@ deploy_latest_for_continuous_testing() {
   gsutil rm gs://${GCS_CONTINUOUS_BUCKET}/**
   gsutil -q -m cp -r -c -a public-read gs://"${GCS_BUCKET}"/* gs://${GCS_CONTINUOUS_BUCKET}/
   echo "Resetting cache on gs://${GCS_CONTINUOUS_BUCKET}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_CONTINUOUS_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${GCS_CONTINUOUS_BUCKET}/**/*.sh" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${GCS_CONTINUOUS_BUCKET}/**" >/dev/null
   echo "Deploying Terraform to latest folder gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}"
   gsutil rm gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/**
   gsutil -q -m cp -r -c -a public-read gs://"${TERRAFORM_GCS_BUCKET}"/* gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/
   echo "Resetting cache on gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}"
-  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/*/**.sh" >/dev/null
+  gsutil -q -m setmeta -r -h "Content-Type:text/x-sh" "gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/**/*.sh" >/dev/null
   gsutil -q -m setmeta -r -h "Cache-Control:no-cache" "gs://${TERRAFORM_GCS_CONTINUOUS_BUCKET}/**" >/dev/null
   echo "Deploying to latest test folder complete"
 }
