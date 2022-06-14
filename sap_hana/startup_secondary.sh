@@ -53,15 +53,15 @@ main::config_ssh
 main::get_settings
 main::create_static_ip
 
-## Install monitoring agent
-main::install_monitoring_agent
-
 ## prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
 hdb::calculate_volume_sizes worker
 hdb::create_sap_data_log_volumes
 hdb::mount_nfs
+
+## Install monitoring agent
+main::install_monitoring_agent
 
 ## Post deployment & installation cleanup
 main::complete

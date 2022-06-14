@@ -56,9 +56,6 @@ main::get_settings
 main::send_start_metrics
 main::create_static_ip
 
-## Install monitoring agent
-main::install_monitoring_agent
-
 ## Prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
@@ -68,6 +65,9 @@ hdbso::create_data_log_volumes
 hdbso::gcestorageclient_install
 hdbso::gcestorageclient_gcloud_config
 hdb::install_worker_sshkeys
+
+## Install monitoring agent
+main::install_monitoring_agent
 
 ## Install SAP HANA
 hdb::create_install_cfg
