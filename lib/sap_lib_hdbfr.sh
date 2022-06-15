@@ -145,7 +145,7 @@ hdb_fr::setup_fast_restart() {
   hdb_fr::log_info "Adding /hana/tmpfs* entries to /etc/fstab. Copy is in /etc/fstab.${ts}"
   cp /etc/fstab /etc/fstab."${ts}"
   for (( i=0; i < ${numa_nodes}; i++ )) do
-    echo "tmpfs${HANA_SID}${i} /hana/tmpfs${i}/${HANA_SID} tmpfs rw,relatime,mpol=prefer:0 0 0" >> /etc/fstab
+    echo "tmpfs${HANA_SID}${i} /hana/tmpfs${i}/${HANA_SID} tmpfs rw,relatime,mpol=prefer:${i} 0 0" >> /etc/fstab
   done
 
   hdb_fr::log_info "Updating the HANA configuration."
