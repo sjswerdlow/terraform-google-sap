@@ -180,13 +180,31 @@ hdb::create_install_cfg() {
   ## output settings to log
   main::errhandle_log_info "Creating HANA installation configuration file /root/.deploy/${HOSTNAME}_hana_install.cfg"
 
+  errored=""
+
   ## check parameters
   if [ -z "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
-    main::errhandle_log_warning "SAP HANA deployement bucket is missing or incorrect in the deployment manager template. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually"
-    main::complete
+    main::errhandle_log_warning "SAP HANA deployement bucket is missing or incorrect in the accelerator template."
+    errored="true"
   fi
-  if [ -z "${VM_METADATA[sap_hana_system_password]}" ] || [ -z "${VM_METADATA[sap_hana_sidadm_password]}" ] || [ -z "${VM_METADATA[sap_hana_sid]}" ] || [ -z "${VM_METADATA[sap_hana_sidadm_uid]}" ]; then
-    main::errhandle_log_warning "SAP HANA parameters were missing or incomplete in the deployment manager template. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually"
+  if [ -z "${VM_METADATA[sap_hana_system_password]}" ]; then
+    main::errhandle_log_warning "SAP HANA system password or password secret was missing or incomplete in the accelerator template."
+    errored="true"
+  fi
+  if [ -z "${VM_METADATA[sap_hana_sidadm_password]}" ]; then
+    main::errhandle_log_warning "SAP HANA sidadm password or password secret was missing or incomplete in the accelerator template."
+    errored="true"
+  fi
+  if [ -z "${VM_METADATA[sap_hana_sid]}" ]; then
+    main::errhandle_log_warning "SAP HANA sid was missing or incomplete in the accelerator template."
+    errored="true"
+  fi
+  if [ -z "${VM_METADATA[sap_hana_sidadm_uid]}" ]; then
+    main::errhandle_log_warning "SAP HANA sidadm uid was missing or incomplete in the accelerator template."
+    errored="true"
+  fi
+  if [ -n "${errored}" ]; then
+    main::errhandle_log_warning "Due to missing parameters, the deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually."
     main::complete
   fi
 
@@ -491,7 +509,7 @@ hdb::backup() {
 
   main::errhandle_log_info "Creating HANA backup ${backup_name}"
   PATH="$PATH:/usr/sap/${VM_METADATA[sap_hana_sid]}/HDB${VM_METADATA[sap_hana_instance_number]}/exe"
-  
+
   ## Call bash with source script to avoid RHEL library errors
   bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u system -p '"${VM_METADATA[sap_hana_system_password]}"' -i ${VM_METADATA[sap_hana_instance_number]} \"BACKUP DATA USING FILE ('${backup_name}')\""
   bash -c "source /usr/sap/${VM_METADATA[sap_hana_sid]}/home/.sapenv.sh && hdbsql -u system -p '"${VM_METADATA[sap_hana_system_password]}"' -d SYSTEMDB -i ${VM_METADATA[sap_hana_instance_number]} \"BACKUP DATA for SYSTEMDB USING FILE ('${backup_name}_SYSTEMDB')\""

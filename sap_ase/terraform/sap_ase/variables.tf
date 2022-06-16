@@ -185,6 +185,7 @@ variable "reservation_name" {
   n1-highmem-64 : Intel Broadwell
   n1-highmem-96 : Intel Skylake
   n1-megamem-96 : Intel Skylake
+  m1-megamem-96 : Intel Skylake
   All other instance types can have automatic Min CPU Platform"
   EOT
   default = ""

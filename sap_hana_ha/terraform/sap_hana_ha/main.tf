@@ -219,12 +219,12 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   }
 
   dynamic "reservation_affinity" {
-    for_each = length(var.reservation_name) > 1 ? [1] : []
+    for_each = length(var.primary_reservation_name) > 1 ? [1] : []
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
         key = "compute.googleapis.com/reservation-name"
-        values = [var.reservation_name]
+        values = [var.primary_reservation_name]
       }
     }
   }
@@ -345,12 +345,12 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   }
 
   dynamic "reservation_affinity" {
-    for_each = length(var.reservation_name) > 1 ? [1] : []
+    for_each = length(var.secondary_reservation_name) > 1 ? [1] : []
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
         key = "compute.googleapis.com/reservation-name"
-        values = [var.reservation_name]
+        values = [var.secondary_reservation_name]
       }
     }
   }

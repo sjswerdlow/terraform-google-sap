@@ -54,5 +54,6 @@ module "sap_hana_ha" {
   # network_tags                    = []                    # default is an empty list
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
-  # reservation_name                = ""                    # default is an empty string
+  # primary_reservation_name        = ""                    # default is an empty string
+  # secondary_reservation_name      = ""                    # default is an empty string
 }

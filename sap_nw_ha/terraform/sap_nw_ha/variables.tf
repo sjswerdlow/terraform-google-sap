@@ -261,9 +261,8 @@ variable "sap_deployment_debug" {
   default = false
   description = "Debug log level for deployment"
 }
-variable "reservation_name" {
+variable "primary_reservation_name" {
   type = string
-  default = ""
   description = <<-EOT
   Use a reservation specified by RESERVATION_NAME.
   By default ANY_RESERVATION is used when this variable is empty.
@@ -275,8 +274,29 @@ variable "reservation_name" {
   n1-highmem-64 : Intel Broadwell
   n1-highmem-96 : Intel Skylake
   n1-megamem-96 : Intel Skylake
+  m1-megamem-96 : "Intel Skylake"
   All other instance types can have automatic Min CPU Platform"
   EOT
+  default = ""
+}
+
+variable "secondary_reservation_name" {
+  type = string
+  description = <<-EOT
+  Use a reservation specified by RESERVATION_NAME.
+  By default ANY_RESERVATION is used when this variable is empty.
+  In order for a reservation to be used it must be created with the
+  "Select specific reservation" selected (specificReservationRequired set to true)
+  Be sure to create your reservation with the correct Min CPU Platform for the
+  following instance types:
+  n1-highmem-32 : Intel Broadwell
+  n1-highmem-64 : Intel Broadwell
+  n1-highmem-96 : Intel Skylake
+  n1-megamem-96 : Intel Skylake
+  m1-megamem-96 : "Intel Skylake"
+  All other instance types can have automatic Min CPU Platform"
+  EOT
+  default = ""
 }
 #
 # DO NOT MODIFY unless you know what you are doing
