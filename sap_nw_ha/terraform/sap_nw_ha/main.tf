@@ -13,6 +13,8 @@ locals {
   secondary_region        = regex("[a-z]*-[a-z1-9]*", var.sap_secondary_zone)
   region                  = local.primary_region
   subnetwork_split        = split("/", var.subnetwork)
+  split_network           = split("/", var.network)
+  is_vpc_network          = length(local.split_network) > 1
   ascs                    = var.sap_nw_abap == true ? "A" : ""
 
   sid                     = lower(var.sap_sid)
@@ -344,6 +346,7 @@ resource "google_compute_health_check" "nw_hc" {
 ################################################################################
 resource "google_compute_firewall" "nw_hc_firewall_rule" {
   name          = local.hc_firewall_rule_name
+  count         = local.is_vpc_network ? 0 : 1
   network       = var.network
   direction     = "INGRESS"
   source_ranges = ["35.191.0.0/16", "130.211.0.0/22"]
