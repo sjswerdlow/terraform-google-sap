@@ -70,5 +70,6 @@ module "sap_nw_ha" {
   # public_ip                  = false
   # service_account            = ""
   # network_tags               = []
-  # reservation_name           = ""
+  # primary_reservation_name   = ""
+  # secondary_reservation_name = ""
 }

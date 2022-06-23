@@ -1,7 +1,7 @@
-# SAP Deployment Manager Templates
+# SAP accelerator Templates
 
 ## Summary
-This is a collection of deployment manager templates for common SAP application
+This is a collection of accelerator templates for common SAP application
 deployments on Google Cloud.  These templates are hosted on a public Google
 Cloud Storage folder for customers to download and use.  Customers modify
 the downloaded templates for their needs and use the gcloud Deployment
@@ -25,7 +25,7 @@ In order to build locally run:
 
 This will place a timestamped folder into the
 [gs://core-connect-dev-dm-templates](https://pantheon.corp.google.com/storage/browser/core-connect-dm-templates;tab=objects?project=core-connect-dev&pageState=(%22StorageObjectListTable%22:(%22f%22:%22%255B%255D%22))&prefix=&forceOnObjectsSortingFiltering=false)
-folder.  Then your template for deployment manager can reference the
+folder.  Then your template can reference the
 timestamped folder.
 
 ** NOTE ** - you need to modify your local template for testing to use
@@ -60,7 +60,7 @@ resources:
 if [[ ! -f "/bin/gcloud" ]] && [[ ! -d "/usr/local/google-cloud-sdk" ]]; then
 
   bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir=/usr/local >/dev/null
-  
+
   export PATH=/usr/local/google-cloud-sdk/bin/:$PATH
 
 fi
@@ -68,7 +68,7 @@ fi
 if [[ -e "/usr/bin/python" ]]; then
 
   export CLOUDSDK_PYTHON=/usr/bin/python
-  
+
 fi
 
 gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/startup.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'
@@ -85,7 +85,7 @@ fi
 if [[ -e "/usr/bin/python" ]]; then
 
   export CLOUDSDK_PYTHON=/usr/bin/python
-  
+
 fi
 
 gsutil cat gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates/sap_hana_scaleout/startup_secondary.sh | bash -s gs://core-connect-dm-templates/DATE_TIME_STAMP/dm-templates'

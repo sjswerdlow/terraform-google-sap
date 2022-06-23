@@ -1,5 +1,5 @@
 # SAP Deployment Templates & Functions -  CHANGELOG
-All notable changes to the SAP Deployment Manager templates will be documented in this file.
+All notable changes to the SAP Accelerator Templates will be documented in this file.
 
 Current Templates:
 
