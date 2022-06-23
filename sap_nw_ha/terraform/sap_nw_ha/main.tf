@@ -306,7 +306,7 @@ resource "google_compute_instance" "ers_instance" {
 resource "google_compute_address" "nw_vips" {
   count        = 2
   name         = count.index == 0 ? local.scs_vip_name : local.ers_vip_name
-  subnetwork   = var.subnetwork
+  subnetwork   = local.subnetwork_uri
   address_type = "INTERNAL"
   address      = count.index == 0 ? local.scs_vip_address : local.ers_vip_address
   region       = count.index == 0 ? local.primary_region : local.secondary_region
