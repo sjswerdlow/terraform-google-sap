@@ -411,7 +411,7 @@ ha::config_pacemaker_secondary() {
     systemctl enable pcsd.service
     echo ${PRIMARY_NODE_IP} " " ${VM_METADATA[sap_primary_instance]}"."`hostname -d`" "${VM_METADATA[sap_primary_instance]} >> /etc/hosts
   fi
-
+  main::complete
 }
 
 
