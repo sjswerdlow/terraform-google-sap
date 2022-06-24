@@ -43,6 +43,7 @@ hdbso::create_data_log_volumes() {
     lvcreate -l 100%FREE -n data vg_hana
 
     ## format file systems
+    main::format_mount /usr/sap /dev/vg_hana/sap xfs tmp
     main::format_mount /hana/data /dev/vg_hana/data xfs tmp
     main::format_mount /hana/log /dev/vg_hana/log xfs tmp
 

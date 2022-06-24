@@ -24,7 +24,7 @@ module "hana_scaleout" {
   linux_image                    = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
   linux_image_project            = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  instance_name                  = "VM_NAME"             # example: hana_instance
+  instance_name                  = "VM_NAME"             # example: hana-instance
   sap_hana_shared_nfs            = "HANA_SHARED_NFS"     # example: 10.10.10.10:/shared
   sap_hana_backup_nfs            = "HANA_BACKUP_NFS"     # example: 10.10.10.10:/backup
 
