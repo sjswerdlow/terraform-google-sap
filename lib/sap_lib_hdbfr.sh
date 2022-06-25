@@ -103,7 +103,7 @@ hdb_fr::setup_fast_restart() {
 
   HANA_SID="${1^^}"
   HANA_PWD="${2}"
-  HANA_NO=$(ls /usr/sap/HDB/ | grep HDB | grep -o -E '[0-9]+')
+  HANA_NO=$(ls /usr/sap/${HANA_SID^^}/ | grep HDB | grep -o -E '[0-9]+')
   numa_nodes=$(numactl -H | grep 'available:' | awk '{print $2}')
   num_tmpfs_dirs=$(ls -d /hana/tmpfs* | wc | awk '{print $1}')
   tmpfs_dirs=""
