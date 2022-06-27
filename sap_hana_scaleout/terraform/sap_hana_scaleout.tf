@@ -25,6 +25,7 @@ module "hana_scaleout" {
   linux_image_project            = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
   instance_name                  = "VM_NAME"             # example: hana-instance
+  sap_hana_sid                   = "SID"                 # Must conform to [a-zA-Z][a-zA-Z0-9]{2}
   sap_hana_shared_nfs            = "HANA_SHARED_NFS"     # example: 10.10.10.10:/shared
   sap_hana_backup_nfs            = "HANA_BACKUP_NFS"     # example: 10.10.10.10:/backup
 
@@ -34,7 +35,6 @@ module "hana_scaleout" {
   ##############################################################################
   # HANA settings
   # sap_hana_deployment_bucket      = "GCS_BUCKET"          # default is ""
-  # sap_hana_sid                    = "SID"                 # default is "", otherwise must conform to [a-zA-Z][a-zA-Z0-9]{2}
   # sap_hana_instance_number        = INSTANCE_NUMBER       # default is 0, must be a 2 digit positive number
   # sap_hana_sidadm_password        = "SID_ADM_PASSWORD"    # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
   # sap_hana_sidadm_password_secret = "SID_ADM_SECRET"      # default is "", otherwise must be the name of a secret in Secret Manager. The secret has the same constraints as "sap_hana_sidadm_password"
