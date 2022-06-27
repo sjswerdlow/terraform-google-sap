@@ -46,10 +46,8 @@ variable "sap_hana_deployment_bucket" {
 variable "sap_hana_sid" {
   type = string
   description = "The SAP HANA SID. If this is not defined, the GCE instance will be provisioned without SAP HANA installed. SID must adhere to SAP standard (Three letters or numbers and start with a letter)"
-  default = ""
   validation {
-    condition = length(var.sap_hana_sid) == 0 || (
-                 length(var.sap_hana_sid) == 3 && can(regex("[A-Z][A-Z0-9]{2}", var.sap_hana_sid)))
+    condition = length(var.sap_hana_sid) == 3 && can(regex("[A-Z][A-Z0-9]{2}", var.sap_hana_sid))
     error_message = "The sap_hana_sid must be 3 characters long and start with a letter and all letters must be capitalized."
   }
 }
