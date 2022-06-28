@@ -396,6 +396,6 @@ resource "google_compute_forwarding_rule" "nw_forwarding_rules" {
   load_balancing_scheme = "INTERNAL"
   backend_service       = element(google_compute_region_backend_service.nw_regional_backend_services.*.id, count.index)
   all_ports             = true
-  subnetwork            = var.subnetwork
+  subnetwork            = local.subnetwork_uri
   project               = var.project_id
 }
