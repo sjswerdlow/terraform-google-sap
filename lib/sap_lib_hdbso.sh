@@ -39,6 +39,7 @@ hdbso::create_data_log_volumes() {
 
     ## create logical volumes
     main::errhandle_log_info '--- Creating logical volumes'
+    lvcreate -L 32G -n sap vg_hana
     lvcreate -L "${hana_log_size}"G -n log vg_hana
     lvcreate -l 100%FREE -n data vg_hana
 
