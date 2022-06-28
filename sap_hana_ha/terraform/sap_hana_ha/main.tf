@@ -150,6 +150,13 @@ resource "google_compute_disk" "sap_hana_ha_primary_boot_disk" {
   size = local.default_boot_size
   project = var.project_id
   image = local.os_full_name
+
+  lifecycle {
+    # Ignores newer versions of the OS image. Removing this lifecycle
+    # and re-applying will cause the current disk to be deleted.
+    # All existing data will be lost.
+    ignore_changes = [image]
+  }
 }
 resource "google_compute_disk" "sap_hana_ha_primary_pdssd_disk" {
   name = "${var.primary_instance_name}-pdssd"
@@ -277,6 +284,13 @@ resource "google_compute_disk" "sap_hana_ha_secondary_boot_disk" {
   size = local.default_boot_size
   project = var.project_id
   image = local.os_full_name
+
+  lifecycle {
+    # Ignores newer versions of the OS image. Removing this lifecycle
+    # and re-applying will cause the current disk to be deleted.
+    # All existing data will be lost.
+    ignore_changes = [image]
+  }
 }
 resource "google_compute_disk" "sap_hana_ha_secondary_pdssd_disk" {
   name = "${var.secondary_instance_name}-pdssd"

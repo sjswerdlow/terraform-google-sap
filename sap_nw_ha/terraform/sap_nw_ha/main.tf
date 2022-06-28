@@ -58,6 +58,13 @@ resource "google_compute_disk" "nw_boot_disks" {
   size    = 30
   image   = "${var.linux_image_project}/${var.linux_image}"
   project = var.project_id
+
+  lifecycle {
+    # Ignores newer versions of the OS image. Removing this lifecycle
+    # and re-applying will cause the current disk to be deleted.
+    # All existing data will be lost.
+    ignore_changes = [image]
+  }
 }
 
 resource "google_compute_disk" "nw_usr_sap_disks" {
