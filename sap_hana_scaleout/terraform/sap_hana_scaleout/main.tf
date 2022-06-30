@@ -53,7 +53,6 @@ locals {
   mem_size = lookup(local.mem_size_map, var.machine_type, 256)
   sap_hana_log_size_min = min(512, max(64, local.mem_size / 2))
   sap_hana_data_size_min = local.mem_size * 12 / 10
-  hana_shared_size_min = min(1024, local.mem_size)
 
   sap_hana_log_size = local.sap_hana_log_size_min
   sap_hana_data_size = local.sap_hana_data_size_min
@@ -65,7 +64,7 @@ locals {
       "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
 
-  pdssd_size = ceil(max(834, local.sap_hana_log_size + local.sap_hana_data_size + local.hana_shared_size_min + 32 + 1))
+  pdssd_size = ceil(max(834, local.sap_hana_log_size + local.sap_hana_data_size  + 1))
 }
 
 ################################################################################

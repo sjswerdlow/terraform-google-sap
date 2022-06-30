@@ -39,12 +39,10 @@ hdbso::create_data_log_volumes() {
 
     ## create logical volumes
     main::errhandle_log_info '--- Creating logical volumes'
-    lvcreate -L 32G -n sap vg_hana
     lvcreate -L "${hana_log_size}"G -n log vg_hana
     lvcreate -l 100%FREE -n data vg_hana
 
     ## format file systems
-    main::format_mount /usr/sap /dev/vg_hana/sap xfs tmp
     main::format_mount /hana/data /dev/vg_hana/data xfs tmp
     main::format_mount /hana/log /dev/vg_hana/log xfs tmp
 
