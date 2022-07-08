@@ -53,6 +53,7 @@ def GenerateConfig(context):
   primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_majoritymaker/startup.sh | bash -s " + deployment_script_location))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
+  sap_deployment_debug = str(context.properties.get('sap_deployment_debug', 'False'))
 
   # Subnetwork: with SharedVPC support
   if "/" in context.properties['subnetwork']:

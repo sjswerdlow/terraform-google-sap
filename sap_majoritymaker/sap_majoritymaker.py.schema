@@ -72,3 +72,8 @@ properties:
   use_reservation_name:
     description: OPTIONAL - Ability to use a specified reservation
     type: string
+
+  sap_deployment_debug:
+    description: OPTIONAL - If this value is set to anything, the deployment will generates verbose deployment logs. Only turn this setting on if a Google support engineer asks you to enable debugging.
+    type: boolean
+    default: false

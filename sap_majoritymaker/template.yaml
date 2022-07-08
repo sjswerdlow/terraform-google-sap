@@ -42,6 +42,9 @@ resources:
     #    account will prevent a successful deployment. Example of a correctly specified
     #    custom service account: myserviceuser@myproject.iam.gserviceaccount.com
     #
+    # sap_deployment_debug: [No | Yes]
+    #    Debug mode. Do not enable debug mode unless you are asked by support to turn it on.
+    #
     #
     # --- Developer Options ---
     # post_deployment_script: [SCRIPT_URL]

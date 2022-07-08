@@ -392,7 +392,7 @@ main::get_settings() {
 
   ## if the startup script has previously completed, abort execution.
   if [[ -n "${VM_METADATA[status]}" ]]; then
-    main::errhandle_log_info "Startup script has previously been run. Aborting execution."
+    main::errhandle_log_info "Startup script has previously been run. Taking no further action."
     exit 0
   fi
 }
