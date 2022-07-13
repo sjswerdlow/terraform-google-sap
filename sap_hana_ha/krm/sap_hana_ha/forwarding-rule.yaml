@@ -1,0 +1,17 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeForwardingRule
+metadata:
+  name: LOAD-BALANCER-NAME-fwr
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  networkRef:
+    external: NETWORK-NAME
+  subnetworkRef:
+    external: SUBNET-NAME
+  location: COMPUTE-REGION
+  backendServiceRef:
+    name: LOAD-BALANCER-NAME
+  ipAddress:
+    addressRef:
+      name: LOAD-BALANCER-NAME-address

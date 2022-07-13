@@ -1,0 +1,10 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstanceGroup
+metadata:
+  name: SECONDARY-INSTANCE-GROUP-NAME
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  instances:
+  - name: SECONDARY-INSTANCE-NAME
+  zone: SECONDARY-ZONE

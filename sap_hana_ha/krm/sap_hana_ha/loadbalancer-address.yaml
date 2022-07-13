@@ -1,0 +1,12 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeAddress
+metadata:
+  name: LOAD-BALANCER-NAME-address
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  addressType: INTERNAL
+  location: COMPUTE-REGION
+  subnetworkRef:
+    external: SUBNET-NAME
+  address: LOAD-BALANCER-ADDRESS

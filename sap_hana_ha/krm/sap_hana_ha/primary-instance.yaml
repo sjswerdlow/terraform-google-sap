@@ -1,0 +1,70 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstance
+metadata:
+  name: PRIMARY-INSTANCE-NAME
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  machineType: MACHINE-TYPE
+  zone: PRIMARY-ZONE
+  bootDisk:
+    initializeParams:
+      type: pd-balanced
+      size: 50
+      sourceImageRef:
+        external: LINUX-IMAGE
+  attachedDisk:
+  - deviceName: PRIMARY-INSTANCE-NAME-primary
+    sourceDiskRef:
+      name: PRIMARY-INSTANCE-NAME-primary
+  - deviceName: PRIMARY-INSTANCE-NAME-backup
+    sourceDiskRef:
+      name: PRIMARY-INSTANCE-NAME-backup
+  networkInterface:
+  - networkRef:
+      external: NETWORK-NAME
+  serviceAccount:
+    serviceAccountRef:
+      external: SERVICE-ACCOUNT
+    scopes:
+      - https://www.googleapis.com/auth/cloud-platform
+  tags:
+  - NETWORK-TAGS-1
+  - NETWORK-TAGS-2
+  - NETWORK-TAGS-N
+  - LOAD-BALANCER-NAME
+  reservationAffinity:
+    type: SPECIFIC_RESERVATION
+    specificReservation:
+      key: compute.googleapis.com/reservation-name
+      values:
+        - PRIMARY-RESERVATION-NAME
+  metadata:
+  - key: sap_hana_deployment_bucket
+    value: SAP-HANA-DEPLOYMENT-BUCKET
+  - key: sap_hana_instance_number
+    value: "SAP-HANA-INSTANCE-NUMBER"
+  - key: sap_hana_sid
+    value: SAP-HANA-SID
+  - key: sap_hana_sidadm_password_secret
+    value: SAP-HANA-SIDADM-PASSWORD-SECRET
+  - key: sap_hana_system_password_secret
+    value: SAP-HANA-SYSTEM-PASSWORD-SECRET
+  - key: sap_hana_sidadm_uid
+    value: "SAP-HANA-SIDADM-UID"
+  - key: sap_hana_sapsys_gid
+    value: "SAP-HANA-SAPSYS-GID"
+  - key: sap_vip
+    value: LOAD-BALANCER-ADDRESS
+  - key: sap_hc_port
+    value: "SAP-HC-PORT"
+  - key: sap_primary_instance
+    value: PRIMARY-INSTANCE-NAME
+  - key: sap_secondary_instance
+    value: SECONDARY-INSTANCE-NAME
+  - key: sap_primary_zone
+    value: PRIMARY-ZONE
+  - key: sap_secondary_zone
+    value: SECONDARY-ZONE
+  - key: startup-script
+    value: curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -s BUILD.TERRA_SH_URL

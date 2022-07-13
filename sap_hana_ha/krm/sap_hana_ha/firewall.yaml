@@ -1,0 +1,15 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeFirewall
+metadata:
+  name: LOAD-BALANCER-NAME-allow-firewall-rule
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  networkRef:
+    external: NETWORK-NAME
+  targetTags:
+  - LOAD-BALANCER-NAME
+  allow:
+  - ports:
+    - 'SAP-HC-PORT'
+    protocol: tcp

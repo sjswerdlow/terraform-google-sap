@@ -1,0 +1,14 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeHealthCheck
+metadata:
+  name: LOAD-BALANCER-NAME-hc
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  tcpHealthCheck:
+    port: SAP-HC-PORT
+  location: COMPUTE-REGION
+  checkIntervalSec: 10
+  healthyThreshold: 2
+  timeoutSec: 10
+  unhealthyThreshold: 2

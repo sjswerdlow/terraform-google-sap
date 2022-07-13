@@ -1,0 +1,10 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeInstanceGroup
+metadata:
+  name: PRIMARY-INSTANCE-GROUP-NAME
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  instances:
+  - name: PRIMARY-INSTANCE-NAME
+  zone: PRIMARY-ZONE

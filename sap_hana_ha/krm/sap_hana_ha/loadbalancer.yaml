@@ -1,0 +1,20 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeBackendService
+metadata:
+  name: LOAD-BALANCER-NAME
+  annotations:
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  networkRef:
+    external: NETWORK-NAME
+  healthChecks:
+  - healthCheckRef:
+      name: LOAD-BALANCER-NAME-hc
+  backend:
+  - group:
+      instanceGroupRef:
+        name: PRIMARY-INSTANCE-GROUP-NAME
+  - group:
+      instanceGroupRef:
+        name: SECONDARY-INSTANCE-GROUP-NAME
+  location: COMPUTE-REGION

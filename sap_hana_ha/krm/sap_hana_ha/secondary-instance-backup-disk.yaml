@@ -1,0 +1,10 @@
+apiVersion: compute.cnrm.cloud.google.com/v1beta1
+kind: ComputeDisk
+metadata:
+  name: SECONDARY-INSTANCE-NAME-backup
+  annotations:
+    diskUse: backup
+    cnrm.cloud.google.com/blueprint: 'kpt-fn'
+spec:
+  size: BACKUP-SIZE
+  location: SECONDARY-ZONE
