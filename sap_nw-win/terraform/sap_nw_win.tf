@@ -33,7 +33,7 @@ module "sap_nw_win" {
 
   # usr_sap_size         = USR_SAP_DISK_SIZE       # default is 0, minimum is 0
   # swap_size            = SWAP_SIZE               # default is 0, minimum is 0
-  # network_tags         = []                      # default is an empty list
+  # network_tags         = [ "TAG_NAME" ]          # default is an empty list
   # public_ip            = true_or_false           # default is true
   # service_account      = ""                      # default is an empty string
   # sap_deployment_debug = true_or_false           # default is false

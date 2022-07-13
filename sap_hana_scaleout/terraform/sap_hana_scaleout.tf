@@ -47,7 +47,7 @@ module "hana_scaleout" {
   # sap_hana_worker_nodes           = WORKER_NODES_NUM      # default is 1, must be at least 1, at most 15
   # sap_hana_standby_nodes          = STANDBY_NODES_NUM     # default is 1, must be at least 1, at most 3
 
-  # network_tags                    = []                    # default is an empty list
+  # network_tags                    = [ "TAG_NAME" ]        # default is an empty list
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # reservation_name                = ""                    # default is an empty string

@@ -51,7 +51,7 @@ module "sap_hana_ha" {
   # secondary_instance_group_name   = GROUP_NAME            # default is ""
   # loadbalancer_name               = LB_NAME               # default is ""
 
-  # network_tags                    = []                    # default is an empty list
+  # network_tags                    = [ "TAG_NAME" ]          # default is an empty list
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # primary_reservation_name        = ""                    # default is an empty string

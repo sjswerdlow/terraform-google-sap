@@ -43,7 +43,7 @@ module "sap_hana" {
   # sap_hana_sidadm_uid             = HANA_SIDADM_UID       # default is 900
   # sap_hana_sapsys_gid             = HANA_SAPSYS_GID       # default is 79
 
-  # network_tags                    = []                    # default is an empty list
+  # network_tags                    = [ "TAG_NAME" ]        # default is an empty list
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # reservation_name                = ""                    # default is an empty string

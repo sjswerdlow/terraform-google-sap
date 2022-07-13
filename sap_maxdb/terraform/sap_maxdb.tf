@@ -40,7 +40,7 @@ module "maxdb" {
   # swap_size                 = SWAP_DISK_SIZE # Required if SAP NetWeaver is on same VM in GB, default is 0 and will not be created
 
   # Optional advanced options
-  # network_tags           = ["TAG"]
+  # network_tags           = [ "TAG_NAME" ]           # default is an empty list
   # public_ip              = TRUE_OR_FALSE            # default is true
   # service_account        = "CUSTOM_SERVICE_ACCOUNT"
   # sap_deployment_debug   = TRUE_OR_FALSE            # default is false

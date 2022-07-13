@@ -22,7 +22,7 @@ module "sap_db2_win" {
   machine_type           = "MACHINE_TYPE"          # example: n1-highmem-32
   subnetwork             = "SUBNETWORK"            # example: default
   windows_image          = "WINDOWS_IMAGE"         # example: rhel-8-4-sap-ha
-  windows_image_project  = "WINDOWS_IMAGE_PROJECT" # example: rhel-sap-cloud 
+  windows_image_project  = "WINDOWS_IMAGE_PROJECT" # example: rhel-sap-cloud
 
   instance_name          = "VM_NAME"               # example: db2-instance
   db2_sid                = "DB2_DATABASE_SID"      # example: ID0
@@ -42,7 +42,7 @@ module "sap_db2_win" {
   # usr_sap_size         = USR_SAP_DISK_SIZE       # default is 0, minimum is 0
   # sap_mnt_size         = SAP_MNT_DISK_SIZE       # default is 0, minimum is 0
   # swap_size            = SWAP_SIZE               # default is 0, minimum is 0
-  # network_tags         = []                      # default is an empty list
+  # network_tags         = [ "TAG_NAME" ]          # default is an empty list
   # public_ip            = true_or_false           # default is true
   # service_account      = ""                      # default is an empty string
   # sap_deployment_debug = true_or_false           # default is false
