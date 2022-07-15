@@ -57,19 +57,19 @@ module "sap_nw_ha" {
   # ers_backend_svc_name       = "[SID]-ers-backend-svc"
   # ers_forw_rule_name         = "[SID]-ers-fwd-rule"
 
-  # usr_sap_size               = 8
-  # sap_mnt_size               = 8
-  # swap_size                  = 8
+  # usr_sap_size               = USR_SAP_DISK_SIZE
+  # sap_mnt_size               = SAP_MNT_DISK_SIZE
+  # swap_size                  = SWAP_SIZE
 
   # sap_scs_instance_number    = "00"
   # sap_ers_instance_number    = "10"
-  # sap_nw_abap                = true
+  # sap_nw_abap                = true_or_false
 
   # pacemaker_cluster_name     = "[SID]-cluster"
 
-  # public_ip                  = false
+  # public_ip                  = true_or_false
   # service_account            = ""
-  # network_tags               = []
+  # network_tags               = [ "TAG_NAME" ]
   # primary_reservation_name   = ""
   # secondary_reservation_name = ""
 }
