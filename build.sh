@@ -364,10 +364,12 @@ cleanup_build() {
 }
 
 make_copybara_commit() {
+  rm -fr $GIT_HUB_REPO_FOLDER
   git clone sso://partner-code/sap-ext-dm-templates $GIT_HUB_REPO_FOLDER && (cd $GIT_HUB_REPO_FOLDER && f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname ${f}) ; curl -Lo $f https://gerrit-review.googlesource.com/tools/hooks/commit-msg ; chmod +x $f)
   cp -r .build_dmtemplates $GIT_HUB_REPO_FOLDER
   cd $GIT_HUB_REPO_FOLDER
-  git checkout -b gitHubSource
+  git checkout -b gitHubSource origin/gitHubSource
+  git pull
   rm -rf modules
   mkdir modules
 
