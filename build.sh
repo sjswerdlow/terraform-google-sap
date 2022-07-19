@@ -365,11 +365,10 @@ cleanup_build() {
 
 make_copybara_commit() {
   rm -fr $GIT_HUB_REPO_FOLDER
-  git clone sso://partner-code/sap-ext-dm-templates $GIT_HUB_REPO_FOLDER && (cd $GIT_HUB_REPO_FOLDER && f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname ${f}) ; curl -Lo $f https://gerrit-review.googlesource.com/tools/hooks/commit-msg ; chmod +x $f)
+  git clone https://partner-code/sap-ext-dm-templates $GIT_HUB_REPO_FOLDER && (cd $GIT_HUB_REPO_FOLDER && f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname ${f}) ; curl -Lo $f https://gerrit-review.googlesource.com/tools/hooks/commit-msg ; chmod +x $f)
   cp -r .build_dmtemplates $GIT_HUB_REPO_FOLDER
   cd $GIT_HUB_REPO_FOLDER
-  git checkout -b gitHubSource origin/gitHubSource
-  git pull
+  git checkout gitHubSource
   rm -rf modules
   mkdir modules
 
@@ -464,7 +463,6 @@ if [[ "${GCS_FOLDER}" == "release" ]]; then
 fi
 if [[ "${GCS_FOLDER}" =~ ^("build_continuous_testing"|"nightly")$ ]]; then
   deploy_latest_for_continuous_testing
-  make_copybara_commit
 fi
 cleanup_build
 

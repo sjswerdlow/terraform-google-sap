@@ -1,6 +1,7 @@
 .idea/
 .build_dmtemplates/
 .build_pacemakergcp/
+.build_github_push/
 **.terraform/
 **.terraform.*
 **terraform.tfstate*
