@@ -301,6 +301,7 @@ deploy_terraform() {
   find . -name "*.py" -type f -delete
   find . -name "*.py.schema" -type f -delete
   find . -name "template.yaml" -type f -delete
+  find . -name "krm" -type d -exec rm -rf {} +
   local deploy_url="${TERRAFORM_GCS_BUCKET}/terraform"
   echo "Deploying Terraform to gs://${deploy_url}"
   gsutil -q -m cp -r -c ${GSUTIL_PUBLIC_OPT} * gs://"${deploy_url}"/
