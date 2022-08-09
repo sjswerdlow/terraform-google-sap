@@ -217,6 +217,7 @@ hdb::create_install_cfg() {
     echo "number=${VM_METADATA[sap_hana_instance_number]}"
     echo "userid=${VM_METADATA[sap_hana_sidadm_uid]}"
     echo "groupid=${VM_METADATA[sap_hana_sapsys_gid]}"
+    echo "apply_system_size_dependent_parameters=off"
   } >>/root/.deploy/"${HOSTNAME}"_hana_install.cfg
 
   ## If HA configured, disable autostart
