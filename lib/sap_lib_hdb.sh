@@ -252,13 +252,16 @@ hdb::build_pw_xml() {
 }
 
 hdb::extract_media() {
+  local media_file
+
   main::errhandle_log_info "Extracting SAP HANA media"
   cd /hana/shared/media/ || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
 
-  if [[ -n $(find /hana/shared/media -maxdepth 1 -iname "${VM_METADATA[sap_hana_media_number]}*.ZIP") ]]; then
+  media_file=$(find /hana/shared/media  -maxdepth 1 -type f -iname "${VM_METADATA[sap_hana_media_number]}*.ZIP")
+  if [[ -n ${media_file} ]]; then
     mkdir -p /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
-    mv /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}".ZIP /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
-    unzip -o /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/"${VM_METADATA[sap_hana_media_number]}".ZIP -d /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
+    unzip -o "${media_file}" -d /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
+    mv "${media_file}" /hana/shared/media/"${VM_METADATA[sap_hana_media_number]}"/
   elif [[ -n $(find /hana/shared/media -maxdepth 1 -iname "${VM_METADATA[sap_hana_media_number]}*part1.exe") ]]; then
     ## Workaround requried due to unar not working with SAP HANA 2.0 SP3. TODO - Remove once no longer required
     if [[ -f /root/.deploy/unrar ]]; then
