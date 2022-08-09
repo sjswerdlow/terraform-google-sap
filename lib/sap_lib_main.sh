@@ -500,25 +500,36 @@ main::get_metadata() {
 }
 
 
-main::complete() {
-  local on_error=${1}
-
-  if [[ -z "${on_error}" ]]; then
-    main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
+main::update-metadata() {
+    local key="${1}"
+    local value="${2}"
 
     local count=0
     local max_count=10
 
-    while ! ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "status=completed" --zone "${CLOUDSDK_COMPUTE_ZONE}"; do
+    while ! ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "${key}=${value}" --zone "${CLOUDSDK_COMPUTE_ZONE}"; do
       count=$((count +1))
       if [ ${count} -gt ${max_count} ]; then
-        main::errhandle_log_info "Failed to update script complete status, continuing."
-        continue
+        main::errhandle_log_info "Failed to update metadata key=${key}, value=${value}, continuing."
+        break
       else
-        main::errhandle_log_info "Failed to update script complete status, trying again in 5 seconds."
+        main::errhandle_log_info "Failed to update metadata key=${key}, value=${value}, trying again in 5 seconds. [Attempt ${count}/${max_count}"
         sleep 5s
       fi
     done
+}
+
+main::complete() {
+  local on_error=${1}
+
+  ## update instance metadata with status
+  if [[ -n "${deployment_warnings}" ]]; then
+    main::update-metadata "status" "completed_with_warnings"
+  elif [[ -z "${on_error}" ]]; then
+    main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
+    main::update-metadata "status" "completed"
+  else
+    main::update-metadata "status" "failed_or_error"
   fi
 
   ## prepare advanced logs
