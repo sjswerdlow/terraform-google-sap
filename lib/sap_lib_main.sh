@@ -524,6 +524,7 @@ main::complete() {
 
   ## update instance metadata with status
   if [[ -n "${deployment_warnings}" ]]; then
+    main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed_with_warnings"
   elif [[ -z "${on_error}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
