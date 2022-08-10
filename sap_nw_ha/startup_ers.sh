@@ -47,7 +47,6 @@ SAP_LIB_METRICS
 
 ## Base configuration
 main::get_os_version
-nw-ha::fail_for_rhel                    # at this point only SLES is implemented
 main::install_gsdk /usr/local
 main::set_boot_parameters
 main::install_packages
