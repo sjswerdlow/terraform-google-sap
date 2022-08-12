@@ -148,14 +148,14 @@ main::install_packages() {
 
     ## check if zypper is still running
     while pgrep zypper; do
-      errhandle_log_info "--- zypper is still running. Waiting 10 seconds before continuing"
+      errhandle_log_info "--- zypper is still running. Waiting 10 seconds before attempting to continue"
       sleep 10s
     done
   fi
 
   ## packages to install
-  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 joe tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune"
-  local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 joe resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 compat-sap-c++-10 libatomic unzip libsss_autofs python2-pip langpacks-en langpacks-de glibc-all-langpacks libnsl libssh2 wget lsof jq"
+  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune"
+  local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 compat-sap-c++-10 libatomic unzip libsss_autofs python2-pip langpacks-en langpacks-de glibc-all-langpacks libnsl libssh2 wget lsof jq"
 
   ## install packages
   if [[ ${LINUX_DISTRO} = "SLES" ]]; then
@@ -199,7 +199,7 @@ main::install_packages() {
     # make sure latest packages are installed (https://cloud.google.com/solutions/sap/docs/sap-hana-ha-config-rhel#install_the_cluster_agents_on_both_nodes)
     main::errhandle_log_info 'Applying updates to packages on system'
     if ! yum update -y; then
-      main::errhandle_log_error 'Applying updates to packages on system failed ("yum update -y"). Logon to the VM to investigate the issue.'
+      main::errhandle_log_warning 'Applying updates to packages on system failed ("yum update -y"). Logon to the VM to investigate the issue.'
     fi
   fi
   main::errhandle_log_info 'Install of required operating system packages complete'
@@ -588,6 +588,9 @@ main::install_ops_agent() {
 }
 
 main::install_monitoring_agent() {
+  local msg1
+  local msg2
+
   main::errhandle_log_info "Installing SAP NetWeaver monitoring agent"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Installing agent for SLES"
@@ -598,9 +601,9 @@ main::install_monitoring_agent() {
     if timeout 300 zypper -n --no-gpg-checks install "google-sapnetweavermonitoring-agent"; then
       main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
     else
-      local MSG1="SAP NetWeaver monitoring agent did not install correctly."
-      local MSG2="Try to install it manually."
-      main::errhandle_log_info "${MSG1} ${MSG2}"
+      local msg1="SAP NetWeaver monitoring agent did not install correctly."
+      local msg2="Try to install it manually."
+      main::errhandle_log_info "${msg1} ${msg2}"
     fi
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     # RHEL
@@ -618,9 +621,9 @@ EOM
     if timeout 300 yum install -y "google-sapnetweavermonitoring-agent"; then
       main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
     else
-      local MSG1="SAP NetWeaver monitoring agent did not install correctly."
-      local MSG2="Try to install it manually."
-      main::errhandle_log_info "${MSG1} ${MSG2}"
+      local msg1="SAP NetWeaver monitoring agent did not install correctly."
+      local msg2="Try to install it manually."
+      main::errhandle_log_info "${msg1} ${msg2}"
     fi
   fi
   set +e
