@@ -306,6 +306,8 @@ EOF
 
 ha::config_pacemaker_primary() {
   main::errhandle_log_info "Creating cluster on primary node"
+  main::errhandle_log_info "Updating /etc/hosts."
+  echo $SECONDARY_NODE_IP " " ${VM_METADATA[sap_secondary_instance]}"."`hostname -d`" "${VM_METADATA[sap_secondary_instance]} >> /etc/hosts
   main::errhandle_log_info "--- Creating corosync-keygen"
   corosync-keygen
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
@@ -329,7 +331,6 @@ ha::config_pacemaker_primary() {
     main::errhandle_log_info "--- Starting cluster services & enabling on startup"
     systemctl start pcsd.service
     systemctl enable pcsd.service
-    echo $SECONDARY_NODE_IP " " ${VM_METADATA[sap_secondary_instance]}"."`hostname -d`" "${VM_METADATA[sap_secondary_instance]} >> /etc/hosts
     main::errhandle_log_info "--- Creating the cluster"
 
     local count=0
@@ -385,6 +386,8 @@ ha::pacemaker_maintenance() {
 ha::config_pacemaker_secondary() {
   main::errhandle_log_info "Joining ${VM_METADATA[sap_secondary_instance]} to cluster"
 
+  main::errhandle_log_info "Updating /etc/hosts."
+  echo ${PRIMARY_NODE_IP} " " ${VM_METADATA[sap_primary_instance]}"."`hostname -d`" "${VM_METADATA[sap_primary_instance]} >> /etc/hosts
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     ha::config_corosync "${SECONDARY_NODE_IP}"
     bash -c "ha-cluster-join -y -c ${VM_METADATA[sap_primary_instance]} csync2"
@@ -409,7 +412,6 @@ ha::config_pacemaker_secondary() {
     main::errhandle_log_info "--- Starting cluster services & enabling on startup"
     systemctl start pcsd.service
     systemctl enable pcsd.service
-    echo ${PRIMARY_NODE_IP} " " ${VM_METADATA[sap_primary_instance]}"."`hostname -d`" "${VM_METADATA[sap_primary_instance]} >> /etc/hosts
   fi
   main::complete
 }
