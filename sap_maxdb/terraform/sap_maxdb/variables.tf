@@ -163,3 +163,12 @@ variable "reservation_name" {
   EOT
   default = ""
 }
+
+#
+# DO NOT MODIFY unless you know what you are doing
+#
+variable "can_ip_forward" {
+  type = bool
+  description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
+  default = true
+}

@@ -322,3 +322,12 @@ variable "post_deployment_script" {
   instance you will need to add a check at the top of your script.
   EOT
 }
+
+#
+# DO NOT MODIFY unless you know what you are doing
+#
+variable "can_ip_forward" {
+  type = bool
+  description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
+  default = true
+}

@@ -138,7 +138,7 @@ resource "google_compute_instance" "scs_instance" {
       }
   }
 
-  can_ip_forward = true
+  can_ip_forward = var.can_ip_forward
   network_interface {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_nw_vm_ip.0.address
@@ -237,7 +237,7 @@ resource "google_compute_instance" "ers_instance" {
       }
   }
 
-  can_ip_forward = true
+  can_ip_forward = var.can_ip_forward
   network_interface {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_nw_vm_ip.1.address

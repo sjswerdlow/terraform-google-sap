@@ -154,6 +154,7 @@ resource "google_compute_instance" "sap_maxdb" {
       source = google_compute_disk.max_db_swap.self_link
     }
   }
+  can_ip_forward = var.can_ip_forward
   network_interface {
     subnetwork = local.subnetwork
     # we only include access_config if public_ip is true, an empty access_config

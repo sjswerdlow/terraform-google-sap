@@ -115,8 +115,12 @@ hdb::create_backup_volume() {
 
 hdb::set_kernel_parameters(){
   main::errhandle_log_info "Setting kernel paramaters"
+
+  # b/190863339 - pagecache_limit_mb only relevant to SLES 12
+  if [[ "${LINUX_DISTRO}" = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
+    echo "vm.pagecache_limit_mb = 0" >> /etc/sysctl.conf
+  fi
   {
-    echo "vm.pagecache_limit_mb = 0"
     echo "net.ipv4.tcp_slow_start_after_idle=0"
     echo "kernel.numa_balancing = 0"
     echo "net.ipv4.tcp_slow_start_after_idle=0"
@@ -184,7 +188,7 @@ hdb::create_install_cfg() {
 
   ## check parameters
   if [ -z "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
-    main::errhandle_log_warning "SAP HANA deployement bucket is missing or incorrect in the accelerator template."
+    main::errhandle_log_warning "SAP HANA deployment bucket is missing or incorrect in the accelerator template."
     errored="true"
   fi
   if [ -z "${VM_METADATA[sap_hana_system_password]}" ]; then
