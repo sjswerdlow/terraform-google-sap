@@ -523,14 +523,14 @@ main::complete() {
   local on_error=${1}
 
   ## update instance metadata with status
-  if [[ -n "${deployment_warnings}" ]]; then
+  if [[ -n "${on_error}" ]]; then
+    main::update-metadata "status" "failed_or_error"
+  elif [[ -n "${deployment_warnings}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed_with_warnings"
-  elif [[ -z "${on_error}" ]]; then
+  else
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed"
-  else
-    main::update-metadata "status" "failed_or_error"
   fi
 
   ## prepare advanced logs
