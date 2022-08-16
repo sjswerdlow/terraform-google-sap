@@ -153,12 +153,24 @@ hdb::download_media() {
   main::errhandle_log_info "Downloading HANA media from ${VM_METADATA[sap_hana_deployment_bucket]}"
   mkdir -p /hana/shared/media
 
+  # Check for sap_hana_deployment_bucket being empty in hdb::create_install_cfg()
+
+  # Check you have access to the bucket
+  if ! ${GSUTIL} ls gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/; then
+    main::errhandle_log_error "SAP HANA media bucket '${VM_METADATA[sap_hana_deployment_bucket]}' cannot be accessed. The deployment has finished and is ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually."
+  fi
+
   # Set the media number, so we know
   VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]} | grep _part1.exe | awk -F"/" '{print $NF}' | sed 's/_part1.exe//')"
 
-  # If SP4 of above, get the media number from the .ZIP
+  # If SP4 or above, get the media number from the .ZIP
   if [[ -z ${VM_METADATA[sap_hana_media_number]} ]]; then
     VM_METADATA[sap_hana_media_number]="$(${GSUTIL} ls gs://${VM_METADATA[sap_hana_deployment_bucket]}/51* | grep -i .ZIP | awk -F"/" '{print $NF}' | sed 's/.ZIP//I')"
+  fi
+
+  # b/169984954 fail here already so user understands easier what is wrong
+  if [[ -z ${VM_METADATA[sap_hana_media_number]} ]]; then
+    main::errhandle_log_error "HANA Media not found in bucket. Expected format gs://${VM_METADATA[sap_hana_deployment_bucket]}/51*.[zip|ZIP]. The deployment has finished and is ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually."
   fi
 
   ## download unrar from GCS. Fix for RHEL missing unrar and SAP packaging change which stoppped unar working.
@@ -172,8 +184,7 @@ hdb::download_media() {
   ## download SAP HANA media
   main::errhandle_log_info "gsutil cp of gs://${VM_METADATA[sap_hana_deployment_bucket]} to /hana/shared/media/ in progress..."
   if ! ${GSUTIL} -q -o "GSUtil:state_dir=/root/.deploy" -m cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/* /hana/shared/media/; then
-    main::errhandle_log_warning "HANA Media Download Failed. The deployment has finished and ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually"
-    main::complete
+    main::errhandle_log_error "HANA Media Download Failed. The deployment has finished and is ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually."
   fi
   main::errhandle_log_info "gsutil cp of HANA media complete."
 }
@@ -208,8 +219,7 @@ hdb::create_install_cfg() {
     errored="true"
   fi
   if [ -n "${errored}" ]; then
-    main::errhandle_log_warning "Due to missing parameters, the deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually."
-    main::complete
+    main::errhandle_log_error "Due to missing parameters, the deployment has finished and ready for SAP HANA, but SAP HANA will need to be installed manually."
   fi
 
   mkdir -p /root/.deploy
@@ -387,12 +397,6 @@ hdb::check_settings() {
      hana_master_node="$(hostname | rev | cut -d"w" -f2-999 | rev)"
   else
      hana_master_node=${HOSTNAME}
-  fi
-
-  ## check you have access to the bucket
-  if ! ${GSUTIL} ls gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/; then
-    unset "VM_METADATA[sap_hana_deployment_bucket]"
-    main::errhandle_log_info "SAP HANA media not found in bucket. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
   fi
 
   ## Remove passwords from metadata
