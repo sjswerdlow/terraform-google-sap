@@ -180,10 +180,10 @@ main::install_packages() {
   elif [[ ${LINUX_DISTRO} = "RHEL" ]]; then
     for package in $rhel_packages; do
         local count=0;
-        local max_count=10;
+        local max_count=3;
         while ! yum -y install "${package}"; do
           count=$((count +1))
-          sleep 5
+          sleep 3
           if [[ ${count} -gt ${max_count} ]]; then
             main::errhandle_log_warning "Failed to install ${package}, continuing installation."
             break
