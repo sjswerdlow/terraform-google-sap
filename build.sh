@@ -53,7 +53,7 @@ fi;
 #
 # NOTE: Minor version should be bumped for any push to the public bucket
 #
-VERSION=1.1
+VERSION=2.0
 
 BUILD_DATE=$(date +"%Y%m%d%H%M%s")
 BUILD_DATE_FOR_BUCKET=$(date '+%Y%m%d%H%M')
