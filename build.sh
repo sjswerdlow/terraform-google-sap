@@ -365,11 +365,19 @@ cleanup_build() {
 }
 
 make_copybara_commit() {
+  git clone https://gerrit.googlesource.com/gcompute-tools \
+    ${KOKORO_ARTIFACTS_DIR}/gcompute-tools
+  ${KOKORO_ARTIFACTS_DIR}/gcompute-tools/git-cookie-authdaemon
+
+  git remote add direct https://partner-code.googlesource.com/_direct/sap-ext-dm-templates
+
   rm -fr $GIT_HUB_REPO_FOLDER
-  git clone https://partner-code/sap-ext-dm-templates $GIT_HUB_REPO_FOLDER && (cd $GIT_HUB_REPO_FOLDER && f=`git rev-parse --git-dir`/hooks/commit-msg ; mkdir -p $(dirname ${f}) ; curl -Lo $f https://gerrit-review.googlesource.com/tools/hooks/commit-msg ; chmod +x $f)
+  mkdir $GIT_HUB_REPO_FOLDER
+  # Can't use the 'base' git copy as it doesn't use https.
+  git clone https://partner-code.googlesource.com/sap-ext-dm-templates $GIT_HUB_REPO_FOLDER
+  git checkout -b gitHubSource
   cp -r .build_dmtemplates $GIT_HUB_REPO_FOLDER
   cd $GIT_HUB_REPO_FOLDER
-  git checkout gitHubSource
   rm -rf modules
   mkdir modules
 
@@ -385,7 +393,7 @@ make_copybara_commit() {
 
   git add .
   git commit -am "${DATE} release commit used by copybara to push to github."
-  git push -f origin HEAD:refs/for/gitHubSource
+  git push -f https://partner-code.googlesource.com/_direct/sap-ext-dm-templates HEAD:refs/for/gitHubSource
   cd ..
 }
 
@@ -409,6 +417,7 @@ if [[ "${GCS_FOLDER}" == "release" ]]; then
     echo "ERROR: Cannot run release outside of Kokoro" \
     && exit 1
   fi
+
   GCS_BUCKET="cloudsapdeploy/deploymentmanager/${BUILD_DATE_FOR_BUCKET}"
   RESOURCE_URL="https://storage.googleapis.com/${GCS_BUCKET}"
   RESOURCE_URL_LATEST="https://storage.googleapis.com/cloudsapdeploy/deploymentmanager/latest"
@@ -461,6 +470,7 @@ sleep 1
 # if this is release then deploy_latest
 if [[ "${GCS_FOLDER}" == "release" ]]; then
   deploy_latest
+  make_copybara_commit
 fi
 if [[ "${GCS_FOLDER}" =~ ^("build_continuous_testing"|"nightly")$ ]]; then
   deploy_latest_for_continuous_testing
