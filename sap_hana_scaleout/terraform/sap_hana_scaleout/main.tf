@@ -19,6 +19,8 @@ locals {
     "n2-highmem-48"   = 386
     "n2-highmem-64"   = 512
     "n2-highmem-80"   = 640
+    "n2-highmem-96"   = 768
+    "n2-highmem-128"  = 864
     "n1-ultramem-40"  = 961
     "n1-ultramem-80"  = 1922
     "n1-ultramem-160" = 3844
@@ -28,6 +30,7 @@ locals {
     "m1-ultramem-160" = 3844
     "m2-ultramem-208" = 5916
     "m2-megamem-416"  = 5916
+    "m2-hypermem-416" = 8832
     "m2-ultramem-416" = 11832
   }
   cpu_platform_map = {
@@ -39,6 +42,8 @@ locals {
     "n2-highmem-48"   = "Automatic"
     "n2-highmem-64"   = "Automatic"
     "n2-highmem-80"   = "Automatic"
+    "n2-highmem-96"   = "Automatic"
+    "n2-highmem-128"  = "Automatic"
     "n1-ultramem-40"  = "Automatic"
     "n1-ultramem-80"  = "Automatic"
     "n1-ultramem-160" = "Automatic"
@@ -48,9 +53,10 @@ locals {
     "m1-ultramem-160" = "Automatic"
     "m2-ultramem-208" = "Automatic"
     "m2-megamem-416"  = "Automatic"
+    "m2-hypermem-416" = "Automatic"
     "m2-ultramem-416" = "Automatic"
   }
-  mem_size = lookup(local.mem_size_map, var.machine_type, 256)
+  mem_size = lookup(local.mem_size_map, var.machine_type, 320)
   sap_hana_log_size_min = min(512, max(64, local.mem_size / 2))
   sap_hana_data_size_min = local.mem_size * 12 / 10
 
