@@ -60,7 +60,7 @@ AGT
 ip_forwarding = false
 AGT
   fi
- 
+
   if service google-guest-agent restart; then
     main::errhandle_log_info "IP settings applied to to the google-guest-agent for load balancing back-end communication."
   else
@@ -220,7 +220,7 @@ EOF
           main::errhandle_log_info "Hosts registered for the cluster."
           finished=0
         fi
-      fi 
+      fi
       if [[ $LINUX_MAJOR_VERSION -le 7 ]]; then
         if pcs cluster auth ${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]} -u hacluster -p ${hacluster_pass}; then
           main::errhandle_log_info "Hosts registered for the cluster."
@@ -234,7 +234,7 @@ EOF
         main::errhandle_log_error "pcsd.service not started on secondary. Stopping deployment. Check logs on secondary."
       fi
     done
-    
+
     main::errhandle_log_info "Creating the cluster"
     if [[ $LINUX_MAJOR_VERSION -ge 8 ]]; then
       pcs cluster setup "${VM_METADATA[pacemaker_cluster_name]}" \
@@ -243,17 +243,19 @@ EOF
     fi
     if [[ $LINUX_MAJOR_VERSION -le 7 ]]; then
       pcs cluster setup --name "${VM_METADATA[pacemaker_cluster_name]}" \
-        ${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]} --token 20000 --join 60
+        ${VM_METADATA[sap_primary_instance]} ${VM_METADATA[sap_secondary_instance]} \
+        --token 20000 --join 60
+      local cfg_out="/etc/corosync/corosync.conf"
+      grep "max_messages:" ${cfg_out} \
+        && sed -i 's/max_messages:.*/max_messages: 20/g' ${cfg_out} \
+        || sed -i '/token:/a\    max_messages: 20' ${cfg_out}
+      grep "token_retransmits_before_loss_const:" ${cfg_out} \
+        && sed -i 's/token_retransmits_before_loss_const:.*/token_retransmits_before_loss_const: 10/g' ${cfg_out} \
+        || sed -i '/token:/a\    token_retransmits_before_loss_const: 10' ${cfg_out}
     fi
-    main::errhandle_log_info "Configuring Corosync ..."
     if [[ ! -f /etc/corosync/corosync.conf ]]; then
       main::errhandle_log_error "/etc/corosync/corosync.conf does not exist. Cluster setup incomplete."
     fi
-    sed -i 's/token:.*/token: 20000/g' /etc/corosync/corosync.conf
-    sed -i '/consensus:/d' /etc/corosync/corosync.conf
-    sed -i 's/join:.*/join: 60/g' /etc/corosync/corosync.conf
-    sed -i 's/max_messages:.*/max_messages: 20/g' /etc/corosync/corosync.conf
-    sed -i 's/token_retransmits_before_loss_const:.*/token_retransmits_before_loss_const: 10/g' /etc/corosync/corosync.conf
     if [[ $LINUX_MAJOR_VERSION -ge 8 ]]; then
       sed -i 's/transport:.*/transport: knet/g' /etc/corosync/corosync.conf
     fi
@@ -282,7 +284,7 @@ EOF
   main::errhandle_log_info "Enable and start Pacemaker service"
   systemctl enable pacemaker
   systemctl start pacemaker
-  
+
   if [[ ${LINUX_DISTRO} = "SLES" ]]; then
     echo "ready" > /root/.deploy/."${HOSTNAME}".ready
   fi
@@ -503,10 +505,10 @@ nw-ha::create_health_check_resources() {
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     pcs resource create "health-check-${VM_METADATA[sap_sid]}-${VM_METADATA[sap_ascs]}SCS${VM_METADATA[sap_scs_instance_number]}" \
       service:haproxy@${VM_METADATA[sap_sid]}${VM_METADATA[sap_ascs]}SCS \
-      op monitor interval=10s timeout=20s 
+      op monitor interval=10s timeout=20s
     pcs resource create "health-check-${VM_METADATA[sap_sid]}-ERS${VM_METADATA[sap_ers_instance_number]}" \
       service:haproxy@${VM_METADATA[sap_sid]}ERS \
-      op monitor interval=10s timeout=20s 
+      op monitor interval=10s timeout=20s
   fi
 
   main::errhandle_log_info "Health check resources added."
