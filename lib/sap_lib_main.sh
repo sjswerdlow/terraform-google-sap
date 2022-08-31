@@ -74,6 +74,7 @@ main::errhandle_log_error() {
   echo "ERROR - Deployment Exited - ${log_entry}"
   if [[ -n "${GCLOUD}" ]]; then
     ${GCLOUD}	--quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"${log_entry}\"" --severity=ERROR
+    ${GCLOUD} --quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"ERROR - Deployment Exited\"" --severity=ERROR
   fi
 
   # Send metrics
