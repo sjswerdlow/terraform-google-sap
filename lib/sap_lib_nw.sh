@@ -314,6 +314,7 @@ EOF
     systemctl start pcsd.service
     systemctl enable pcsd.service
     pcs cluster sync
+    systemctl restart corosync
     nw-ha::setup_haproxy
   fi
 
