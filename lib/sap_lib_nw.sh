@@ -257,6 +257,7 @@ EOF
     fi
     pcs cluster sync
     pcs cluster enable --all
+    pcs cluster stop --all
     pcs cluster start --all
   fi
   main::errhandle_log_info "Setting general cluster properties."
