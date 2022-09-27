@@ -375,7 +375,7 @@ make_copybara_commit() {
   mkdir $GIT_HUB_REPO_FOLDER
   # Can't use the 'base' git copy as it doesn't use https.
   git clone https://partner-code.googlesource.com/sap-ext-dm-templates $GIT_HUB_REPO_FOLDER
-  git checkout -b gitHubSource
+  git checkout -b copybaraSource
   cp -r .build_dmtemplates $GIT_HUB_REPO_FOLDER
   cd $GIT_HUB_REPO_FOLDER
   rm -rf modules
@@ -393,7 +393,7 @@ make_copybara_commit() {
 
   git add .
   git commit -am "${DATE} release commit used by copybara to push to github."
-  git push -f https://partner-code.googlesource.com/_direct/sap-ext-dm-templates HEAD:refs/for/gitHubSource
+  git push -f https://partner-code.googlesource.com/_direct/sap-ext-dm-templates HEAD:refs/heads/copybaraSource
   cd ..
 }
 
