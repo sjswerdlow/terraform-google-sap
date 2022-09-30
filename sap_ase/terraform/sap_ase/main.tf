@@ -15,6 +15,7 @@ locals {
   subnetwork_uri = length(local.subnetwork_split) > 1 ? (
       "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
 }
 
 ################################################################################
@@ -226,7 +227,7 @@ resource "google_compute_instance" "sap_ase_instance" {
   }
 
   metadata = {
-    startup-script = var.primary_startup_url
+    startup-script = local.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_ase_sid = var.ase_sid

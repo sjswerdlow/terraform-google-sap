@@ -71,6 +71,8 @@ locals {
       "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
 
   pdssd_size = ceil(max(834, local.sap_hana_log_size + local.sap_hana_data_size  + 1))
+  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
+  secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url
 }
 
 ################################################################################
@@ -192,7 +194,7 @@ resource "google_compute_instance" "sap_hana_scaleout_primary_instance" {
   }
 
   metadata = {
-    startup-script = var.primary_startup_url
+    startup-script = local.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
@@ -277,7 +279,7 @@ resource "google_compute_instance" "sap_hana_scaleout_worker_instances" {
   }
 
   metadata = {
-    startup-script = var.secondary_startup_url
+    startup-script = local.secondary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket
@@ -361,7 +363,7 @@ resource "google_compute_instance" "sap_hana_scaleout_standby_instances" {
   }
 
   metadata = {
-    startup-script = var.secondary_startup_url
+    startup-script = local.secondary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_hana_deployment_bucket = var.sap_hana_deployment_bucket

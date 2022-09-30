@@ -45,6 +45,8 @@ locals {
     "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
     "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
 
+  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
+  secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url
 }
 
 ################################################################################
@@ -169,6 +171,8 @@ resource "google_compute_instance" "scs_instance" {
     }
   }
   metadata = {
+    startup-scrit              = local.primary_startup_url
+
     # SCS settings
     sap_primary_instance       = var.sap_primary_instance
     sap_primary_zone           = var.sap_primary_zone
@@ -200,8 +204,6 @@ resource "google_compute_instance" "scs_instance" {
     post_deployment_script     = var.post_deployment_script
     template-type              = "TERRAFORM"
   }
-
-  metadata_startup_script = var.primary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
@@ -268,6 +270,8 @@ resource "google_compute_instance" "ers_instance" {
     }
   }
   metadata = {
+    startup-script             = local.secondary_startup_url
+
     # SCS settings
     sap_primary_instance       = var.sap_primary_instance
     sap_primary_zone           = var.sap_primary_zone
@@ -299,8 +303,6 @@ resource "google_compute_instance" "ers_instance" {
     post_deployment_script     = var.post_deployment_script
     template-type              = "TERRAFORM"
   }
-
-  metadata_startup_script = var.secondary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.

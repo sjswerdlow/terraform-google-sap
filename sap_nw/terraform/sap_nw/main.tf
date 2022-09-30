@@ -21,6 +21,7 @@ locals {
     "n1-highmem-96": "Intel Skylake",
     "n1-megamem-96": "Intel Skylake",
   }
+  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
 }
 
 ################################################################################
@@ -156,7 +157,7 @@ resource "google_compute_instance" "sap_nw_instance" {
   }
 
   metadata = {
-    startup-script = var.primary_startup_url
+    startup-script = local.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     template-type = "TERRAFORM"

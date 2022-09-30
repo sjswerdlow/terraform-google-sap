@@ -38,6 +38,7 @@ locals {
     "m2-megamem-416"  = "Automatic"
     "m2-ultramem-416" = "Automatic"
   }
+  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
 }
 
 ################################################################################
@@ -260,7 +261,7 @@ resource "google_compute_instance" "sap_db2_instance" {
   }
 
   metadata = {
-    startup-script = var.primary_startup_url
+    startup-script = local.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     sap_ibm_db2_sid = var.db2_sid

@@ -17,6 +17,7 @@ locals {
   region = "${local.zone_split[0]}-${local.zone_split[1]}"
   max_data_disk_type = var.maxdb_data_ssd ? "pd-ssd" : "pd-balanced"
   max_log_disk_type = var.maxdb_log_ssd ? "pd-ssd" : "pd-balanced"
+  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
 }
 
 ################################################################################
@@ -184,13 +185,12 @@ resource "google_compute_instance" "sap_maxdb" {
     }
   }
   metadata = {
+    startup-script = local.primary_startup_url
     post_deployment_script = var.post_deployment_script
     sap_deployment_debug = var.sap_deployment_debug
     maxdb_sid = var.maxdb_sid
     template-type = "TERRAFORM"
   }
-
-  metadata_startup_script = var.primary_startup_url
 
   lifecycle {
     # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
