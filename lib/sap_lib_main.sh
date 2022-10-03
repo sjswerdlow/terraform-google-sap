@@ -155,7 +155,7 @@ main::install_packages() {
   fi
 
   ## packages to install
-  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune"
+  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune nvme-cli"
   local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 compat-sap-c++-10 libatomic unzip libsss_autofs python2-pip langpacks-en langpacks-de glibc-all-langpacks libnsl libssh2 wget lsof jq"
 
   ## install packages
@@ -204,6 +204,50 @@ main::install_packages() {
     fi
   fi
   main::errhandle_log_info 'Install of required operating system packages complete'
+}
+
+#######################################
+# Finds and returns (via 'echo') first device in $by_id_dir that contains
+# $searchstring. Works with SCSI (/dev/sdX) and NVME (/dev/nvmeX) devices.
+#
+# Input: searchstring
+# Output: device name
+#
+# Examples for NVME and SCSI:
+#     main::get_device_by_id backup
+#       /dev/nvme0n3     (NVME)
+#       /dev/sdc         (SCSI)
+#######################################
+main::get_device_by_id() {
+
+  local searchstring=${1}
+  local by_id_dir="/dev/disk/by-id"
+  local device_name=""
+  local nvme_script='/usr/lib/udev/google_nvme_id'
+
+  device_name=$(readlink -f ${by_id_dir}/$(ls ${by_id_dir} | grep google | grep -m 1 "${searchstring}"))
+  if [ ${device_name} != ${by_id_dir} ]; then
+    echo ${device_name}
+    return
+  fi
+
+  # TODO(franklegler): Remove workaround once b/249894430 is resolved
+  # On M3 with SLES devices are not yet listed by their name (b/249894430)
+  # Workaround: Run script to create symlinks ()
+  if [[ -b /dev/nvme0n1 ]] && [[ -f ${nvme_script} ]]; then
+    udevadm control --reload-rules && udevadm trigger # b/249894430#comment11
+    for i in $(ls /dev/nvme0n*); do                   # b/249894430#comment13
+        $nvme_script -d $i -s
+    done
+    device_name=$(readlink -f ${by_id_dir}/$(ls ${by_id_dir} | grep google | grep -m 1 "${searchstring}"))
+    if [ ${device_name} != ${by_id_dir} ]; then
+      echo ${device_name}
+      return
+    fi
+  fi
+  # End workaround
+
+  main::errhandle_log_error "No device containing '${searchstring}' found."
 }
 
 

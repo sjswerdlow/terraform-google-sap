@@ -13,7 +13,7 @@ hdbso::calculate_volume_sizes() {
     hana_data_size=$(((VM_MEMSIZE*12)/10))
 
     ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
-    hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE /dev/sdb)/1024/1024/1024))
+    hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE $DEVICE_DATA_LOG)/1024/1024/1024))
     hana_pdssd_size_x2=$(((hana_data_size+hana_log_size)*2))
 
     if [[ ${hana_pdssd_size} -gt ${hana_pdssd_size_x2} ]]; then
@@ -35,7 +35,7 @@ hdbso::create_data_log_volumes() {
     main::errhandle_log_info 'Building /hana/data & /hana/log'
 
     ## create volume group
-    main::create_vg /dev/sdb vg_hana
+    main::create_vg $DEVICE_DATA_LOG vg_hana
 
     ## create logical volumes
     main::errhandle_log_info '--- Creating logical volumes'
