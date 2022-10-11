@@ -29,7 +29,7 @@ hdb::calculate_volume_sizes() {
   fi
 
   ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
-  hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE /dev/sdb)/1024/1024/1024))
+  hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE $DEVICE_DATA_LOG)/1024/1024/1024))
   hana_pdssd_size_x2=$(((hana_data_size+hana_log_size)*2 +hana_shared_size))
 
   if [[ ${hana_pdssd_size} -gt ${hana_pdssd_size_x2} ]]; then
@@ -48,7 +48,7 @@ hdb::create_sap_data_log_volumes() {
   main::errhandle_log_info "Building /usr/sap, /hana/data & /hana/log"
 
   ## create volume group
-  main::create_vg /dev/sdb vg_hana
+  main::create_vg $DEVICE_DATA_LOG vg_hana
 
   ## create logical volumes
   main::errhandle_log_info '--- Creating logical volumes'
@@ -90,7 +90,7 @@ hdb::create_sap_data_log_volumes() {
 
 hdb::create_shared_volume() {
 
-  main::create_vg /dev/sdb vg_hana
+  main::create_vg $DEVICE_DATA_LOG vg_hana
   lvcreate -L ${hana_shared_size}G -n shared vg_hana
 
   ## format and mount
@@ -103,7 +103,7 @@ hdb::create_backup_volume() {
   main::errhandle_log_info "Building /hanabackup"
 
   ## create volume group
-  main::create_vg /dev/sdc vg_hanabackup
+  main::create_vg $DEVICE_BACKUP vg_hanabackup
 
   main::errhandle_log_info "--- Creating logical volume"
   lvcreate -l 100%FREE -n backup vg_hanabackup
@@ -296,7 +296,7 @@ hdb::extract_media() {
       done
     fi
   else
-    main::errhandle_log_error "Unable to found SAP HANA media. Please ensure the media is uploaded to your GCS bucket in the correct format"
+    main::errhandle_log_error "Unable to find SAP HANA media. Please ensure the media is uploaded to your GCS bucket in the correct format"
   fi
 }
 
@@ -378,6 +378,7 @@ hdb::config_backup() {
 
 
 hdb::check_settings() {
+  main::errhandle_log_info "Checking settings for HANA deployment"
 
   ## Set defaults if required
   VM_METADATA[sap_hana_sidadm_uid]=$(main::check_default 900 "${VM_METADATA[sap_hana_sidadm_uid]}")
@@ -402,6 +403,21 @@ hdb::check_settings() {
   ## Remove passwords from metadata
   main::remove_metadata sap_hana_system_password
   main::remove_metadata sap_hana_sidadm_password
+
+  ## Detect devices for attached disks
+  ##   - Names of disks correspond to what is defined on DM/TF side
+  main::errhandle_log_info "Determining device names for HANA deployment"
+  if [[ -z  "${VM_METADATA[sap_hana_original_role]}" ]]; then
+    # Non-Scale-out naming (hana, hana_ha, hana_ha_ilb)
+    readonly DEVICE_DATA_LOG=$(main::get_device_by_id "pdssd")
+    main::errhandle_log_info "DEVICE_DATA_LOG is ${DEVICE_DATA_LOG}"
+    readonly DEVICE_BACKUP=$(main::get_device_by_id "backup")
+    main::errhandle_log_info "DEVICE_BACKUP is ${DEVICE_BACKUP}"
+  elif [[ ! "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
+    # Scale-out naming uses 'mnt000xx' and has no backup disk
+    readonly DEVICE_DATA_LOG=$(main::get_device_by_id "mnt000")
+    main::errhandle_log_info "DEVICE_DATA_LOG is ${DEVICE_DATA_LOG}"
+  fi
 }
 
 

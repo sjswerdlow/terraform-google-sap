@@ -196,6 +196,21 @@ def GenerateConfig(context):
   elif context.properties['instanceType'] == 'm2-ultramem-416':
       mem_size = 11832
       cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'm3-megamem-64':
+      mem_size=976
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'm3-megamem-128':
+      mem_size=1952
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'm3-ultramem-32':
+      mem_size=976
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'm3-ultramem-64':
+      mem_size=1952
+      cpu_platform = "Automatic"
+  elif context.properties['instanceType'] == 'm3-ultramem-128':
+      mem_size=3904
+      cpu_platform = "Automatic"
   else:
       mem_size = 320
       cpu_platform = "Automatic"

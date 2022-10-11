@@ -31,6 +31,11 @@ locals {
     "m2-megamem-416"  = 5916
     "m2-hypermem-416" = 8832
     "m2-ultramem-416" = 11832
+    "m3-megamem-64"   = 976
+    "m3-megamem-128"  = 1952
+    "m3-ultramem-32"  = 976
+    "m3-ultramem-64"  = 1952
+    "m3-ultramem-128" = 3904
   }
   cpu_platform_map = {
     "n1-highmem-32"   = "Intel Broadwell"
@@ -54,6 +59,11 @@ locals {
     "m2-megamem-416"  = "Automatic"
     "m2-hypermem-416" = "Automatic"
     "m2-ultramem-416" = "Automatic"
+    "m3-megamem-64"   = "Automatic"
+    "m3-megamem-128"  = "Automatic"
+    "m3-ultramem-32"  = "Automatic"
+    "m3-ultramem-64"  = "Automatic"
+    "m3-ultramem-128" = "Automatic"
   }
   mem_size = lookup(local.mem_size_map, var.machine_type, 320)
   hana_log_size_min = min(512, max(64, local.mem_size / 2))
