@@ -171,7 +171,7 @@ resource "google_compute_instance" "scs_instance" {
     }
   }
   metadata = {
-    startup-scrit              = local.primary_startup_url
+    startup-script              = local.primary_startup_url
 
     # SCS settings
     sap_primary_instance       = var.sap_primary_instance
