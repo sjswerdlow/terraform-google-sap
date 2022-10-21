@@ -1,3 +1,18 @@
+/**
+ * Copyright 2022 Google LLC
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #
 # Terraform SAP NW HA for Google Cloud
 #
@@ -9,18 +24,18 @@
 # Local variables
 ################################################################################
 locals {
-  primary_region          = regex("[a-z]*-[a-z1-9]*", var.sap_primary_zone)
-  secondary_region        = regex("[a-z]*-[a-z1-9]*", var.sap_secondary_zone)
-  region                  = local.primary_region
-  subnetwork_split        = split("/", var.subnetwork)
-  split_network           = split("/", var.network)
-  is_vpc_network          = length(local.split_network) > 1
-  ascs                    = var.sap_nw_abap == true ? "A" : ""
+  primary_region   = regex("[a-z]*-[a-z1-9]*", var.sap_primary_zone)
+  secondary_region = regex("[a-z]*-[a-z1-9]*", var.sap_secondary_zone)
+  region           = local.primary_region
+  subnetwork_split = split("/", var.subnetwork)
+  split_network    = split("/", var.network)
+  is_vpc_network   = length(local.split_network) > 1
+  ascs             = var.sap_nw_abap == true ? "A" : ""
 
-  sid                     = lower(var.sap_sid)
+  sid = lower(var.sap_sid)
 
-  hc_firewall_rule_name   = var.hc_firewall_rule_name == "" ? "${local.sid}-hc-allow" : var.hc_firewall_rule_name
-  hc_network_tag          = length(var.hc_network_tag) == 0 ? ["${local.hc_firewall_rule_name}"] : var.hc_network_tag
+  hc_firewall_rule_name = var.hc_firewall_rule_name == "" ? "${local.sid}-hc-allow" : var.hc_firewall_rule_name
+  hc_network_tag        = length(var.hc_network_tag) == 0 ? ["${local.hc_firewall_rule_name}"] : var.hc_network_tag
 
   sap_scs_instance_number = var.sap_scs_instance_number == "" ? "00" : var.sap_scs_instance_number
   scs_inst_group_name     = var.scs_inst_group_name == "" ? "${local.sid}-scs-ig" : var.scs_inst_group_name
@@ -40,12 +55,12 @@ locals {
   ers_backend_svc_name    = var.ers_backend_svc_name == "" ? "${local.sid}-ers-backend-svc" : var.ers_backend_svc_name
   ers_forw_rule_name      = var.ers_forw_rule_name == "" ? "${local.sid}-ers-fwd-rule" : var.ers_forw_rule_name
 
-  pacemaker_cluster_name  = var.pacemaker_cluster_name == "" ? "${local.sid}-cluster" : var.pacemaker_cluster_name
+  pacemaker_cluster_name = var.pacemaker_cluster_name == "" ? "${local.sid}-cluster" : var.pacemaker_cluster_name
   subnetwork_uri = length(local.subnetwork_split) > 1 ? (
     "projects/${local.subnetwork_split[0]}/regions/${local.region}/subnetworks/${local.subnetwork_split[1]}") : (
-    "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
+  "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
 
-  primary_startup_url = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
+  primary_startup_url   = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
   secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url
 }
 
@@ -121,23 +136,23 @@ resource "google_compute_instance" "scs_instance" {
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source = google_compute_disk.nw_boot_disks[0].self_link
+    source      = google_compute_disk.nw_boot_disks[0].self_link
   }
 
   attached_disk {
     device_name = google_compute_disk.nw_usr_sap_disks[0].name
-    source = google_compute_disk.nw_usr_sap_disks[0].self_link
+    source      = google_compute_disk.nw_usr_sap_disks[0].self_link
   }
   attached_disk {
     device_name = google_compute_disk.nw_sapmnt_disks[0].name
-    source = google_compute_disk.nw_sapmnt_disks[0].self_link
+    source      = google_compute_disk.nw_sapmnt_disks[0].self_link
   }
   dynamic "attached_disk" {
-      for_each = var.swap_size > 0 ? [1] : []
-      content {
-        device_name = google_compute_disk.nw_swap_disks[0].name
-        source = google_compute_disk.nw_swap_disks[0].self_link
-      }
+    for_each = var.swap_size > 0 ? [1] : []
+    content {
+      device_name = google_compute_disk.nw_swap_disks[0].name
+      source      = google_compute_disk.nw_swap_disks[0].self_link
+    }
   }
 
   can_ip_forward = var.can_ip_forward
@@ -165,44 +180,44 @@ resource "google_compute_instance" "scs_instance" {
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
-        key = "compute.googleapis.com/reservation-name"
+        key    = "compute.googleapis.com/reservation-name"
         values = [var.primary_reservation_name]
       }
     }
   }
   metadata = {
-    startup-script              = local.primary_startup_url
+    startup-script = local.primary_startup_url
 
     # SCS settings
-    sap_primary_instance       = var.sap_primary_instance
-    sap_primary_zone           = var.sap_primary_zone
-    scs_hc_port                = local.scs_hc_port
-    scs_vip_address            = google_compute_address.nw_vips.0.address
-    scs_vip_name               = local.scs_vip_name
+    sap_primary_instance = var.sap_primary_instance
+    sap_primary_zone     = var.sap_primary_zone
+    scs_hc_port          = local.scs_hc_port
+    scs_vip_address      = google_compute_address.nw_vips.0.address
+    scs_vip_name         = local.scs_vip_name
 
     # ERS settings
-    sap_secondary_instance     = var.sap_secondary_instance
-    sap_secondary_zone         = var.sap_secondary_zone
-    ers_hc_port                = local.ers_hc_port
-    ers_vip_address            = google_compute_address.nw_vips.1.address
-    ers_vip_name               = local.ers_vip_name
+    sap_secondary_instance = var.sap_secondary_instance
+    sap_secondary_zone     = var.sap_secondary_zone
+    ers_hc_port            = local.ers_hc_port
+    ers_vip_address        = google_compute_address.nw_vips.1.address
+    ers_vip_name           = local.ers_vip_name
 
     # File system settings
-    nfs_path                   = var.nfs_path
+    nfs_path = var.nfs_path
 
     # SAP system settings
-    sap_sid                    = upper(var.sap_sid)
-    sap_scs_instance_number    = local.sap_scs_instance_number
-    sap_ers_instance_number    = local.sap_ers_instance_number
-    sap_ascs                   = local.ascs
+    sap_sid                 = upper(var.sap_sid)
+    sap_scs_instance_number = local.sap_scs_instance_number
+    sap_ers_instance_number = local.sap_ers_instance_number
+    sap_ascs                = local.ascs
 
     # Pacemaker settings
-    pacemaker_cluster_name     = local.pacemaker_cluster_name
+    pacemaker_cluster_name = local.pacemaker_cluster_name
 
     # Other
-    sap_deployment_debug       = var.sap_deployment_debug ? "True" : "False"
-    post_deployment_script     = var.post_deployment_script
-    template-type              = "TERRAFORM"
+    sap_deployment_debug   = var.sap_deployment_debug ? "True" : "False"
+    post_deployment_script = var.post_deployment_script
+    template-type          = "TERRAFORM"
   }
 
   lifecycle {
@@ -220,23 +235,23 @@ resource "google_compute_instance" "ers_instance" {
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source = google_compute_disk.nw_boot_disks[1].self_link
+    source      = google_compute_disk.nw_boot_disks[1].self_link
   }
 
   attached_disk {
     device_name = google_compute_disk.nw_usr_sap_disks[1].name
-    source = google_compute_disk.nw_usr_sap_disks[1].self_link
+    source      = google_compute_disk.nw_usr_sap_disks[1].self_link
   }
   attached_disk {
     device_name = google_compute_disk.nw_sapmnt_disks[1].name
-    source = google_compute_disk.nw_sapmnt_disks[1].self_link
+    source      = google_compute_disk.nw_sapmnt_disks[1].self_link
   }
   dynamic "attached_disk" {
-      for_each = var.swap_size > 0 ? [1] : []
-      content {
-        device_name = google_compute_disk.nw_swap_disks[1].name
-        source = google_compute_disk.nw_swap_disks[1].self_link
-      }
+    for_each = var.swap_size > 0 ? [1] : []
+    content {
+      device_name = google_compute_disk.nw_swap_disks[1].name
+      source      = google_compute_disk.nw_swap_disks[1].self_link
+    }
   }
 
   can_ip_forward = var.can_ip_forward
@@ -264,44 +279,44 @@ resource "google_compute_instance" "ers_instance" {
     content {
       type = "SPECIFIC_RESERVATION"
       specific_reservation {
-        key = "compute.googleapis.com/reservation-name"
+        key    = "compute.googleapis.com/reservation-name"
         values = [var.secondary_reservation_name]
       }
     }
   }
   metadata = {
-    startup-script             = local.secondary_startup_url
+    startup-script = local.secondary_startup_url
 
     # SCS settings
-    sap_primary_instance       = var.sap_primary_instance
-    sap_primary_zone           = var.sap_primary_zone
-    scs_hc_port                = local.scs_hc_port
-    scs_vip_address            = google_compute_address.nw_vips.0.address
-    scs_vip_name               = local.scs_vip_name
+    sap_primary_instance = var.sap_primary_instance
+    sap_primary_zone     = var.sap_primary_zone
+    scs_hc_port          = local.scs_hc_port
+    scs_vip_address      = google_compute_address.nw_vips.0.address
+    scs_vip_name         = local.scs_vip_name
 
     # ERS settings
-    sap_secondary_instance     = var.sap_secondary_instance
-    sap_secondary_zone         = var.sap_secondary_zone
-    ers_hc_port                = local.ers_hc_port
-    ers_vip_address            = google_compute_address.nw_vips.1.address
-    ers_vip_name               = local.ers_vip_name
+    sap_secondary_instance = var.sap_secondary_instance
+    sap_secondary_zone     = var.sap_secondary_zone
+    ers_hc_port            = local.ers_hc_port
+    ers_vip_address        = google_compute_address.nw_vips.1.address
+    ers_vip_name           = local.ers_vip_name
 
     # File system settings
-    nfs_path                   = var.nfs_path
+    nfs_path = var.nfs_path
 
     # SAP system settings
-    sap_sid                    = upper(var.sap_sid)
-    sap_scs_instance_number    = local.sap_scs_instance_number
-    sap_ers_instance_number    = local.sap_ers_instance_number
-    sap_ascs                   = local.ascs
+    sap_sid                 = upper(var.sap_sid)
+    sap_scs_instance_number = local.sap_scs_instance_number
+    sap_ers_instance_number = local.sap_ers_instance_number
+    sap_ascs                = local.ascs
 
     # Pacemaker settings
-    pacemaker_cluster_name     = local.pacemaker_cluster_name
+    pacemaker_cluster_name = local.pacemaker_cluster_name
 
     # Other
-    sap_deployment_debug       = var.sap_deployment_debug ? "True" : "False"
-    post_deployment_script     = var.post_deployment_script
-    template-type              = "TERRAFORM"
+    sap_deployment_debug   = var.sap_deployment_debug ? "True" : "False"
+    post_deployment_script = var.post_deployment_script
+    template-type          = "TERRAFORM"
   }
 
   lifecycle {
@@ -346,7 +361,7 @@ resource "google_compute_health_check" "nw_hc" {
   project             = var.project_id
 
   tcp_health_check {
-    port              = count.index == 0 ? local.scs_hc_port : local.ers_hc_port
+    port = count.index == 0 ? local.scs_hc_port : local.ers_hc_port
   }
 }
 
@@ -372,24 +387,24 @@ resource "google_compute_firewall" "nw_hc_firewall_rule" {
 # Backend services
 ################################################################################
 resource "google_compute_region_backend_service" "nw_regional_backend_services" {
-  count         = 2
-  name          = count.index == 0 ? local.scs_backend_svc_name : local.ers_backend_svc_name
-  region        = local.region
+  count                 = 2
+  name                  = count.index == 0 ? local.scs_backend_svc_name : local.ers_backend_svc_name
+  region                = local.region
   load_balancing_scheme = "INTERNAL"
-  health_checks = [element(google_compute_health_check.nw_hc.*.id, count.index)]
-  project       = var.project_id
+  health_checks         = [element(google_compute_health_check.nw_hc.*.id, count.index)]
+  project               = var.project_id
 
   failover_policy {
     disable_connection_drain_on_failover = true
-    drop_traffic_if_unhealthy = true
-    failover_ratio = 1
+    drop_traffic_if_unhealthy            = true
+    failover_ratio                       = 1
   }
   backend {
     group    = element(google_compute_instance_group.nw_instance_groups.*.id, count.index)
     failover = false
   }
   backend {
-    group    = element(google_compute_instance_group.nw_instance_groups.*.id, 1-count.index)
+    group    = element(google_compute_instance_group.nw_instance_groups.*.id, 1 - count.index)
     failover = true
   }
 }

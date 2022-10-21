@@ -84,7 +84,7 @@ PACEMAKER_STONITH_COPY="gsutil cp ${RESOURCE_URL}/pacemaker-gcp/gcpstonith"
 PACEMAKER_CHECKOUT="git clone sso://partner-code/sap-ext-pacemaker-gcp .build_pacemakergcp"
 
 # Github Push Constants
-RELEASED_TERRAFORM_MODULES=("sap_nw" "sap_nw_ha" "sap_hana" "sap_hana_ha" "sap_hana_scaleout")
+RELEASED_TERRAFORM_MODULES=("sap_hana" "sap_hana_ha" "sap_hana_scaleout", "sap_nw", "sap_nw_ha")
 GIT_HUB_REPO_FOLDER=".build_github_push"
 
 SED_CMD="sed -i"
@@ -378,15 +378,7 @@ make_copybara_commit() {
   git checkout -b copybaraSource
   cp -r .build_dmtemplates $GIT_HUB_REPO_FOLDER
   cd $GIT_HUB_REPO_FOLDER
-  rm -rf modules
-  mkdir modules
-
-  for release in ${RELEASED_TERRAFORM_MODULES[@]}; do
-    mkdir "modules/${release}"
-    mkdir "modules/${release}/${release}_source"
-    cp ".build_dmtemplates/${release}/terraform/${release}.tf" "modules/${release}/${release}_example.tf"
-    find ".build_dmtemplates/${release}/terraform/${release}/" -name "*.tf" | xargs cp -t "modules/${release}/${release}_source/"
-  done
+  make_github_files
 
   rm -rf .build_dmtemplates
   DATE=$(date +%d-%m-%Y);
@@ -395,6 +387,15 @@ make_copybara_commit() {
   git commit -am "${DATE} release commit used by copybara to push to github."
   git push -f https://partner-code.googlesource.com/_direct/sap-ext-dm-templates HEAD:refs/heads/copybaraSource
   cd ..
+}
+
+make_github_files() {
+  dir_prefix="$1"
+  rm -rf "${dir_prefix}modules/*.tf" || mkdir "${dir_prefix}modules" || true
+
+  for release in ${RELEASED_TERRAFORM_MODULES[@]}; do
+    find ".build_dmtemplates/${release}/terraform/${release}/" -name "*.tf" | xargs cp -t "${dir_prefix}modules/${release}/"
+  done
 }
 
 #
@@ -468,9 +469,13 @@ echo "**************************************************************************
 # tiny sleep so we don't see the shell-init error on mac
 sleep 1
 # if this is release then deploy_latest
+
 if [[ "${GCS_FOLDER}" == "release" ]]; then
   deploy_latest
   make_copybara_commit
+fi
+if [[ "${GCS_FOLDER}" == "githubDev" ]]; then
+  make_github_files "terraform-google-sap/"
 fi
 if [[ "${GCS_FOLDER}" =~ ^("build_continuous_testing"|"nightly")$ ]]; then
   deploy_latest_for_continuous_testing

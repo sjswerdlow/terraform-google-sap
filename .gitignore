@@ -1,3 +1,4 @@
+terraform-google-sap/
 .idea/
 .build_dmtemplates/
 .build_pacemakergcp/
@@ -6,4 +7,3 @@
 **.terraform.*
 **terraform.tfstate*
 .DS_Store
-terraform-google-sap/
