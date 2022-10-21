@@ -446,10 +446,12 @@ resource "google_compute_region_backend_service" "sap_hana_ha_loadbalancer" {
 
   backend {
       group = google_compute_instance_group.sap_hana_ha_primary_instance_group.self_link
+      failover = false
   }
 
   backend {
       group = google_compute_instance_group.sap_hana_ha_secondary_instance_group.self_link
+      failover = true
   }
 
   protocol = "TCP"
