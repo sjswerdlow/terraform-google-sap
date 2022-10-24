@@ -77,8 +77,6 @@ main::errhandle_log_error() {
     ${GCLOUD} --quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"ERROR - Deployment Exited\"" --severity=ERROR
   fi
 
-  # Send metrics
-  metrics::send_metric -s "ERROR"  -e "1"
 
   main::complete error
 }
@@ -570,12 +568,15 @@ main::complete() {
   ## update instance metadata with status
   if [[ -n "${on_error}" ]]; then
     main::update-metadata "status" "failed_or_error"
+    metrics::send_metric -s "ERROR"  -e "1"
   elif [[ -n "${deployment_warnings}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed_with_warnings"
+    metrics::send_metric -s "CONFIGURED"
   else
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed"
+    metrics::send_metric -s "CONFIGURED"
   fi
 
   ## prepare advanced logs
