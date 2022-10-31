@@ -572,7 +572,7 @@ main::complete() {
   elif [[ -n "${deployment_warnings}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed_with_warnings"
-    metrics::send_metric -s "CONFIGURED"
+    metrics::send_metric -s "ERROR"  -e "2"
   else
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed"
