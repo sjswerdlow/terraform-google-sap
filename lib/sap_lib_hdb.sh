@@ -183,7 +183,12 @@ hdb::download_media() {
 
   ## download SAP HANA media
   main::errhandle_log_info "gsutil cp of gs://${VM_METADATA[sap_hana_deployment_bucket]} to /hana/shared/media/ in progress..."
-  if ! ${GSUTIL} -q -o "GSUtil:state_dir=/root/.deploy" -m cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/* /hana/shared/media/; then
+  # b/259315464 - no parallelism on SLES12
+  local parallel="-m"
+  if [[ ${LINUX_DISTRO} = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
+    parallel=""
+  fi
+  if ! ${GSUTIL} -q -o "GSUtil:state_dir=/root/.deploy" ${parallel} cp gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/* /hana/shared/media/; then
     main::errhandle_log_error "HANA Media Download Failed. The deployment has finished and is ready for SAP HANA, but SAP HANA will need to be downloaded and installed manually."
   fi
   main::errhandle_log_info "gsutil cp of HANA media complete."
