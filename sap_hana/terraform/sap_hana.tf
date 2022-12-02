@@ -59,6 +59,7 @@ module "sap_hana" {
   # sap_hana_sapsys_gid             = HANA_SAPSYS_GID       # default is 79
 
   # network_tags                    = [ "TAG_NAME" ]        # default is an empty list
+  # nic_type                        = "NIC_TYPE"            # default is "VIRTIO_NET". Must be "VIRTIO_NET" or "GVNIC"
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # reservation_name                = ""                    # default is an empty string

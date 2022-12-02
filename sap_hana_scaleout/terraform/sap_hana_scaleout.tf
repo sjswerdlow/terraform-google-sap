@@ -63,6 +63,7 @@ module "hana_scaleout" {
   # sap_hana_standby_nodes          = STANDBY_NODES_NUM     # default is 1, must be at least 1, at most 3
 
   # network_tags                    = [ "TAG_NAME" ]        # default is an empty list
+  # nic_type                        = "NIC_TYPE"            # default is "VIRTIO_NET". Must be "VIRTIO_NET" or "GVNIC"
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # reservation_name                = ""                    # default is an empty string

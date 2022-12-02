@@ -236,6 +236,7 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_hana_ha_vm_ip.0.address
 
+    nic_type = var.nic_type
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
@@ -369,6 +370,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   network_interface {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_hana_ha_vm_ip.1.address
+    nic_type = var.nic_type
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
