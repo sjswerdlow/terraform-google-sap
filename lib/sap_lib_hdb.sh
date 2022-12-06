@@ -89,7 +89,10 @@ hdb::create_sap_data_log_volumes() {
 
 
 hdb::create_shared_volume() {
-
+  if [[ -n ${VM_METADATA[sap_hana_shared_nfs]} ]]; then
+    main::errhandle_log_info "NFS endpoint specified for /hana/shared. Skipping block device."
+    return 0
+  fi
   main::create_vg $DEVICE_DATA_LOG vg_hana
   lvcreate -L ${hana_shared_size}G -n shared vg_hana
 
@@ -99,7 +102,10 @@ hdb::create_shared_volume() {
 
 
 hdb::create_backup_volume() {
-
+  if [[ -n ${VM_METADATA[sap_hana_backup_nfs]} ]]; then
+    main::errhandle_log_info "NFS endpoint specified for /hanabackup. Skipping block device."
+    return 0
+  fi
   main::errhandle_log_info "Building /hanabackup"
 
   ## create volume group
@@ -427,7 +433,8 @@ hdb::check_settings() {
 
 
 hdb::config_nfs() {
-  if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+  if [[ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" \
+        && -z ${VM_METADATA[sap_hana_shared_nfs]} ]]; then
 
     main::errhandle_log_info "Configuring NFS for scale-out"
 
@@ -514,15 +521,16 @@ hdb::install_scaleout_nodes() {
 
 
 hdb::mount_nfs() {
-  main::errhandle_log_info 'Mounting NFS volumes /hana/shared & /hanabackup'
-  echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hana/shared /hana/shared nfs  nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
-  echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hanabackup /hanabackup nfs  nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
+  if [[ -z ${VM_METADATA[sap_hana_shared_nfs]} ]]; then
+    main::errhandle_log_info 'Mounting NFS volumes /hana/shared & /hanabackup'
+    echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hana/shared /hana/shared nfs  nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
+    echo "$(hostname | rev | cut -d"w" -f2-999 | rev):/hanabackup /hanabackup nfs  nfsvers=3,rsize=32768,wsize=32768,hard,intr,timeo=18,retrans=200 0 0" >>/etc/fstab
 
-  mkdir -p /hana/shared /hanabackup
+    mkdir -p /hana/shared /hanabackup
 
-  ## mount file systems
-  mount -a
-
+    ## mount file systems
+    mount -a
+  fi
   ## check /hana/shared is mounted before continuing
   local count=0
   while ! grep -q '/hana/shared' /etc/mtab ; do

@@ -88,6 +88,22 @@ hdbso::create_data_log_volumes() {
 
 
 hdbso::mount_nfs_vols() {
+  local scenario="${1}"
+
+  if [[ "${scenario}" == "nonha" ]]; then
+    if [[ -z ${VM_METADATA[sap_hana_shared_nfs]} ]]; then
+      main::errhandle_log_info "No NFS endpoint specified for /hana/shared"
+      return 0
+    fi
+    if [[ -z ${VM_METADATA[sap_hana_backup_nfs]} ]]; then
+      main::errhandle_log_info "No NFS endpoint specified for /hanabackup"
+      return 0
+    fi
+    if [[ ${VM_METADATA[sap_hana_scaleout_nodes]} -lt 1 ]]; then
+      main::errhandle_log_warning "No scale-out nodes specified"
+    fi
+  fi
+
   main::errhandle_log_info "Mounting NFS volumes /hana/shared & /hanabackup"
 
   local nfs_version

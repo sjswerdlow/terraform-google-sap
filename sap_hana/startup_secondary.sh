@@ -38,6 +38,7 @@ TEMPLATE_NAME="SAP_HANA_SECONDARY"
 
 SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
+SAP_LIB_HDBSO_SH
 SAP_LIB_METRICS
 
 ##########################################################################
@@ -56,6 +57,7 @@ main::create_static_ip
 ## prepare for SAP HANA
 hdb::check_settings
 hdb::set_kernel_parameters
+hdbso::mount_nfs_vols "nonha"
 hdb::calculate_volume_sizes worker
 hdb::create_sap_data_log_volumes
 hdb::mount_nfs

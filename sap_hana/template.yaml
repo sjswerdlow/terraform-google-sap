@@ -67,6 +67,14 @@ resources:
     #    The default group ID for sapsys is 79. By specifying a value above you can overide
     #    this value to your requirements
     #
+    # sap_hana_shared_nfs: [NFS_ENDPOINT_FOR_/hana/shared]
+    #    For a multi-node deployment, you can specify an optional NFS service to mount. without
+    #    this specification, an NFS server and export will be created on the nameserver VM.
+    #
+    # sap_hana_backup_nfs: [NFS_ENDPOINT_FOR_/hanabackup]
+    #    For a multi-node deployment, you can specify an optional NFS service to mount. without
+    #    this specification, an NFS server and export will be created on the nameserver VM.
+    #
     # sap_deployment_debug: [No | Yes]
     #    Debug mode. Do not enable debug mode unless you are asked by support to turn it on.
     #

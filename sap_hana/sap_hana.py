@@ -63,6 +63,8 @@ def GenerateConfig(context):
   sap_hana_sidadm_uid = str(context.properties.get('sap_hana_sidadm_uid', '900'))
   sap_hana_sapsys_gid = str(context.properties.get('sap_hana_sapsys_gid', '79'))
   sap_hana_scaleout_nodes = int(context.properties.get('sap_hana_scaleout_nodes', ''))
+  sap_hana_shared_nfs = str(context.properties.get('sap_hana_shared_nfs', ''))
+  sap_hana_backup_nfs = str(context.properties.get('sap_hana_backup_nfs', ''))
   sap_hana_deployment_bucket =  str(context.properties.get('sap_hana_deployment_bucket', ''))
   sap_hana_double_volume_size = str(context.properties.get('sap_hana_double_volume_size', 'False'))
   sap_hana_backup_size = int(context.properties.get('sap_hana_backup_size', '0'))
@@ -288,6 +290,14 @@ def GenerateConfig(context):
                       'value': sap_hana_sapsys_gid
                   },
                   {
+                      'key': 'sap_hana_shared_nfs',
+                      'value': sap_hana_shared_nfs
+                  },
+                  {
+                      'key': 'sap_hana_backup_nfs',
+                      'value': sap_hana_backup_nfs
+                  },
+                  {
                       'key': 'sap_hana_scaleout_nodes',
                       'value': sap_hana_scaleout_nodes
                   },
@@ -385,6 +395,14 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_hana_instance_number',
                               'value': sap_hana_instance_number
+                          },
+                          {
+                              'key': 'sap_hana_shared_nfs',
+                              'value': sap_hana_shared_nfs
+                          },
+                          {
+                              'key': 'sap_hana_backup_nfs',
+                              'value': sap_hana_backup_nfs
                           },
                           {
                               'key': 'sap_hana_scaleout_nodes',
