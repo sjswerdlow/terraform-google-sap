@@ -213,12 +213,12 @@ variable "post_deployment_script" {
 
 variable "nic_type" {
   type        = string
-  description = "Optional - This value determines the type of NIC to use for all VMs, valid options are GVNIC and VIRTIO_NET. If choosing GVNIC make sure that it is supported by your OS choice here https://cloud.google.com/compute/docs/images/os-details#networking."
+  description = "Optional - This value determines the type of NIC to use, valid options are GVNIC and VIRTIO_NET. If choosing GVNIC make sure that it is supported by your OS choice here https://cloud.google.com/compute/docs/images/os-details#networking."
   validation {
-    condition     = contains(["VIRTIO_NET", "GVNIC"], var.nic_type)
+    condition     = contains(["VIRTIO_NET", "GVNIC", ""], var.nic_type)
     error_message = "The nic_type must be either GVNIC or VIRTIO_NET."
   }
-  default     = "VIRTIO_NET"
+  default     = ""
 }
 
 #

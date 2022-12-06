@@ -188,7 +188,7 @@ resource "google_compute_instance" "sap_hana_scaleout_primary_instance" {
   network_interface {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_hana_vm_ip.address
-    nic_type = var.nic_type
+    nic_type = var.nic_type == "" ? null : var.nic_type
 
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
@@ -275,7 +275,7 @@ resource "google_compute_instance" "sap_hana_scaleout_worker_instances" {
   network_interface {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_hana_worker_ip[count.index].address
-    nic_type = var.nic_type
+    nic_type = var.nic_type == "" ? null : var.nic_type
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
@@ -360,7 +360,7 @@ resource "google_compute_instance" "sap_hana_scaleout_standby_instances" {
   network_interface {
     subnetwork = local.subnetwork_uri
     network_ip = google_compute_address.sap_hana_standby_ip[count.index].address
-    nic_type = var.nic_type
+    nic_type = var.nic_type == "" ? null : var.nic_type
     # we only include access_config if public_ip is true, an empty access_config
     # will create an ephemeral public ip
     dynamic "access_config" {
