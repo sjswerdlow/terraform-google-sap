@@ -127,9 +127,21 @@ variable "sap_hana_scaleout_nodes" {
   }
 }
 
+variable "sap_hana_shared_nfs" {
+  type = string
+  default = ""
+  description = "NFS endpoint for /hana/shared storage."
+}
+
+variable "sap_hana_backup_nfs" {
+  type = string
+  default = ""
+  description = "NFS endpoint for /hanabackup storage."
+}
+
 variable "sap_hana_backup_size" {
   type        = number
-  description = "Size in GB of the /hanabackup volume. If this is not set or set to zero, the GCE instance will be provisioned with a hana backup volume of 2 times the total memory."
+  description = "Size in GB of the /hanabackup volume. If this is not set or set to zero, the GCE instance will be provisioned with a hana backup volume of 2 times the total memory. If sap_hana_backup_nfs is set, this setting is ignored."
   default     = 0
   validation {
     condition     = var.sap_hana_backup_size >= 0

@@ -143,6 +143,8 @@ resource "google_compute_disk" "sap_hana_pdssd_disks" {
   project = var.project_id
 }
 resource "google_compute_disk" "sap_hana_backup_disk" {
+  # skip resource of NFS backup location is specified
+  count   = (var.sap_hana_backup_nfs != "" ? true : false) ? 0 : 1
   # TODO(b/202736714): check if name is correct
   name    = "${var.instance_name}-backup"
   type    = "pd-standard"
@@ -193,9 +195,12 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     source      = google_compute_disk.sap_hana_pdssd_disks[0].self_link
   }
 
-  attached_disk {
-    device_name = google_compute_disk.sap_hana_backup_disk.name
-    source      = google_compute_disk.sap_hana_backup_disk.self_link
+  dynamic "attached_disk" {
+    for_each = length(google_compute_disk.sap_hana_backup_disk) > 0 ? [1] : []
+    content {
+      device_name = google_compute_disk.sap_hana_backup_disk[0].name
+      source = google_compute_disk.sap_hana_backup_disk[0].self_link
+    }
   }
 
   can_ip_forward = var.can_ip_forward
@@ -249,6 +254,8 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
+    sap_hana_shared_nfs             = var.sap_hana_shared_nfs
+    sap_hana_backup_nfs             = var.sap_hana_backup_nfs
     sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
     template-type                   = "TERRAFORM"
   }
@@ -329,6 +336,8 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
     sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
+    sap_hana_shared_nfs             = var.sap_hana_shared_nfs
+    sap_hana_backup_nfs             = var.sap_hana_backup_nfs
     sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
     template-type                   = "TERRAFORM"
   }

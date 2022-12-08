@@ -118,6 +118,14 @@ properties:
     maximum: 60000
     minimum: 0
 
+  sap_hana_shared_nfs:
+    description: OPTIONAL - NFS endpoint for an existing NFS service to used for /hana/shared where sap_hana_scaleout_nodes > 0. Example: 10.151.91.122:/hana_shared_nfs.
+    type: string
+
+  sap_hana_backup_nfs:
+    description: OPTIONAL - NFS endpoint for an existing NFS service to used for /hanabackup where sap_hana_scaleout_nodes > 0. Example: 10.151.91.122:/hana_backup_nfs.
+    type: string
+
   networkTag:
     description: OPTIONAL - A network tag can be associated to your instance on deployment. This can be used for firewalling or routing purposes.
     type: string
