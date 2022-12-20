@@ -63,7 +63,11 @@ variable "sap_hana_sid" {
 
 variable "sap_hana_deployment_bucket" {
   type        = string
-  description = "The GCS bucket containing the SAP HANA media. If this is not defined, the GCE instance will be provisioned without SAP HANA installed."
+  description = "The Cloud Storage path that contains the SAP HANA media, do not include gs://. If this is not defined, the GCE instance will be provisioned without SAP HANA installed."
+  validation {
+    condition = (! (length(regexall( "gs:", var.sap_hana_deployment_bucket)) > 0))
+    error_message = "The sap_hana_deployment_bucket must only contain the Cloud Storage path, which includes the bucket name and the names of any folders. Do not include gs://."
+  }
   default     = ""
 }
 

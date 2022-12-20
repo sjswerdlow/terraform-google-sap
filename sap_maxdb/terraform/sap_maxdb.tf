@@ -14,8 +14,7 @@ module "maxdb" {
   #
   # Fill in the information below
   #
-  ### Sam these are all the default values from variables.tf.
-  instance_name              = "MV_NAME"              # example: hana_scaleout
+  instance_name              = "MV_NAME"              # example: max-db-instance
   machine_type               = "MACHINE_TYPE"         # example: n1-highmem-32
   project_id                 = "PROJECT_ID"           # example: customer-project-x
   zone                       = "ZONE"                 # example: us-central1-a

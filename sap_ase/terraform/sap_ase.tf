@@ -39,7 +39,7 @@ module "sap_ase" {
   linux_image            = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
   linux_image_project    = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  instance_name          = "VM_NAME"             # example: ase_instance
+  instance_name          = "VM_NAME"             # example: ase-instance
   ase_sid                = "ASE_DATABASE_SID"    # example: A00
 
   ##############################################################################
