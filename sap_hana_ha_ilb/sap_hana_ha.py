@@ -58,6 +58,7 @@ def GenerateConfig(context):
   secondary_startup_url = str(context.properties.get('secondary_startup_url', "curl -s " + deployment_script_location + "/sap_hana_ha_ilb/startup_secondary.sh | bash -s " + deployment_script_location))
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
+  nic_type =  str(context.properties.get('nic_type', ''))
   subnetwork = context.properties['subnetwork']
   network = str(context.properties.get('network', 'default'))
 
@@ -402,6 +403,7 @@ def GenerateConfig(context):
                   }],
               'networkInterfaces': [{
                   'accessConfigs': networking,
+                  'nicType': nic_type,
                   'subnetwork': subnetwork
                   }],
               'reservationAffinity': reservation_affinity
@@ -556,7 +558,8 @@ def GenerateConfig(context):
                   }],
               'networkInterfaces': [{
                   'accessConfigs': networking,
-                    'subnetwork': subnetwork
+                  'nicType': nic_type,
+                  'subnetwork': subnetwork
                   }],
               'reservationAffinity': reservation_affinity
           }
