@@ -110,6 +110,24 @@ locals {
   "projects/${var.project_id}/regions/${local.region}/subnetworks/${var.subnetwork}")
   primary_startup_url   = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
   secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url
+
+
+  use_backup_disk = ( var.sap_hana_backup_nfs == "" && var.sap_hana_backup_nfs_resource == null)
+  both_backup_nfs_defined = (var.sap_hana_backup_nfs != "") && var.sap_hana_backup_nfs_resource != null
+  both_shared_nfs_defined = (var.sap_hana_shared_nfs != "") && var.sap_hana_shared_nfs_resource != null
+
+  backup_nfs_endpoint = var.sap_hana_backup_nfs_resource == null ? var.sap_hana_backup_nfs : "${var.sap_hana_backup_nfs_resource.networks[0].ip_addresses[0]}:/${var.sap_hana_backup_nfs_resource.file_shares[0].name}"
+  shared_nfs_endpoint = var.sap_hana_shared_nfs_resource == null ? var.sap_hana_shared_nfs : "${var.sap_hana_shared_nfs_resource.networks[0].ip_addresses[0]}:/${var.sap_hana_shared_nfs_resource.file_shares[0].name}"
+
+}
+
+data "assert_test" "one_backup" {
+  test = local.use_backup_disk || !local.both_backup_nfs_defined
+  throw = "If using an NFS as /backup then only either sap_hana_backup_nfs or sap_hana_backup_nfs_resource may be defined."
+}
+data "assert_test" "one_shared" {
+  test = !local.both_shared_nfs_defined
+  throw = "If using an NFS as /shared then only either sap_hana_shared_nfs or sap_hana_shared_nfs_resource may be defined."
 }
 
 ################################################################################
@@ -142,9 +160,12 @@ resource "google_compute_disk" "sap_hana_pdssd_disks" {
   size    = local.pdssd_size
   project = var.project_id
 }
+
+
+
 resource "google_compute_disk" "sap_hana_backup_disk" {
   # skip resource of NFS backup location is specified
-  count   = (var.sap_hana_backup_nfs != "" ? true : false) ? 0 : 1
+  count   = local.use_backup_disk ? 1 : 0
   # TODO(b/202736714): check if name is correct
   name    = "${var.instance_name}-backup"
   type    = "pd-standard"
@@ -254,8 +275,8 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
-    sap_hana_shared_nfs             = var.sap_hana_shared_nfs
-    sap_hana_backup_nfs             = var.sap_hana_backup_nfs
+    sap_hana_shared_nfs             = local.shared_nfs_endpoint
+    sap_hana_backup_nfs             = local.backup_nfs_endpoint
     sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
     template-type                   = "TERRAFORM"
   }
@@ -336,8 +357,8 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
     sap_hana_system_password_secret = var.sap_hana_system_password_secret
     sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
     sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
-    sap_hana_shared_nfs             = var.sap_hana_shared_nfs
-    sap_hana_backup_nfs             = var.sap_hana_backup_nfs
+    sap_hana_shared_nfs             = local.shared_nfs_endpoint
+    sap_hana_backup_nfs             = local.backup_nfs_endpoint
     sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
     template-type                   = "TERRAFORM"
   }

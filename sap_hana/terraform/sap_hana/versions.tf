@@ -17,5 +17,9 @@ terraform {
   required_version = ">=0.12.6"
   required_providers {
     google = {}
+    assert = {
+      source = "bwoznicki/assert"
+      version = "0.0.1"
+    }
   }
 }
