@@ -630,14 +630,12 @@ ha::enable_hdb_hadr_provider_hook() {
     # only used HANA 2 SP3 +
     main::errhandle_log_info "Enabling HA/DR provider hook - HANA version checked"
     su - "${VM_METADATA[sap_hana_sid],,}"adm HDB stop
-    mkdir -p /hana/shared/myHooks
-    [[ "${LINUX_DISTRO}" = "RHEL" ]] && \
-      cp /usr/share/SAPHanaSR/srHook/SAPHanaSR.py /hana/shared/myHooks
-    [[ "${LINUX_DISTRO}" = "SLES" ]] && \
-      cp /usr/share/SAPHanaSR/SAPHanaSR.py /hana/shared/myHooks
-    chown -R "${VM_METADATA[sap_hana_sid],,}"adm:sapsys /hana/shared/myHooks
 
-    cat <<EOF >> /hana/shared/"${VM_METADATA[sap_hana_sid]}"/global/hdb/custom/config/global.ini
+    [[ "${LINUX_DISTRO}" = "RHEL" ]] && mkdir -p /hana/shared/myHooks &&\
+      cp /usr/share/SAPHanaSR/srHook/SAPHanaSR.py /hana/shared/myHooks &&\
+      chown -R "${VM_METADATA[sap_hana_sid],,}"adm:sapsys /usr/share/myHooks
+
+    [[ "${LINUX_DISTRO}" = "RHEL" ]] && cat <<EOF >> /hana/shared/"${VM_METADATA[sap_hana_sid]}"/global/hdb/custom/config/global.ini
 
 [ha_dr_provider_SAPHanaSR]
 provider = SAPHanaSR
@@ -656,6 +654,17 @@ Cmnd_Alias SITEB_SFAIL = /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_
 ${VM_METADATA[sap_hana_sid],,}adm ALL=(ALL) NOPASSWD: SITEA_SOK, SITEA_SFAIL, SITEB_SOK, SITEB_SFAIL
 # https://access.redhat.com/solutions/6315931
 Defaults!SITEA_SOK, SITEA_SFAIL, SITEB_SOK, SITEB_SFAIL !requiretty
+EOF
+
+    [[ "${LINUX_DISTRO}" = "SLES" ]] && cat <<EOF >> /hana/shared/"${VM_METADATA[sap_hana_sid]}"/global/hdb/custom/config/global.ini
+
+[ha_dr_provider_SAPHanaSR]
+provider = SAPHanaSR
+path = /usr/share/SAPHanaSR
+execution_order = 1
+
+[trace]
+ha_dr_saphanasr = info
 EOF
 
     [[ "${LINUX_DISTRO}" = "SLES" ]] && cat <<EOF > /etc/sudoers.d/20-saphana
