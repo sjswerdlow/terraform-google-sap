@@ -422,8 +422,10 @@ hdb::check_settings() {
     # Non-Scale-out naming (hana, hana_ha, hana_ha_ilb)
     readonly DEVICE_DATA_LOG=$(main::get_device_by_id "pdssd")
     main::errhandle_log_info "DEVICE_DATA_LOG is ${DEVICE_DATA_LOG}"
-    readonly DEVICE_BACKUP=$(main::get_device_by_id "backup")
-    main::errhandle_log_info "DEVICE_BACKUP is ${DEVICE_BACKUP}"
+    if [[ -z "${VM_METADATA[sap_hana_backup_nfs]}" ]]; then
+      readonly DEVICE_BACKUP=$(main::get_device_by_id "backup")
+      main::errhandle_log_info "DEVICE_BACKUP is ${DEVICE_BACKUP}"
+    fi
   elif [[ ! "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
     # Scale-out naming uses 'mnt000xx' and has no backup disk
     readonly DEVICE_DATA_LOG=$(main::get_device_by_id "mnt000")

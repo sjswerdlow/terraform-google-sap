@@ -130,16 +130,58 @@ variable "sap_hana_scaleout_nodes" {
     error_message = "The sap_hana_scaleout_nodes must be positive or 0."
   }
 }
+variable "sap_hana_backup_nfs_resource" {
+  default = null
+  type = object({
+    networks = list(
+      object({
+        ip_addresses = list(string)
+      })
+    )
+    file_shares = list(
+      object({
+        name = string
+      })
+    )
+
+  })
+  description = "NFS resource to be used as the backup drive instead of a disk. This and sap_hana_backup_nfs may not both be set."
+}
+variable "sap_hana_shared_nfs_resource" {
+  default = null
+  type = object({
+    networks = list(
+      object({
+        ip_addresses = list(string)
+      })
+    )
+    file_shares = list(
+      object({
+        name = string
+      })
+    )
+
+  })
+  description = "NFS resource to be used as the shared drive instead of a disk. This and sap_hana_shared_nfs may not both be set."
+}
 
 variable "sap_hana_shared_nfs" {
   type = string
   default = ""
+  validation {
+    condition     = var.sap_hana_shared_nfs == "" || can(regex("(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}:\\/[^[:space:]]*", var.sap_hana_shared_nfs))
+    error_message = "The sap_hana_backup_nfs must be an IP address followed by ':/' then some name."
+  }
   description = "NFS endpoint for /hana/shared storage."
 }
 
 variable "sap_hana_backup_nfs" {
   type = string
   default = ""
+  validation {
+    condition     = var.sap_hana_backup_nfs == "" || can(regex("(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}:\\/[^[:space:]]*", var.sap_hana_backup_nfs))
+    error_message = "The sap_hana_backup_nfs must be an IP address followed by ':/' then some name."
+  }
   description = "NFS endpoint for /hanabackup storage."
 }
 
