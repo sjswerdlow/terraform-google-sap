@@ -61,8 +61,8 @@ module "sap_hana" {
   # sap_hana_shared_nfs             = "HANA_SHARED_NFS"     # default is "", example: "10.10.10.10:/shared"
   # sap_hana_backup_nfs             = "HANA_BACKUP_NFS"     # default is "", example: "10.10.10.10:/backup"
 
-  # sap_hana_shared_nfs_resource    = resource.google_filestore_instance.shared_nfs.     # default is null.
-  # sap_hana_backup_nfs_resource    = resource.google_filestore_instance.backup_nfs.     # default is null.
+  # sap_hana_shared_nfs_resource    = resource.google_filestore_instance.shared_nfs     # default is null.
+  # sap_hana_backup_nfs_resource    = resource.google_filestore_instance.backup_nfs     # default is null.
 
   # network_tags                    = [ "TAG_NAME" ]        # default is an empty list
   # nic_type                        = "NIC_TYPE"            # default is machine type dependent. Must be "VIRTIO_NET" or "GVNIC"
