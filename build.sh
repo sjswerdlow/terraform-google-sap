@@ -390,7 +390,7 @@ make_copybara_commit() {
 }
 
 make_github_files() {
-  dir_prefix="$1"
+  dir_prefix="{$1:-}"
   rm -rf "${dir_prefix}modules/*.tf" || mkdir "${dir_prefix}modules" || true
 
   for release in ${RELEASED_TERRAFORM_MODULES[@]}; do
@@ -471,8 +471,8 @@ sleep 1
 # if this is release then deploy_latest
 
 if [[ "${GCS_FOLDER}" == "release" ]]; then
+  # make_copybara_commit
   deploy_latest
-  make_copybara_commit
 fi
 if [[ "${GCS_FOLDER}" == "githubDev" ]]; then
   make_github_files "terraform-google-sap/"
