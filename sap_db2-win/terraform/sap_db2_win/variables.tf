@@ -110,7 +110,7 @@ variable "db2_backup_size" {
 
 variable "usr_sap_size" {
   type = number
-  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created."
+  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the db2 database instance. If set to 0, no disk will be created."
   default = 0
   validation {
     condition = var.usr_sap_size >= 0
@@ -120,7 +120,7 @@ variable "usr_sap_size" {
 
 variable "sap_mnt_size" {
   type = number
-  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created."
+  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the db2 database instance. If set to 0, no disk will be created."
   default = 0
   validation {
     condition = var.sap_mnt_size >= 0
@@ -130,7 +130,7 @@ variable "sap_mnt_size" {
 
 variable "swap_size" {
   type = number
-  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created."
+  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the db2 database instance. If set to 0, no disk will be created."
   default = 0
   validation {
     condition = var.swap_size >= 0
@@ -191,7 +191,8 @@ variable "post_deployment_script" {
 # DO NOT MODIFY unless you know what you are doing
 #
 variable "primary_startup_url" {
-  type = string  description = "Startup script to be executed when the VM boots, should not be overridden."
+  type = string
+  description = "Startup script to be executed when the VM boots, should not be overridden."
   default = "BUILD.TERRA_SH_URL/sap_db2-win/startup.ps1"
 }
 
@@ -200,3 +201,4 @@ variable "can_ip_forward" {
   description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
   default = true
 }
+

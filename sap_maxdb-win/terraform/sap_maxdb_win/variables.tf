@@ -84,14 +84,14 @@ variable "maxdb_backup_size" {
   description = "Size in GB of X:\\ (Backup)."
   default = 10
   validation {
-    condition = var.ase_backup_size > 0
-    error_message = "The ase_backup_size must greater than 0."
+    condition = var.maxdb_backup_size > 0
+    error_message = "The maxdb_backup_size must greater than 0."
   }
 }
 
 variable "usr_sap_size" {
   type = number
-  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created."
+  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the maxdb database instance. If set to 0, no disk will be created."
   default = 0
   validation {
     condition = var.usr_sap_size >= 0
@@ -101,7 +101,7 @@ variable "usr_sap_size" {
 
 variable "swap_size" {
   type = number
-  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the ase database instance. If set to 0, no disk will be created."
+  description = "OPTIONAL - Only required if you plan on deploying SAP NetWeaver on the same VM as the maxdb database instance. If set to 0, no disk will be created."
   default = 0
   validation {
     condition = var.swap_size >= 0

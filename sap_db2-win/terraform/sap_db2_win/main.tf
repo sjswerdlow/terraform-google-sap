@@ -67,22 +67,6 @@ resource "google_compute_disk" "sap_db2_backup_disk" {
   project = var.project_id
 }
 
-resource "google_compute_disk" "sap_db2_dump_disk" {
-  name = "${var.instance_name}-db2dump"
-  type = "pd-balanced"
-  zone = var.zone
-  size = var.db2_dump_size
-  project = var.project_id
-}
-
-resource "google_compute_disk" "sap_db2_home_disk" {
-  name = "${var.instance_name}-db2home"
-  type = "pd-balanced"
-  zone = var.zone
-  size = var.db2_home_size
-  project = var.project_id
-}
-
 resource "google_compute_disk" "sap_db2_usr_sap_disk" {
   count = var.usr_sap_size > 0 ? 1 : 0
   name = "${var.instance_name}-usrsap"

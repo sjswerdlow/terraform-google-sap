@@ -20,7 +20,6 @@ module "sap_maxdb_win" {
   project_id             = "PROJECT_ID"            # example: my-project-x
   zone                   = "ZONE"                  # example: us-east1-b
   machine_type           = "MACHINE_TYPE"          # example: n1-highmem-32
-  network                = "NETWORK"               # example: default
   subnetwork             = "SUBNETWORK"            # example: default
   windows_image          = "WINDOWS_IMAGE"         # example: windows-server-2019-dc
   windows_image_project  = "WINDOWS_IMAGE_PROJECT" # example: windows-cloud
