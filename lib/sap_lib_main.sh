@@ -637,37 +637,37 @@ main::install_monitoring_agent() {
   local msg1
   local msg2
 
-  main::errhandle_log_info "Installing SAP NetWeaver monitoring agent"
+  main::errhandle_log_info "Installing SAP Agent"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Installing agent for SLES"
     # SLES
-    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-sapnetweavermonitoring-agent-sles$(grep "VERSION_ID=" /etc/os-release | cut -d = -f 2 | tr -d '"' | cut -d . -f 1)-\$basearch google-sapnetweavermonitoring-agent
+    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles$(grep "VERSION_ID=" /etc/os-release | cut -d = -f 2 | tr -d '"' | cut -d . -f 1)-\$basearch-unstable google-cloud-sap-agent-unstable
     rpm --import https://packages.cloud.google.com/yum/doc/yum-key.gpg
-    zypper --no-gpg-checks --gpg-auto-import-keys ref -f
-    if timeout 300 zypper -n --no-gpg-checks install "google-sapnetweavermonitoring-agent"; then
-      main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
+
+    if timeout 300 zypper -n --no-gpg-checks install "google-cloud-sap-agent"; then
+      main::errhandle_log_info "Finished installation SAP Agent"
     else
-      local msg1="SAP NetWeaver monitoring agent did not install correctly."
+      local msg1="SAP Agent did not install correctly."
       local msg2="Try to install it manually."
       main::errhandle_log_info "${msg1} ${msg2}"
     fi
   elif [ "${LINUX_DISTRO}" = "RHEL" ]; then
     # RHEL
     main::errhandle_log_info "Installing agent for RHEL"
-    tee /etc/yum.repos.d/google-sapnetweavermonitoring-agent.repo << EOM
-[google-sapnetweavermonitoring-agent]
-name=Google SAP Netweaver Monitoring Agent
-baseurl=https://packages.cloud.google.com/yum/repos/google-sapnetweavermonitoring-agent-el$(cat /etc/redhat-release | cut -d . -f 1 | tr -d -c 0-9)-\$basearch
+
+  tee /etc/yum.repos.d/google-cloud-sap-agent.repo << EOM
+[google-cloud-sap-agent]
+name=UNSTABLE Google Cloud Agent for SAP
+baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el$(cat /etc/redhat-release | cut -d . -f 1 | tr -d -c 0-9)-\$basearch-unstable
 enabled=1
 gpgcheck=0
 repo_gpgcheck=0
-gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg
-  https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
-    if timeout 300 yum install -y "google-sapnetweavermonitoring-agent"; then
-      main::errhandle_log_info "Finished installation SAP NetWeaver monitoring agent"
+
+    if timeout 300 yum install -y "google-cloud-sap-agent"; then
+      main::errhandle_log_info "Finished installation SAP Agent"
     else
-      local msg1="SAP NetWeaver monitoring agent did not install correctly."
+      local msg1="SAP Agent did not install correctly."
       local msg2="Try to install it manually."
       main::errhandle_log_info "${msg1} ${msg2}"
     fi
