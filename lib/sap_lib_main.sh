@@ -641,7 +641,7 @@ main::install_monitoring_agent() {
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Installing agent for SLES"
     # SLES
-    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles$(grep "VERSION_ID=" /etc/os-release | cut -d = -f 2 | tr -d '"' | cut -d . -f 1)-\$basearch-unstable google-cloud-sap-agent-unstable
+    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles$(grep "VERSION_ID=" /etc/os-release | cut -d = -f 2 | tr -d '"' | cut -d . -f 1)-\$basearch google-cloud-sap-agent
     rpm --import https://packages.cloud.google.com/yum/doc/yum-key.gpg
 
     if timeout 300 zypper -n --no-gpg-checks install "google-cloud-sap-agent"; then
@@ -657,8 +657,8 @@ main::install_monitoring_agent() {
 
   tee /etc/yum.repos.d/google-cloud-sap-agent.repo << EOM
 [google-cloud-sap-agent]
-name=UNSTABLE Google Cloud Agent for SAP
-baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el$(cat /etc/redhat-release | cut -d . -f 1 | tr -d -c 0-9)-\$basearch-unstable
+name=Google Cloud Agent for SAP
+baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el$(cat /etc/redhat-release | cut -d . -f 1 | tr -d -c 0-9)-\$basearch
 enabled=1
 gpgcheck=0
 repo_gpgcheck=0
