@@ -136,6 +136,7 @@ hdb::set_kernel_parameters(){
     echo "net.ipv4.tcp_timestamps = 1"
     echo "net.ipv4.tcp_syn_retries = 8"
     echo "net.ipv4.tcp_wmem = 4096 16384 4194304"
+    echo "net.ipv4.tcp_limit_output_bytes = 1048576"
   } >> /etc/sysctl.conf
 
   sysctl -p
