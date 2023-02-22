@@ -123,10 +123,6 @@ def GenerateConfig(context):
                   'items': [{
                       'key': 'startup-script',
                       'value': primary_startup_url
-                  },
-                  {
-                      'key': 'status',
-                      'value': "Pending"
                   }]
               },
               'canIpForward': True,
