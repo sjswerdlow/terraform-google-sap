@@ -637,7 +637,7 @@ main::install_monitoring_agent() {
   local msg1
   local msg2
 
-  main::errhandle_log_info "Installing SAP Agent"
+  main::errhandle_log_info "Installing Agent for SAP"
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Installing agent for SLES"
     # SLES
@@ -645,9 +645,9 @@ main::install_monitoring_agent() {
     rpm --import https://packages.cloud.google.com/yum/doc/yum-key.gpg
 
     if timeout 300 zypper -n --no-gpg-checks install "google-cloud-sap-agent"; then
-      main::errhandle_log_info "Finished installation SAP Agent"
+      main::errhandle_log_info "Finished installation Agent for SAP"
     else
-      local msg1="SAP Agent did not install correctly."
+      local msg1="Agent for SAP did not install correctly."
       local msg2="Try to install it manually."
       main::errhandle_log_info "${msg1} ${msg2}"
     fi
@@ -661,13 +661,14 @@ name=Google Cloud Agent for SAP
 baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el$(cat /etc/redhat-release | cut -d . -f 1 | tr -d -c 0-9)-\$basearch
 enabled=1
 gpgcheck=0
-repo_gpgcheck=0
+repo_gpgcheck=1
+gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
 
     if timeout 300 yum install -y "google-cloud-sap-agent"; then
-      main::errhandle_log_info "Finished installation SAP Agent"
+      main::errhandle_log_info "Finished installation Agent for SAP"
     else
-      local msg1="SAP Agent did not install correctly."
+      local msg1="Agent for SAP did not install correctly."
       local msg2="Try to install it manually."
       main::errhandle_log_info "${msg1} ${msg2}"
     fi
