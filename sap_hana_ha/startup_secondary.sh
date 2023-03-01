@@ -79,7 +79,7 @@ ha::install_primary_sshkeys
 ha::download_scripts
 ha::create_hdb_user
 ha::hdbuserstore
-hdb::backup /hanabackup/data/pre_ha_config
+hdb::backup pre_ha_config
 ha::wait_for_primary
 ha::copy_hdb_ssfs_keys
 hdb::stop

@@ -80,7 +80,7 @@ ha::install_secondary_sshkeys
 ha::download_scripts
 ha::create_hdb_user
 ha::hdbuserstore
-hdb::backup /hanabackup/data/pre_ha_config
+hdb::backup pre_ha_config
 ha::enable_hsr
 ha::ready
 ha::setup_haproxy  # RHEL only

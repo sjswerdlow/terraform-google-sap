@@ -79,6 +79,10 @@ variable "sap_secondary_zone" {
 variable "nfs_path" {
   type        = string
   description = "NFS path for shared file system, e.g. 10.163.58.114:/ssd"
+  validation {
+    condition     = var.nfs_path == "" || can(regex("(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}:\\/[^[:space:]]*", var.nfs_path))
+    error_message = "The nfs_path must be an IP address followed by ':/' then some name."
+  }
 }
 #
 # SAP system settings

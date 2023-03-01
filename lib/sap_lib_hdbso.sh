@@ -1,6 +1,11 @@
 
 hdbso::calculate_volume_sizes() {
 
+  if [[ "${VM_METADATA[use_single_shared_data_log_disk]}" = "false" ]]; then
+    main::errhandle_log_info "No disk volume size calculation needed, using multiple disks used for /usr/sap, shared, data, log."
+    return 0
+  fi
+
   if [[ ! "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
     main::errhandle_log_info "Calculating disk volume sizes"
 
@@ -13,7 +18,7 @@ hdbso::calculate_volume_sizes() {
     hana_data_size=$(((VM_MEMSIZE*12)/10))
 
     ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
-    hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE $DEVICE_DATA_LOG)/1024/1024/1024))
+    hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE $DEVICE_SINGLE_PD)/1024/1024/1024))
     hana_pdssd_size_x2=$(((hana_data_size+hana_log_size)*2))
 
     if [[ ${hana_pdssd_size} -gt ${hana_pdssd_size_x2} ]]; then
@@ -34,31 +39,56 @@ hdbso::create_data_log_volumes() {
   if [[ ! "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
     main::errhandle_log_info 'Building /hana/data & /hana/log'
 
-    ## create volume group
-    main::create_vg $DEVICE_DATA_LOG vg_hana
+    if [[ "${VM_METADATA[use_single_data_log_disk]}" = "true" ]]; then
+      ## create volume group
+      main::create_vg $DEVICE_SINGLE_PD vg_hana
 
-    ## create logical volumes
-    main::errhandle_log_info '--- Creating logical volumes'
-    lvcreate -L "${hana_log_size}"G -n log vg_hana
-    lvcreate -l 100%FREE -n data vg_hana
+      ## create logical volumes
+      main::errhandle_log_info '--- Creating logical volumes'
+      lvcreate -L "${hana_log_size}"G -n log vg_hana
+      lvcreate -l 100%FREE -n data vg_hana
 
-    ## format file systems
-    main::format_mount /hana/data /dev/vg_hana/data xfs tmp
-    main::format_mount /hana/log /dev/vg_hana/log xfs tmp
+      ## format file systems
+      main::format_mount /hana/data /dev/vg_hana/data xfs tmp
+      main::format_mount /hana/log /dev/vg_hana/log xfs tmp
 
-    ## create sid folder inside of mounted file system
-    mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
+      ## create sid folder inside of mounted file system
+      mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
 
-    ## Update permissions then unmount - mounts are now under the control of gceStorageClient
-    main::errhandle_log_info '--- Unmounting and deactivating file systems'
-    chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /hana/log /hana/data
-    chmod -R 750 /hana/data /hana/log
-    /usr/bin/sync
-    /usr/bin/umount /hana/log
-    /usr/bin/umount /hana/data
+      ## Update permissions then unmount - mounts are now under the control of gceStorageClient
+      main::errhandle_log_info '--- Unmounting and deactivating file systems'
+      chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /hana/log /hana/data
+      chmod -R 750 /hana/data /hana/log
+      /usr/bin/sync
+      /usr/bin/umount /hana/log
+      /usr/bin/umount /hana/data
 
-    ## disable volume group
-    /sbin/vgchange -a n vg_hana
+      ## disable volume group
+      /sbin/vgchange -a n vg_hana
+    else
+      main::create_vg $DEVICE_DATA vg_hana_data
+      lvcreate -l 100%FREE -n data vg_hana_data
+      main::format_mount /hana/data /dev/vg_hana_data/data xfs tmp
+
+      main::create_vg $DEVICE_LOG vg_hana_log
+      lvcreate -l 100%FREE -n log vg_hana_log
+      main::format_mount /hana/log /dev/vg_hana_log/log xfs tmp
+
+      ## create sid folder inside of mounted file system
+      mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
+
+      ## Update permissions then unmount - mounts are now under the control of gceStorageClient
+      main::errhandle_log_info '--- Unmounting and deactivating file systems'
+      chown -R "${VM_METADATA[sap_hana_sidadm_uid]}":"${VM_METADATA[sap_hana_sapsys_gid]}" /hana/log /hana/data
+      chmod -R 750 /hana/data /hana/log
+      /usr/bin/sync
+      /usr/bin/umount /hana/log
+      /usr/bin/umount /hana/data
+
+      ## disable volume group
+      /sbin/vgchange -a n vg_hana_data
+      /sbin/vgchange -a n vg_hana_log
+    fi
   fi
 
   ## create base SID directory to avoid hdblcm failing on worker/standby nodes
@@ -217,11 +247,17 @@ EOF
   for worker in $(seq 1 $((VM_METADATA[sap_hana_worker_nodes]+1))); do
     partno="0000${worker}"
     partno_concat="${partno: -5}"
-    echo "partition_${worker}_*__pd = ${HOSTNAME}-mnt${partno_concat}" >> /hana/shared/gceStorageClient/global.ini
+    if [[ "${VM_METADATA[use_single_data_log_disk]}" = "true" ]]; then
+      echo "partition_${worker}_*__pd = ${HOSTNAME}-hana${partno_concat}" >> /hana/shared/gceStorageClient/global.ini
+    else
+      echo "partition_${worker}_data__pd = ${HOSTNAME}-data${partno_concat}" >> /hana/shared/gceStorageClient/global.ini
+      echo "partition_${worker}_log__pd = ${HOSTNAME}-log${partno_concat}" >> /hana/shared/gceStorageClient/global.ini
+    fi
   done
 
   ## Add bottom section to global.ini
-  cat <<EOF >> /hana/shared/gceStorageClient/global.ini
+  if [[ "${VM_METADATA[use_single_data_log_disk]}" = "true" ]]; then
+    cat <<EOF >> /hana/shared/gceStorageClient/global.ini
 partition_*_data__dev = /dev/vg_hana/data
 partition_*_log__dev = /dev/vg_hana/log
 partition_*_data__mountOptions = -t xfs -o logbsize=256k
@@ -231,6 +267,18 @@ partition_*_*__fencing = disabled
 [trace]
 ha_gcestorageclient = info
 EOF
+  else
+    cat <<EOF >> /hana/shared/gceStorageClient/global.ini
+partition_*_data__dev = /dev/vg_hana_data/data
+partition_*_log__dev = /dev/vg_hana_log/log
+partition_*_data__mountOptions = -t xfs -o logbsize=256k
+partition_*_log__mountOptions = -t xfs -o logbsize=256k
+partition_*_*__fencing = disabled
+
+[trace]
+ha_gcestorageclient = info
+EOF
+  fi
 }
 
 

@@ -208,7 +208,7 @@ def GenerateConfig(context):
   hana_nodes = []
 
   hana_nodes.append({
-          'name': instance_name + '-mnt00001',
+          'name': instance_name + '-hana00001',
           'type': 'compute.v1.disk',
           'properties': {
                 'zone': zone,
@@ -290,6 +290,10 @@ def GenerateConfig(context):
                       'value': sap_hana_standby_nodes
                   },
                   {
+                      'key': 'use_single_data_log_disk',
+                      'value': "true"
+                  },
+                  {
                       'key': 'template-type',
                       'value': "DEPLOYMENTMANAGER"
                   }]
@@ -307,9 +311,9 @@ def GenerateConfig(context):
                       }
                   },
                   {
-                  'deviceName': instance_name + '-mnt00001',
+                  'deviceName': instance_name + '-hana00001',
                   'type': 'PERSISTENT',
-                  'source': ''.join(['$(ref.', instance_name  + '-mnt00001', '.selfLink)']),
+                  'source': ''.join(['$(ref.', instance_name  + '-hana00001', '.selfLink)']),
                   'autoDelete': True
                   }],
               'canIpForward': True,
@@ -340,7 +344,7 @@ def GenerateConfig(context):
       for i in range(1,sap_hana_worker_nodes+1):
           partition = i + 1
           instance_name = context.properties['instanceName'] + "w" + str(i)
-          pdname = context.properties['instanceName'] + "-mnt" + str(partition).zfill(5)
+          pdname = context.properties['instanceName'] + "-hana" + str(partition).zfill(5)
 
           hana_nodes.append({
                 'name': pdname,
@@ -407,6 +411,10 @@ def GenerateConfig(context):
                           {
                               'key': 'sap_deployment_debug',
                               'value': sap_deployment_debug
+                          },
+                          {
+                              'key': 'use_single_data_log_disk',
+                              'value': "true"
                           },
                           {
                               'key': 'template-type',

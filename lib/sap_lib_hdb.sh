@@ -1,5 +1,10 @@
 
 hdb::calculate_volume_sizes() {
+  if [[ "${VM_METADATA[use_single_shared_data_log_disk]}" = "false" ]]; then
+    main::errhandle_log_info "No disk volume size calculation needed, using multiple disks used for /usr/sap, shared, data, log."
+    return 0
+  fi
+
   main::errhandle_log_info "Calculating disk volume sizes"
 
   hana_log_size=$((VM_MEMSIZE/2))
@@ -29,7 +34,7 @@ hdb::calculate_volume_sizes() {
   fi
 
   ## if there is enough space (i.e, multi_sid enabled or if 208GB instances) then double the volume sizes
-  hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE $DEVICE_DATA_LOG)/1024/1024/1024))
+  hana_pdssd_size=$(($(lsblk --nodeps --bytes --noheadings --output SIZE $DEVICE_SINGLE_PD)/1024/1024/1024))
   hana_pdssd_size_x2=$(((hana_data_size+hana_log_size)*2 +hana_shared_size))
 
   if [[ ${hana_pdssd_size} -gt ${hana_pdssd_size_x2} ]]; then
@@ -44,22 +49,35 @@ hdb::calculate_volume_sizes() {
 }
 
 hdb::create_sap_data_log_volumes() {
-
   main::errhandle_log_info "Building /usr/sap, /hana/data & /hana/log"
 
-  ## create volume group
-  main::create_vg $DEVICE_DATA_LOG vg_hana
+  if [[ "${VM_METADATA[use_single_shared_data_log_disk]}" = "true" ]]; then
+    ## create volume group
+    main::create_vg $DEVICE_SINGLE_PD vg_hana
 
-  ## create logical volumes
-  main::errhandle_log_info '--- Creating logical volumes'
-  lvcreate -L 32G -n sap vg_hana
-  lvcreate -L ${hana_log_size}G -n log vg_hana
-  lvcreate -l 100%FREE -n data vg_hana
+    ## create logical volumes
+    main::errhandle_log_info '--- Creating logical volumes'
+    lvcreate -L 32G -n sap vg_hana
+    lvcreate -L ${hana_log_size}G -n log vg_hana
+    lvcreate -l 100%FREE -n data vg_hana
 
-  ## format file systems
-  main::format_mount /usr/sap /dev/vg_hana/sap xfs
-  main::format_mount /hana/data /dev/vg_hana/data xfs
-  main::format_mount /hana/log /dev/vg_hana/log xfs
+    ## format file systems
+    main::format_mount /usr/sap /dev/vg_hana/sap xfs
+    main::format_mount /hana/data /dev/vg_hana/data xfs
+    main::format_mount /hana/log /dev/vg_hana/log xfs
+  else
+    main::create_vg $DEVICE_DATA vg_hana_data
+    lvcreate -l 100%FREE -n data vg_hana_data
+    main::format_mount /hana/data /dev/vg_hana_data/data xfs
+
+    main::create_vg $DEVICE_LOG vg_hana_log
+    lvcreate -l 100%FREE -n log vg_hana_log
+    main::format_mount /hana/log /dev/vg_hana_log/log xfs
+
+    main::create_vg $DEVICE_USRSAP vg_hana_usrsap
+    lvcreate -l 100%FREE -n usrsap vg_hana_usrsap
+    main::format_mount /usr/sap /dev/vg_hana_usrsap/usrsap xfs
+  fi
 
   ## create base folders
   mkdir -p /hana/data/"${VM_METADATA[sap_hana_sid]}" /hana/log/"${VM_METADATA[sap_hana_sid]}"
@@ -93,11 +111,17 @@ hdb::create_shared_volume() {
     main::errhandle_log_info "NFS endpoint specified for /hana/shared. Skipping block device."
     return 0
   fi
-  main::create_vg $DEVICE_DATA_LOG vg_hana
-  lvcreate -L ${hana_shared_size}G -n shared vg_hana
 
-  ## format and mount
-  main::format_mount /hana/shared /dev/vg_hana/shared xfs
+  main::errhandle_log_info "Building /hana/shared"
+  if [[ "${VM_METADATA[use_single_shared_data_log_disk]}" = "true" ]]; then
+    main::create_vg $DEVICE_SINGLE_PD vg_hana
+    lvcreate -L ${hana_shared_size}G -n shared vg_hana
+    main::format_mount /hana/shared /dev/vg_hana/shared xfs
+  else
+    main::create_vg $DEVICE_SHARED vg_hana_shared
+    lvcreate -l 100%FREE -n shared vg_hana_shared
+    main::format_mount /hana/shared /dev/vg_hana_shared/shared xfs
+  fi
 }
 
 
@@ -106,16 +130,19 @@ hdb::create_backup_volume() {
     main::errhandle_log_info "NFS endpoint specified for /hanabackup. Skipping block device."
     return 0
   fi
-  main::errhandle_log_info "Building /hanabackup"
 
-  ## create volume group
-  main::create_vg $DEVICE_BACKUP vg_hanabackup
+  if [[ -n $DEVICE_BACKUP ]]; then
+    main::errhandle_log_info "Building /hanabackup"
 
-  main::errhandle_log_info "--- Creating logical volume"
-  lvcreate -l 100%FREE -n backup vg_hanabackup
+    ## create volume group
+    main::create_vg $DEVICE_BACKUP vg_hanabackup
 
-  ## create filesystems
-  main::format_mount /hanabackup /dev/vg_hanabackup/backup xfs
+    main::errhandle_log_info "--- Creating logical volume"
+    lvcreate -l 100%FREE -n backup vg_hanabackup
+
+    ## create filesystems
+    main::format_mount /hanabackup /dev/vg_hanabackup/backup xfs
+  fi
 }
 
 
@@ -379,13 +406,28 @@ hdb::set_parameters() {
 
 
 hdb::config_backup() {
-  main::errhandle_log_info 'Configuring backup locations to /hanabackup'
-  mkdir -p /hanabackup/data/"${VM_METADATA[sap_hana_sid]}" /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
-  chown -R root:sapsys /hanabackup
-  chmod -R g=wrx /hanabackup
-  hdb::set_parameters global.ini persistence basepath_databackup /hanabackup/data/"${VM_METADATA[sap_hana_sid]}"
-  hdb::set_parameters global.ini persistence basepath_logbackup /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
-  hdb::set_parameters global.ini persistence basepath_catalogbackup /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
+  if [[ "${VM_METADATA[sap_hana_backup_disk]}" = "true" \
+      || -n ${VM_METADATA[sap_hana_backup_nfs]} ]]; then
+
+    main::errhandle_log_info 'Configuring backup locations to /hanabackup'
+    mkdir -p /hanabackup/data/"${VM_METADATA[sap_hana_sid]}" /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
+    chown -R root:sapsys /hanabackup
+    chmod -R g=wrx /hanabackup
+    hdb::set_parameters global.ini persistence basepath_databackup /hanabackup/data/"${VM_METADATA[sap_hana_sid]}"
+    hdb::set_parameters global.ini persistence basepath_logbackup /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
+    hdb::set_parameters global.ini persistence basepath_catalogbackup /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
+  elif [[ -n "${VM_METADATA[sap_primary_instance]}" ]]; then
+    main::errhandle_log_warning 'WARNING: No backup disk provisioned. Configuring "/hana/shared" as backup location for initial backup in HA deployment. Make sure to change backup configuration after deployment.'
+
+    mkdir -p /hana/shared/backup/data/"${VM_METADATA[sap_hana_sid]}" /hana/shared/backup/log/"${VM_METADATA[sap_hana_sid]}"
+    chown -R root:sapsys /hana/shared/backup
+    chmod -R g=wrx /hana/shared/backup
+    hdb::set_parameters global.ini persistence basepath_databackup /hana/shared/backup/data/"${VM_METADATA[sap_hana_sid]}"
+    hdb::set_parameters global.ini persistence basepath_logbackup /hana/shared/backup/log/"${VM_METADATA[sap_hana_sid]}"
+    hdb::set_parameters global.ini persistence basepath_catalogbackup /hana/shared/backup/log/"${VM_METADATA[sap_hana_sid]}"
+  else
+    main::errhandle_log_warning 'WARNING: No backup disk provisioned. Skipping configuration of backup locations.'
+  fi
 }
 
 
@@ -417,20 +459,67 @@ hdb::check_settings() {
   main::remove_metadata sap_hana_sidadm_password
 
   ## Detect devices for attached disks
-  ##   - Names of disks correspond to what is defined on DM/TF side
+  ##   - Names of disks correspond to what is defined on TF side
+  ##      - universal (1 disk) PD has '<VM-name>-hana'   in name
+  ##      - /hana/data PD         has '<VM-name>-data'   in name
+  ##      - /hana/log PD          has '<VM-name>-log'    in name
+  ##      - /hana/shared PD       has '<VM-name>-shared' in name
+  ##      - /usr/sap PD           has '<VM-name>-usrsap' in name
+  ##      - /hanabackup PD        has '<VM-name>-backup' in name
   main::errhandle_log_info "Determining device names for HANA deployment"
-  if [[ -z  "${VM_METADATA[sap_hana_original_role]}" ]]; then
-    # Non-Scale-out naming (hana, hana_ha, hana_ha_ilb)
-    readonly DEVICE_DATA_LOG=$(main::get_device_by_id "pdssd")
-    main::errhandle_log_info "DEVICE_DATA_LOG is ${DEVICE_DATA_LOG}"
-    if [[ -z "${VM_METADATA[sap_hana_backup_nfs]}" ]]; then
-      readonly DEVICE_BACKUP=$(main::get_device_by_id "backup")
-      main::errhandle_log_info "DEVICE_BACKUP is ${DEVICE_BACKUP}"
+  local vm_name=$(main::get_metadata "http://169.254.169.254/computeMetadata/v1/instance/name")
+  local name_single_pd="${vm_name}"-hana
+  local name_data="${vm_name}"-data
+  local name_log="${vm_name}"-log
+  local name_usrsap="${vm_name}"-usrsap
+  local name_shared="${vm_name}"-shared
+  local name_backup="${vm_name}"-backup
+
+  if [[ -n "${VM_METADATA[sap_hana_original_role]}" && \
+        ! "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
+
+    # Scale-out scenario (sap_hana_scaleout) - non-standby nodes
+    #   - we have either a single disk or 2 disks (hana, log)
+    if [[ "${VM_METADATA[use_single_data_log_disk]}" = "true" ]]; then
+      readonly DEVICE_SINGLE_PD=$(main::get_device_by_id "${name_single_pd}")
+      main::errhandle_log_info "DEVICE_SINGLE_PD is ${DEVICE_SINGLE_PD}"
+    else
+      readonly DEVICE_DATA=$(main::get_device_by_id "${name_data}")
+      main::errhandle_log_info "DEVICE_DATA is ${DEVICE_DATA}"
+      readonly DEVICE_LOG=$(main::get_device_by_id "${name_log}")
+      main::errhandle_log_info "DEVICE_LOG is ${DEVICE_LOG}"
     fi
-  elif [[ ! "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
-    # Scale-out naming uses 'mnt000xx' and has no backup disk
-    readonly DEVICE_DATA_LOG=$(main::get_device_by_id "mnt000")
-    main::errhandle_log_info "DEVICE_DATA_LOG is ${DEVICE_DATA_LOG}"
+  elif [[ -n "${VM_METADATA[sap_hana_original_role]}" && \
+          "${VM_METADATA[sap_hana_original_role]}" = "standby" ]]; then
+
+    # Scale-out scenario (sap_hana_scaleout) - standby nodes
+    #   - we have no additional disks
+    main::errhandle_log_info "Standby node, no devices to be detected."
+  else
+    # non-Scale-out scenarios (sap_hana, sap_hana_ha)
+    #   - we have either a single disk or 3 disks (hana, log, usrsap)
+    #     or 4 disks (hana, log, usrsap, shared)
+    if [[ "${VM_METADATA[use_single_shared_data_log_disk]}" = "true" ]]; then
+      readonly DEVICE_SINGLE_PD=$(main::get_device_by_id "${name_single_pd}")
+      main::errhandle_log_info "DEVICE_SINGLE_PD is ${DEVICE_SINGLE_PD}"
+    else
+      readonly DEVICE_DATA=$(main::get_device_by_id "${name_data}")
+      main::errhandle_log_info "DEVICE_DATA is ${DEVICE_DATA}"
+      readonly DEVICE_LOG=$(main::get_device_by_id "${name_log}")
+      main::errhandle_log_info "DEVICE_LOG is ${DEVICE_LOG}"
+      readonly DEVICE_USRSAP=$(main::get_device_by_id "${name_usrsap}")
+      main::errhandle_log_info "DEVICE_USRSAP is ${DEVICE_USRSAP}"
+
+      if [[ "${VM_METADATA[sap_hana_shared_disk]}" = "true" ]]; then
+        readonly DEVICE_SHARED=$(main::get_device_by_id "${name_shared}")
+        main::errhandle_log_info "DEVICE_SHARED is ${DEVICE_SHARED}"
+      fi
+    fi
+  fi
+
+  if [[ "${VM_METADATA[sap_hana_backup_disk]}" = "true" ]]; then
+    readonly DEVICE_BACKUP=$(main::get_device_by_id "${name_backup}")
+    main::errhandle_log_info "DEVICE_BACKUP is ${DEVICE_BACKUP}"
   fi
 }
 

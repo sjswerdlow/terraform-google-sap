@@ -67,4 +67,7 @@ module "hana_scaleout" {
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # reservation_name                = ""                    # default is an empty string
+
+  # disk_type                       = "DISK_TYPE"           # default is "pd-ssd", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme".
+  # use_single_data_log_disk        = true_or_false         # default is false
 }

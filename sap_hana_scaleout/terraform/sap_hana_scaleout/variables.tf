@@ -146,11 +146,19 @@ variable "sap_hana_standby_nodes" {
 
 variable "sap_hana_shared_nfs" {
   type        = string
+  validation {
+    condition     = var.sap_hana_shared_nfs == "" || can(regex("(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}:\\/[^[:space:]]*", var.sap_hana_shared_nfs))
+    error_message = "The sap_hana_shared_nfs must be an IP address followed by ':/' then some name."
+  }
   description = "Google Filestore share for /hana/shared"
 }
 
 variable "sap_hana_backup_nfs" {
   type        = string
+  validation {
+    condition     = var.sap_hana_backup_nfs == "" || can(regex("(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}:\\/[^[:space:]]*", var.sap_hana_backup_nfs))
+    error_message = "The sap_hana_backup_nfs must be an IP address followed by ':/' then some name."
+  }
   description = "Google Filestore share for /hanabackup"
 }
 
@@ -225,9 +233,73 @@ variable "nic_type" {
   default     = ""
 }
 
+variable "disk_type" {
+  type = string
+  description = "Optional - The default disk type to use on all disks deployed. Extreme disks are not supported on all machine types. See https://cloud.google.com/compute/docs/disks/ for details."
+  validation {
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme"], var.disk_type)
+    error_message = "The disk_type must be either ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+  }
+  default = "pd-ssd"
+}
+
+variable "use_single_data_log_disk" {
+  type = bool
+  description = "Optional - By default two separate disk for data and logs will be made. If set to true, one disk will be used instead."
+  default = false
+}
+
 #
 # DO NOT MODIFY unless you know what you are doing
 #
+variable "data_disk_type_override" {
+  type = string
+  description = "Warning, do not use unless you know what you are doing. Override the 'default_disk_type' for the data disk."
+  validation {
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme", ""], var.data_disk_type_override)
+    error_message = "The data_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+  }
+  default = ""
+}
+variable "log_disk_type_override" {
+  type = string
+  description = "Warning, do not use unless you know what you are doing. Override the 'default_disk_type' for the log disk."
+  validation {
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme", ""], var.log_disk_type_override)
+    error_message = "The log_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+  }
+  default = ""
+}
+variable "unified_disk_size_override" {
+  type = number
+  description = "Warning, do not use unless you know what you are doing. Overrides the default size for the primary's unified disk, that is based off of the machine_type."
+  default = null
+}
+variable "data_disk_size_override" {
+  type = number
+  description = "Warning, do not use unless you know what you are doing. Overrides the default size for the data disk(s), that is based off of the machine_type."
+  default = null
+}
+variable "log_disk_size_override" {
+  type = number
+  description = "Warning, do not use unless you know what you are doing. Overrides the default size for the log disk(s), that is based off of the machine_type."
+  default = null
+}
+variable "unified_disk_iops_override" {
+  type = number
+  description = "Warning, do not use unless you know what you are doing. Direclty sets the number of IOPS that the primary's unified disk will use. Has no effect if not using a disk type that supports it."
+  default = null
+}
+variable "data_disk_iops_override" {
+  type = number
+  description = "Warning, do not use unless you know what you are doing. Direclty sets the number of IOPS that the data disk(s) will use. Has no effect if not using a disk type that supports it."
+  default = null
+}
+variable "log_disk_iops_override" {
+  type = number
+  description = "Warning, do not use unless you know what you are doing. Direclty sets the number of IOPS that the log disk(s) will use. Has no effect if not using a disk type that supports it."
+  default = null
+}
 variable "primary_startup_url" {
   type        = string
   description = "Startup script to be executed when the VM boots, should not be overridden."

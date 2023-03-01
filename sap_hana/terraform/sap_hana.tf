@@ -54,6 +54,8 @@ module "sap_hana" {
   # sap_hana_system_password        = "SYSTEM_PASSWORD"     # default is "", otherwise must contain one lower case letter, one upper case letter, one number, and be at least 8 characters in length
   # sap_hana_system_password_secret = "SYSTEM_SECRET"       # default is "", otherwise must be the name of a secret in Secret Manager. The secret has the same constraints as "sap_hana_system_password"
   # sap_hana_scaleout_nodes         = SCALEOUT_NODES_NUM    # default is 0, minimum is 0
+  # sap_hana_shared_nfs             = "HANA_SHARED_NFS"     # default is "", example: "10.10.10.10:/shared"
+  # sap_hana_backup_nfs             = "HANA_BACKUP_NFS"     # default is "", example: "10.10.10.10:/backup"
   # sap_hana_backup_size            = BACKUP_DISK_SIZE      # default is 0, minimum is 0
   # sap_hana_sidadm_uid             = HANA_SIDADM_UID       # default is 900
   # sap_hana_sapsys_gid             = HANA_SAPSYS_GID       # default is 79
@@ -69,4 +71,10 @@ module "sap_hana" {
   # public_ip                       = true_or_false         # default is true
   # service_account                 = ""                    # default is an empty string
   # reservation_name                = ""                    # default is an empty string
+
+  # disk_type                       = "DISK_TYPE"           # default is "pd-ssd", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme".
+  # use_single_shared_data_log_disk = true_or_false         # default is false
+  # include_backup_disk             = true_or_false         # default is true
+
+
 }

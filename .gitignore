@@ -7,3 +7,5 @@ terraform-google-sap/
 **.terraform.*
 **terraform.tfstate*
 .DS_Store
+*_builds.csv
+tools/*.json
