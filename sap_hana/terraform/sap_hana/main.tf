@@ -101,17 +101,15 @@ locals {
 
   hana_data_size = max(local.hana_data_size_min, local.min_total_disk - local.hana_usrsap_size - local.hana_log_size - local.hana_shared_size_min )
 
-  # scaleout_nodes > 0 then hana_shared_size and pdhdd is changed; assumes that sap_hana_scaleout_nodes is an integer
+  # scaleout_nodes > 0 then hana_shared_size and backup is changed; assumes that sap_hana_scaleout_nodes is an integer
   hana_shared_size   = var.sap_hana_scaleout_nodes > 0 ? local.hana_shared_size_min * ceil(var.sap_hana_scaleout_nodes / 4): local.hana_shared_size_min
-  backup_size_default = var.sap_hana_scaleout_nodes > 0 ? 2 * local.mem_size * (var.sap_hana_scaleout_nodes + 1) : 0
+  backup_size = var.sap_hana_backup_size > 0 ? var.sap_hana_backup_size : 2 * local.mem_size * (var.sap_hana_scaleout_nodes + 1)
 
   # ensure the combined disk meets minimum size/performance ;
   pd_size = ceil(max(local.min_total_disk, local.hana_log_size + local.hana_data_size_min + local.hana_shared_size + local.hana_usrsap_size + 1))
 
   # ensure pd-hdd for backup is smaller than the maximum pd size
   pd_size_worker = ceil(max(local.min_total_disk, local.hana_log_size + local.hana_data_size_min + local.hana_usrsap_size + 1))
-
-
 
   final_data_disk_type = var.data_disk_type_override == "" ? var.disk_type : var.data_disk_type_override
   final_log_disk_type = var.log_disk_type_override == "" ? var.disk_type : var.log_disk_type_override
@@ -159,9 +157,6 @@ locals {
   final_usrsap_iops = var.usrsap_disk_iops_override == null ? local.iops_map[local.final_usrsap_disk_type]["usrsap"] : var.usrsap_disk_iops_override
   final_unified_iops = var.unified_disk_iops_override == null ? local.iops_map[var.disk_type]["unified"] : var.unified_disk_iops_override
   final_unified_worker_iops = var.unified_worker_disk_iops_override == null ? local.iops_map[var.disk_type]["worker"] : var.unified_worker_disk_iops_override
-
-  # change PD-HDD size if a custom backup size has been set
-  pdhdd_size = var.sap_hana_backup_size > 0 ? var.sap_hana_backup_size : local.backup_size_default
 
   # network config variables
   zone_split       = split("-", var.zone)
@@ -281,7 +276,7 @@ resource "google_compute_disk" "sap_hana_backup_disk" {
   name    = "${var.instance_name}-backup"
   type    = "pd-standard"
   zone    = var.zone
-  size    = local.pdhdd_size
+  size    = local.backup_size
   project = var.project_id
 }
 
