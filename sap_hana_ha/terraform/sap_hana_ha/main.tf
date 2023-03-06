@@ -499,7 +499,7 @@ resource "google_compute_disk" "sap_hana_ha_secondary_usrsap_disks" {
   count   = var.use_single_shared_data_log_disk ? 0 : 1
   name    = format("${var.secondary_instance_name}-usrsap")
   type    = local.final_usrsap_disk_type
-  zone    = var.primary_zone
+  zone    = var.secondary_zone
   size    = local.usrsap_pd_size
   project = var.project_id
   provisioned_iops = local.final_usrsap_iops
