@@ -466,8 +466,19 @@ hdb::check_settings() {
   ##      - /hana/shared PD       has '<VM-name>-shared' in name
   ##      - /usr/sap PD           has '<VM-name>-usrsap' in name
   ##      - /hanabackup PD        has '<VM-name>-backup' in name
+  # Worker nodes in sap_hana and sap_hana_scaleout use different naming
+  # convention.
+  #       - VMs are named <Primary-VM-name>w1 to <Primary-VM-name>w16
+  #       - Disks are named <Primary-VM-name>-<meaning>-00XX (XX = 01 to 16)
   main::errhandle_log_info "Determining device names for HANA deployment"
+
   local vm_name=$(main::get_metadata "http://169.254.169.254/computeMetadata/v1/instance/name")
+  # Adopting VM name used in disks for worker nodes
+  if [[ -n "${VM_METADATA[sap_hana_original_role]}" && \
+        "${VM_METADATA[sap_hana_original_role]}" = "worker" || \
+        "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
+    vm_name=$(python -c "import re; print(re.split(r'w[0-9]{1,2}$', '${vm_name}')[0])")
+  fi
   local name_single_pd="${vm_name}"-hana
   local name_data="${vm_name}"-data
   local name_log="${vm_name}"-log
