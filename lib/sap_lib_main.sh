@@ -480,7 +480,8 @@ main::install_gsdk() {
     if [[ "${LINUX_DISTRO}" = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
       export CLOUDSDK_PYTHON=/usr/bin/python
     fi
-    bash <(curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash) --disable-prompts --install-dir="${install_location}" >/dev/null
+    curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash > install.sh
+    bash install.sh --disable-prompts --install-dir="${install_location}" 1> /var/log/google-cloud-sdk-install.log 2>&1
     rc=$?
     if [[ "${rc}" -eq 0 ]]; then
       main::errhandle_log_info "Installed Google SDK in ${install_location}"
