@@ -189,6 +189,10 @@ data "assert_test" "one_shared" {
   test = !local.both_shared_nfs_defined
   throw = "If using an NFS as /shared then only either sap_hana_shared_nfs or sap_hana_shared_nfs_resource may be defined."
 }
+data "assert_test" "both_or_neither_nfs" {
+  test = (local.backup_nfs_endpoint == "") == (local.shared_nfs_endpoint == "")
+  throw = "If either NFS is defined, then both /shared and /backup must be defined."
+}
 
 ################################################################################
 # disks
