@@ -479,7 +479,7 @@ hdb::check_settings() {
         "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
     vm_name=$(python -c "import re; print(re.split(r'w[0-9]{1,2}$', '${vm_name}')[0])")
   fi
-  local name_single_pd="${vm_name}"-hana
+  local name_single_pd="${vm_name}".*-hana
   local name_data="${vm_name}"-data
   local name_log="${vm_name}"-log
   local name_usrsap="${vm_name}"-usrsap
