@@ -477,7 +477,7 @@ hdb::check_settings() {
   if [[ -n "${VM_METADATA[sap_hana_original_role]}" && \
         "${VM_METADATA[sap_hana_original_role]}" = "worker" || \
         "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
-    vm_name=$(python -c "import re; print(re.split(r'w[0-9]{1,2}$', '${vm_name}')[0])")
+    vm_name=$(echo ${vm_name} | awk '{split($0,a,"w[0-9]"); print a[1]}')
   fi
   local name_single_pd="${vm_name}".*-hana
   local name_data="${vm_name}"-data
