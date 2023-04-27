@@ -102,20 +102,26 @@ main::config_ssh() {
   service sshd restart
   cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
   /usr/sbin/rcgoogle-accounts-daemon restart ||  /usr/sbin/rcgoogle-guest-agent restart
+
+  ## Allow self ssh with keys
+  cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 }
 
 
 main::install_ssh_key(){
   local host=${1}
-  local host_zone
+  local host_zone=${2}
 
-  host_zone=$(${GCLOUD} compute instances list --filter="name=('${host}')" --format "value(zone)")
+  if [[ -z "${host_zone}" ]]; then
+    host_zone=$(${GCLOUD} compute instances list --filter="name=('${host}')" --format "value(zone)")
+  fi
+
   main::errhandle_log_info "Installing ${HOSTNAME} SSH key on ${host}"
 
   local count=0
   local max_count=10
 
-  while ! ${GCLOUD} --quiet compute instances add-metadata "${host}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)" --zone "${host_zone}"; do
+  while ! ${GCLOUD} --quiet compute ssh "${host}" --zone "${host_zone}" --internal-ip --command "echo $(cat /root/.ssh/id_rsa.pub) >> /root/.ssh/authorized_keys"; do
     count=$((count +1))
     if [ ${count} -gt ${max_count} ]; then
       main::errhandle_log_error "Failed to install ${HOSTNAME} SSH key on ${host}, aborting installation."

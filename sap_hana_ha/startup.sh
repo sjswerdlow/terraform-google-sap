@@ -76,7 +76,7 @@ hdb::config_backup
 
 ## Setup HA
 ha::check_settings
-ha::install_secondary_sshkeys
+main::install_ssh_key "${VM_METADATA[sap_secondary_instance]}" "${VM_METADATA[sap_secondary_zone]}"
 ha::download_scripts
 ha::create_hdb_user
 ha::hdbuserstore
