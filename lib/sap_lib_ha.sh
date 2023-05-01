@@ -322,9 +322,9 @@ ha::config_pacemaker_primary() {
     ha::config_corosync "${PRIMARY_NODE_IP}"
     main::errhandle_log_info "--- Starting cluster"
     sleep 5s
-    # b/189944327 - to avoid that gcpstonith fails when using Python3.4 on SLES12
+    # b/189944327, b/189154450 - to avoid that gcpstonith fails when using Python3.4 on SLES12
     if [[ "${LINUX_MAJOR_VERSION}" = "12" ]]; then
-      echo "CLOUDSDK_PYTHON=/usr/bin/python" | tee -a /etc/sysconfig/pacemaker
+      echo "CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/sysconfig/pacemaker
     fi
     systemctl enable pacemaker
     systemctl start pacemaker
@@ -402,9 +402,9 @@ ha::config_pacemaker_secondary() {
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     ha::config_corosync "${SECONDARY_NODE_IP}"
     bash -c "ha-cluster-join -y -c ${VM_METADATA[sap_primary_instance]} csync2"
-    # b/189944327 - to avoid that gcpstonith fails when using Python3.4 on SLES12
+    # b/189944327, b/189154450 - to avoid that gcpstonith fails when using Python3.4 on SLES12
     if [[ "${LINUX_MAJOR_VERSION}" = "12" ]]; then
-      echo "CLOUDSDK_PYTHON=/usr/bin/python" | tee -a /etc/sysconfig/pacemaker
+      echo "CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/sysconfig/pacemaker
     fi
     systemctl enable pacemaker
     systemctl start pacemaker
