@@ -62,7 +62,7 @@ main::install_monitoring_agent
 
 ## Setup HA
 nw-ha::create_deploy_directory
-main::install_ssh_key "${VM_METADATA[sap_primary_instance]}" "${VM_METADATA[sap_primary_zone]}"
+ha::install_secondary_sshkeys
 nw-ha::create_nfs_directories
 nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
