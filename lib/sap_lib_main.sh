@@ -476,9 +476,16 @@ main::install_gsdk() {
       ln -s /usr/bin/gcloud /usr/local/google-cloud-sdk/bin/gcloud
     fi
   elif [[ ! -d "${install_location}/google-cloud-sdk" ]]; then
-    # b/188946979
+    # b/189154450 - on SLES 12 use Python 3.6 w/ gcloud (default 3.4 is no longer supported by gcloud)
     if [[ "${LINUX_DISTRO}" = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
-      export CLOUDSDK_PYTHON=/usr/bin/python
+      zypper install -y python36
+      export CLOUDSDK_PYTHON=/usr/bin/python3.6
+      if ! grep -q CLOUDSDK_PYTHON /etc/profile; then
+        echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/profile
+      fi
+      if ! grep -q CLOUDSDK_PYTHON /etc/environment; then
+        echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/environment
+      fi
     fi
     curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash > install.sh
     bash install.sh --disable-prompts --install-dir="${install_location}" 1> /var/log/google-cloud-sdk-install.log 2>&1
@@ -497,21 +504,6 @@ main::install_gsdk() {
 
   readonly GCLOUD="/usr/bin/gcloud"
   readonly GSUTIL="/usr/bin/gsutil"
-
-  ## set default python version for Cloud SDK in SLES, move from 3.4 to 2.7
-  # b/188946979 - only applicable to SLES12
-  if [[ ${LINUX_DISTRO} = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
-    update-alternatives --install /usr/bin/gsutil gsutil /usr/local/google-cloud-sdk/bin/gsutil 1 --force
-    update-alternatives --install /usr/bin/gcloud gcloud /usr/local/google-cloud-sdk/bin/gcloud 1 --force
-    export CLOUDSDK_PYTHON=/usr/bin/python
-    # b/189944327 - to avoid gcloud/gsutil fails when using Python3.4 on SLES12
-    if ! grep -q CLOUDSDK_PYTHON /etc/profile; then
-      echo "export CLOUDSDK_PYTHON=/usr/bin/python" | tee -a /etc/profile
-    fi
-    if ! grep -q CLOUDSDK_PYTHON /etc/environment; then
-      echo "export CLOUDSDK_PYTHON=/usr/bin/python" | tee -a /etc/environment
-    fi
-  fi
 
   ## run an instances list to ensure the software is up to date
   ${GCLOUD} --quiet beta compute instances list >/dev/null
