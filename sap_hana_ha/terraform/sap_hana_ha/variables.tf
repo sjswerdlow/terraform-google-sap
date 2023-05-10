@@ -407,3 +407,23 @@ variable "can_ip_forward" {
   description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
   default     = true
 }
+
+variable "primary_static_ip" {
+  type        = string
+  description = "Optional - Defines an internal static IP for the primary VM."
+  validation {
+    condition     = var.primary_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.primary_static_ip))
+    error_message = "The primary_static_ip must be a valid IP address."
+  }
+  default     = ""
+}
+
+variable "secondary_static_ip" {
+  type        = string
+  description = "Optional - Defines an internal static IP for the secondary VM."
+  validation {
+    condition     = var.secondary_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.secondary_static_ip))
+    error_message = "The secondary_static_ip must be a valid IP address."
+  }
+  default     = ""
+}

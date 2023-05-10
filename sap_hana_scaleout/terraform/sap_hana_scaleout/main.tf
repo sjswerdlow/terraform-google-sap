@@ -207,6 +207,7 @@ resource "google_compute_address" "sap_hana_vm_ip" {
   address_type = "INTERNAL"
   region       = local.region
   project      = var.project_id
+  address      = var.vm_static_ip
 }
 resource "google_compute_address" "sap_hana_worker_ip" {
   count        = var.sap_hana_worker_nodes
@@ -215,6 +216,7 @@ resource "google_compute_address" "sap_hana_worker_ip" {
   address_type = "INTERNAL"
   region       = local.region
   project      = var.project_id
+  address      = length(var.worker_static_ips) > count.index ? var.worker_static_ips[count.index] : ""
 }
 resource "google_compute_address" "sap_hana_standby_ip" {
   count        = var.sap_hana_standby_nodes
@@ -223,6 +225,7 @@ resource "google_compute_address" "sap_hana_standby_ip" {
   address_type = "INTERNAL"
   region       = local.region
   project      = var.project_id
+  address      = length(var.standby_static_ips) > count.index ? var.standby_static_ips[count.index] : ""
 }
 
 ################################################################################

@@ -220,6 +220,7 @@ resource "google_compute_address" "sap_hana_ha_vm_ip" {
   address_type = "INTERNAL"
   region       = local.region
   project      = var.project_id
+  address      = count.index == 0 ? var.primary_static_ip : var.secondary_static_ip
 }
 
 
