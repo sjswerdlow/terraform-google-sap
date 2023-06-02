@@ -323,6 +323,7 @@ resource "google_compute_instance" "sap_hana_scaleout_primary_instance" {
     sap_hana_shared_nfs             = var.sap_hana_shared_nfs
     sap_hana_backup_nfs             = var.sap_hana_backup_nfs
     use_single_data_log_disk        = var.use_single_data_log_disk
+    sap_hana_data_disk_type         = local.final_data_disk_type
     template-type                   = "TERRAFORM"
   }
 

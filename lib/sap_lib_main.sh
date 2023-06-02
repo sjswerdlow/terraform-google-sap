@@ -200,6 +200,13 @@ main::install_packages() {
     if ! yum update -y; then
       main::errhandle_log_warning 'Applying updates to packages on system failed ("yum update -y"). Logon to the VM to investigate the issue.'
     fi
+    if [[ $LINUX_MAJOR_VERSION -eq 8 ]] && [[ $LINUX_MINOR_VERSION -eq 4 ]]; then
+      # b/283810042
+      main::errhandle_log_info 'Updating fence_gce in RHEL 8.4'
+      if ! yum --releasever=8.6 update -y fence-agents-gce; then
+        main::errhandle_log_warning 'Update of fence_gce failed ("yum --releasever=8.6 update fence-agents-gce;"). Logon to the VM to investigate the issue.'
+      fi
+    fi
   fi
   main::errhandle_log_info 'Install of required operating system packages complete'
 }

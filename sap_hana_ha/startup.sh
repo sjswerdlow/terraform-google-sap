@@ -73,6 +73,7 @@ hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
+hdb::config_hdx_parameters
 
 ## Setup HA
 ha::check_settings

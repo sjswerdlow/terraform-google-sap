@@ -431,6 +431,18 @@ hdb::config_backup() {
 }
 
 
+hdb::config_hdx_parameters() {
+  if [[ "${VM_METADATA[sap_hana_data_disk_type]}" = "hyperdisk-extreme" ]]; then
+
+    main::errhandle_log_info 'Setting HANA Parameters for hyperdisk-extreme disks'
+    hdb::set_parameters global.ini fileio num_completion_queues 12
+    hdb::set_parameters global.ini fileio num_submit_queues 12
+    hdb::set_parameters indexserver.ini parallel tables_preloaded_in_parallel 32
+    hdb::set_parameters indexserver.ini global load_table_numa_aware true
+  fi
+}
+
+
 hdb::check_settings() {
   main::errhandle_log_info "Checking settings for HANA deployment"
 
