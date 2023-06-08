@@ -265,7 +265,9 @@ hdb::create_install_cfg() {
 
   ## create hana_install.cfg file
   {
-    echo "[Server]" >/root/.deploy/"${HOSTNAME}"_hana_install.cfg
+    echo "[General]"  >/root/.deploy/"${HOSTNAME}"_hana_install.cfg
+    echo "components=client,server"
+    echo "[Server]"
     echo "sid=${VM_METADATA[sap_hana_sid]}"
     echo "number=${VM_METADATA[sap_hana_instance_number]}"
     echo "userid=${VM_METADATA[sap_hana_sidadm_uid]}"
