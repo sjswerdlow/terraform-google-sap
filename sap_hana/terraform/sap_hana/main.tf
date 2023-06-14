@@ -51,6 +51,10 @@ locals {
     "m3-ultramem-32"  = 976
     "m3-ultramem-64"  = 1952
     "m3-ultramem-128" = 3904
+    "c3-standard-44"  = 176
+    "c3-highmem-44"   = 352
+    "c3-highmem-88"   = 704
+    "c3-highmem-176"  = 1408
   }
 
   cpu_platform_map = {
@@ -80,6 +84,10 @@ locals {
     "m3-ultramem-32"  = "Automatic"
     "m3-ultramem-64"  = "Automatic"
     "m3-ultramem-128" = "Automatic"
+    "c3-standard-44"  = "Automatic"
+    "c3-highmem-44"   = "Automatic"
+    "c3-highmem-88"   = "Automatic"
+    "c3-highmem-176"  = "Automatic"
   }
 
 
