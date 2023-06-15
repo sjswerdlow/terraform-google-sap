@@ -569,15 +569,15 @@ main::complete() {
   ## update instance metadata with status
   if [[ -n "${on_error}" ]]; then
     main::update-metadata "status" "failed_or_error"
-    metrics::send_metric -s "ERROR"  -e "1"
+    metrics::send_metric -s "ERROR"  -e "1" > /dev/null 2>&1
   elif [[ -n "${deployment_warnings}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed_with_warnings"
-    metrics::send_metric -s "ERROR"  -e "2"
+    metrics::send_metric -s "ERROR"  -e "2" > /dev/null 2>&1
   else
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
     main::update-metadata "status" "completed"
-    metrics::send_metric -s "CONFIGURED"
+    metrics::send_metric -s "CONFIGURED" > /dev/null 2>&1
   fi
 
   ## prepare advanced logs
@@ -622,8 +622,8 @@ main::complete() {
 }
 
 main::send_start_metrics() {
-  metrics::send_metric -s "STARTED"
-  metrics::send_metric -s "TEMPLATEID"
+  metrics::send_metric -s "STARTED" > /dev/null 2>&1
+  metrics::send_metric -s "TEMPLATEID" > /dev/null 2>&1
 }
 
 main::install_ops_agent() {
