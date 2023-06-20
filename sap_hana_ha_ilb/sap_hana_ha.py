@@ -272,7 +272,7 @@ def GenerateConfig(context):
   hana_nodes = []
 
   hana_nodes.append({
-          'name': instance_name + '-pdssd',
+          'name': instance_name + '-hana',
           'type': 'compute.v1.disk',
           'properties': {
               'zone': primary_zone,
@@ -372,6 +372,18 @@ def GenerateConfig(context):
                       'value': sap_vip_secondary_range
                   },
                   {
+                      'key': 'use_single_shared_data_log_disk',
+                      'value': "true"
+                  },
+                  {
+                      'key': 'sap_hana_backup_disk',
+                      'value': "true"
+                  },
+                  {
+                      'key': 'sap_hana_shared_disk',
+                      'value': "false"
+                  },
+                  {
                       'key': 'template-type',
                       'value': "DEPLOYMENTMANAGER"
                   }]
@@ -389,9 +401,9 @@ def GenerateConfig(context):
                       }
                   },
                   {
-                  'deviceName': instance_name + '-pdssd',
+                  'deviceName': instance_name + '-hana',
                   'type': 'PERSISTENT',
-                  'source': ''.join(['$(ref.', instance_name + '-pdssd', '.selfLink)']),
+                  'source': ''.join(['$(ref.', instance_name + '-hana', '.selfLink)']),
                   'autoDelete': True
                   },
                   {
@@ -427,7 +439,7 @@ def GenerateConfig(context):
   instance_name = context.properties['secondaryInstanceName']
 
   hana_nodes.append({
-          'name': instance_name + '-pdssd',
+          'name': instance_name + '-hana',
           'type': 'compute.v1.disk',
           'properties': {
               'zone': secondary_zone,
@@ -527,6 +539,18 @@ def GenerateConfig(context):
                       'value': sap_vip_secondary_range
                   },
                   {
+                      'key': 'use_single_shared_data_log_disk',
+                      'value': "true"
+                  },
+                  {
+                      'key': 'sap_hana_backup_disk',
+                      'value': "true"
+                  },
+                  {
+                      'key': 'sap_hana_shared_disk',
+                      'value': "false"
+                  },
+                  {
                       'key': 'template-type',
                       'value': "DEPLOYMENTMANAGER"
                   }]
@@ -544,9 +568,9 @@ def GenerateConfig(context):
                       }
                   },
                   {
-                  'deviceName': instance_name + '-pdssd',
+                  'deviceName': instance_name + '-hana',
                   'type': 'PERSISTENT',
-                  'source': ''.join(['$(ref.', instance_name + '-pdssd', '.selfLink)']),
+                  'source': ''.join(['$(ref.', instance_name + '-hana', '.selfLink)']),
                   'autoDelete': True
                   },
                   {
