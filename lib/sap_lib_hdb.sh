@@ -367,6 +367,8 @@ hdb::upgrade(){
     /usr/sap/"${VM_METADATA[sap_hana_sid]}"/SYS/exe/hdb/SAPCAR -xvf "IMDB_SERVER*.SAR"
     cd SAP_HANA_DATABASE || main::errhandle_log_error "Unable to access /hana/shared/media. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
     main::errhandle_log_info "--- Upgrading Database"
+    # remove component specification from install batch config. hdblcm will auto-detect components from patch file location.
+    sed -i '/^components=/d' /root/.deploy/"${HOSTNAME}"_hana_install.cfg || main::errhandle_log_warning "Unable to update batch install configuration file. Upgrade may fail."
     if ! echo $(hdb::build_pw_xml) | ./hdblcm --configfile=/root/.deploy/"${HOSTNAME}"_hana_install.cfg --action=update --ignore=check_signature_file --update_execution_mode=optimized --read_password_from_stdin=xml --batch; then
         main::errhandle_log_warning "SAP HANA Database revision upgrade failed to install."
     fi
