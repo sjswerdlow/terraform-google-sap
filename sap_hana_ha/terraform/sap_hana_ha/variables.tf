@@ -288,6 +288,36 @@ variable "include_backup_disk" {
   default     = true
 }
 
+variable "primary_static_ip" {
+  type        = string
+  description = "Optional - Defines an internal static IP for the primary VM."
+  validation {
+    condition     = var.primary_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.primary_static_ip))
+    error_message = "The primary_static_ip must be a valid IP address."
+  }
+  default     = ""
+}
+
+variable "secondary_static_ip" {
+  type        = string
+  description = "Optional - Defines an internal static IP for the secondary VM."
+  validation {
+    condition     = var.secondary_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.secondary_static_ip))
+    error_message = "The secondary_static_ip must be a valid IP address."
+  }
+  default     = ""
+}
+
+variable "backup_disk_type" {
+  type        = string
+  description = "Optional - The default is pd-balanced, only used if a backup disk is needed."
+  default     = "pd-balanced"
+  validation {
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme", "pd-standard"], var.backup_disk_type)
+    error_message = "The disk_type must be either pd-ssd, pd-balanced, pd-standard, pd-extreme, or hyperdisk-extreme."
+  }
+}
+
 #
 # DO NOT MODIFY unless you know what you are doing
 #
@@ -406,24 +436,4 @@ variable "can_ip_forward" {
   type        = bool
   description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
   default     = true
-}
-
-variable "primary_static_ip" {
-  type        = string
-  description = "Optional - Defines an internal static IP for the primary VM."
-  validation {
-    condition     = var.primary_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.primary_static_ip))
-    error_message = "The primary_static_ip must be a valid IP address."
-  }
-  default     = ""
-}
-
-variable "secondary_static_ip" {
-  type        = string
-  description = "Optional - Defines an internal static IP for the secondary VM."
-  validation {
-    condition     = var.secondary_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.secondary_static_ip))
-    error_message = "The secondary_static_ip must be a valid IP address."
-  }
-  default     = ""
 }

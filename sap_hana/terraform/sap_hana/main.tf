@@ -286,10 +286,11 @@ resource "google_compute_disk" "sap_hana_usrsap_disks" {
 resource "google_compute_disk" "sap_hana_backup_disk" {
   count = local.use_backup_disk ? 1 : 0
   name    = "${var.instance_name}-backup"
-  type    = "pd-standard"
+  type    = var.backup_disk_type
   zone    = var.zone
   size    = local.backup_size
   project = var.project_id
+  provisioned_iops = length(regexall(".*extreme.*",var.backup_disk_type)) > 0 ? max(10000, 2 * local.backup_size) : null
 }
 
 ################################################################################

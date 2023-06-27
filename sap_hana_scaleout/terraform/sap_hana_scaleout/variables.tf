@@ -249,6 +249,40 @@ variable "use_single_data_log_disk" {
   default = false
 }
 
+variable "vm_static_ip" {
+  type        = string
+  description = "Optional - Defines an internal static IP for the VM."
+  validation {
+    condition     = var.vm_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.vm_static_ip))
+    error_message = "The vm_static_ip must be a valid IP address."
+  }
+  default     = ""
+}
+
+variable "worker_static_ips" {
+  type        = list(string)
+  description = "Optional - Defines internal static IP addresses for the worker nodes."
+  validation {
+    condition = alltrue([
+      for ip in var.worker_static_ips : ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", ip))
+    ])
+    error_message = "All worker_static_ips must be valid IP addresses."
+  }
+  default     = []
+}
+
+variable "standby_static_ips" {
+  type        = list(string)
+  description = "Optional - Defines internal static IP addresses for the standby nodes."
+  validation {
+    condition = alltrue([
+      for ip in var.standby_static_ips : ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", ip))
+    ])
+    error_message = "All standby_static_ips must be valid IP addresses."
+  }
+  default     = []
+}
+
 #
 # DO NOT MODIFY unless you know what you are doing
 #
@@ -318,36 +352,3 @@ variable "can_ip_forward" {
   default     = true
 }
 
-variable "vm_static_ip" {
-  type        = string
-  description = "Optional - Defines an internal static IP for the VM."
-  validation {
-    condition     = var.vm_static_ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", var.vm_static_ip))
-    error_message = "The vm_static_ip must be a valid IP address."
-  }
-  default     = ""
-}
-
-variable "worker_static_ips" {
-  type        = list(string)
-  description = "Optional - Defines internal static IP addresses for the worker nodes."
-  validation {
-    condition = alltrue([
-      for ip in var.worker_static_ips : ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", ip))
-    ])
-    error_message = "All worker_static_ips must be valid IP addresses."
-  }
-  default     = []
-}
-
-variable "standby_static_ips" {
-  type        = list(string)
-  description = "Optional - Defines internal static IP addresses for the standby nodes."
-  validation {
-    condition = alltrue([
-      for ip in var.standby_static_ips : ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", ip))
-    ])
-    error_message = "All standby_static_ips must be valid IP addresses."
-  }
-  default     = []
-}

@@ -304,10 +304,11 @@ resource "google_compute_disk" "sap_hana_ha_primary_usrsap_disks" {
 resource "google_compute_disk" "sap_hana_ha_primary_backup_disks" {
   count = var.include_backup_disk ? 1 : 0
   name    = "${var.primary_instance_name}-backup"
-  type    = "pd-standard"
+  type    = var.backup_disk_type
   zone    = var.primary_zone
   size    = local.backup_pd_size
   project = var.project_id
+  provisioned_iops = length(regexall(".*extreme.*",var.backup_disk_type)) > 0 ? max(10000, 2 * local.backup_pd_size) : null
 }
 
 ################################################################################
@@ -518,10 +519,11 @@ resource "google_compute_disk" "sap_hana_ha_secondary_usrsap_disks" {
 resource "google_compute_disk" "sap_hana_ha_secondary_backup_disks" {
   count = var.include_backup_disk ? 1 : 0
   name    = "${var.secondary_instance_name}-backup"
-  type    = "pd-standard"
+  type    = var.backup_disk_type
   zone    = var.secondary_zone
   size    = local.backup_pd_size
   project = var.project_id
+  provisioned_iops = length(regexall(".*extreme.*",var.backup_disk_type)) > 0 ? max(10000, 2 * local.backup_pd_size) : null
 }
 
 ################################################################################
