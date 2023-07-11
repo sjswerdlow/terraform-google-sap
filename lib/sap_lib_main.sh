@@ -639,6 +639,28 @@ main::install_monitoring_agent() {
   local msg2
 
   main::errhandle_log_info "Installing Agent for SAP"
+
+  systemctl status google-cloud-sap-agent > /dev/null
+  local status=$?
+  # 0	"program is running or service is OK"	unit is active
+  # 1	"program is dead and /var/run pid file exists"	unit not failed (used by is-failed)
+  # 2	"program is dead and /var/lock lock file exists"	unused
+  # 3	"program is not running"	unit is not active
+  # 4	"program or service status is unknown"	no such unit
+  if [[ "${status}" = "1" ]] || [[ "${status}" = "2" ]] || [[ "${status}" = "3" ]]; then
+    main::errhandle_log_info "Agent for SAP is already installed"
+    if [[ "${LINUX_DISTRO}" = "SLES" ]]; then
+      # the agent already exists but may be in a bad state, will attempt to fix
+      sed -i 's~ /usr/sap~ -/usr/sap~g' /usr/lib/systemd/system/google-cloud-sap-agent.service
+      systemctl restart google-cloud-sap-agent
+    fi
+    return
+  fi
+  if [[ "${status}" = "0" ]]; then
+    main::errhandle_log_info "Agent for SAP is already installed"
+    return
+  fi
+
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Installing agent for SLES"
     # SLES
