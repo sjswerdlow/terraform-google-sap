@@ -271,7 +271,7 @@ variable "disk_type" {
   description = "Optional - The default disk type to use on all disks deployed. Extreme disks are not supported on all machine types. See https://cloud.google.com/compute/docs/disks/ for details."
   validation {
     condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme"], var.disk_type)
-    error_message = "The nic_type must be either pd-ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+    error_message = "The disk_type must be either pd-ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
   }
   default = "pd-ssd"
 }
