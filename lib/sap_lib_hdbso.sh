@@ -290,23 +290,9 @@ hdbso::update_sudoers() {
 
 
 hdbso::install_scaleout_nodes() {
+  local worker
 
   main::errhandle_log_info "Preparing to install additional SAP HANA nodes"
-
-  local worker
-  local count=0
-
-  for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
-    while [[ $(ssh -o StrictHostKeyChecking=no "${HOSTNAME}"w"${worker}" "echo 1") != [1] ]]; do
-      count=$((count +1))
-      main::errhandle_log_info "--- ${HOSTNAME}w${worker} is not accessible via SSH - sleeping for 10 seconds and trying again"
-      sleep 10
-      if [ ${count} -gt 60 ]; then
-        main::errhandle_log_error "Unable to add additional HANA hosts. Couldn't connect to additional ${HOSTNAME}w${worker} via SSH"
-      fi
-    done
-  done
-
   cd /hana/shared/"${VM_METADATA[sap_hana_sid]}"/hdblcm || main::errhandle_log_error "Unable to access HANA Lifecycle Manager. Additional HANA nodes will not be installed"
 
   ## Install Worker Nodes
@@ -315,6 +301,7 @@ hdbso::install_scaleout_nodes() {
     ## ssh into each worker node and start SAP HANA
     for worker in $(seq 1 "${VM_METADATA[sap_hana_worker_nodes]}"); do
       main::errhandle_log_info "--- ${HOSTNAME}w${worker}"
+      main::exchange_sshpubkey_with "${HOSTNAME}w${worker}" "${CLOUDSDK_COMPUTE_ZONE}"
       echo $(hdb::build_pw_xml) | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b
     done
   fi
@@ -323,6 +310,7 @@ hdbso::install_scaleout_nodes() {
     main::errhandle_log_info "Installing ${VM_METADATA[sap_hana_standby_nodes]} standby nodes"
     for worker in $(seq $((VM_METADATA[sap_hana_worker_nodes]+1)) "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       main::errhandle_log_info "--- ${HOSTNAME}w${worker}"
+      main::exchange_sshpubkey_with "${HOSTNAME}w${worker}" "${CLOUDSDK_COMPUTE_ZONE}"
       echo $(hdb::build_pw_xml) | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}":role=standby --root_user=root --listen_interface=global --read_password_from_stdin=xml -b
     done
   fi
@@ -341,8 +329,6 @@ hdbso::install_scaleout_nodes() {
 
   ## enable fencing
   hdb::set_parameters global.ini storage partition_*_*__fencing enabled
-
-  main::complete
 }
 
 hdbso::restart() {

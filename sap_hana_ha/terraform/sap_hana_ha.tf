@@ -61,6 +61,15 @@ module "sap_hana_ha" {
   # sap_hana_sidadm_uid             = HANA_SIDADM_UID       # default is 900
   # sap_hana_sapsys_gid             = HANA_SAPSYS_GID       # default is 79
 
+  # HANA Scaleout settings
+  # sap_hana_scaleout_nodes         = NUM_SCALEOUT_NODES    # default is 0
+
+  # Majority maker values must be specified if scaleout_nodes is >0
+  # majority_maker_instance_name    = "MM_INSTANCE_NAME"    # default is empty, must be specified if scaleout_nodes>0
+  # majority_maker_machine_type     = "MM_MACHINE_TYPE"     # default is empty, must be specified if scaleout_nodes>0
+  # majority_maker_zone             = "MM_ZONE"             # default is empty, must be specified if scaleout_nodes>0, should be different from primary_zone and secondary_zone, but in the same region
+
+  # HA Settings
   # sap_vip                         = IP_ADDRESS            # default is ""
   # primary_instance_group_name     = GROUP_NAME            # default is ""
   # secondary_instance_group_name   = GROUP_NAME            # default is ""
@@ -74,6 +83,8 @@ module "sap_hana_ha" {
   # secondary_reservation_name      = ""                    # default is an empty string
   # primary_static_ip               = ""                    # default is an empty string, example: "10.0.0.1"
   # secondary_static_ip             = ""                    # default is an empty string, example: "10.0.0.2"
+  # primary_worker_static_ips       = [ "IP1", "IP2" ]      # default is an empty list, example: ["10.0.0.3", "10.0.0.4"]
+  # secondary_worker_static_ips     = [ "IP1", "IP2" ]      # default is an empty list, example: ["10.0.0.5", "10.0.0.6"]
 
 
   # disk_type                       = "DISK_TYPE"           # default is "pd-ssd", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme".

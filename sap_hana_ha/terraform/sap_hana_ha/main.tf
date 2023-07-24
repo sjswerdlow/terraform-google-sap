@@ -100,10 +100,10 @@ locals {
   min_total_disk = local.min_total_disk_map[var.disk_type]
 
   mem_size             = lookup(local.mem_size_map, var.machine_type, 320)
-  hana_log_size    = ceil(min(512, max(64, local.mem_size / 2)))
+  hana_log_size        = ceil(min(512, max(64, local.mem_size / 2)))
   hana_data_size_min   = ceil(local.mem_size * 12 / 10)
-  hana_shared_size = min(1024, local.mem_size)
-  hana_usrsap_size = 32
+  hana_shared_size     = min(1024, local.mem_size)
+  hana_usrsap_size     = 32
 
   default_boot_size = 30
 
@@ -113,7 +113,7 @@ locals {
   network_tags          = local.all_network_tag_items
 
 
-  # ensure the combined disk meets minimum size/performance ;
+  # ensure the combined disk meets minimum size/performance
   pd_size = ceil(max(local.min_total_disk, local.hana_log_size + local.hana_data_size_min + local.hana_shared_size + local.hana_usrsap_size + 1))
 
   temp_shared_disk_type = contains(["hyperdisk-extreme", "pd-extreme"], var.disk_type) ? "pd-balanced" : var.disk_type
@@ -214,7 +214,40 @@ locals {
   }) : {}
 
   primary_startup_url   = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
+  worker_startup_url    = var.sap_deployment_debug ? replace(var.worker_startup_url, "bash -s", "bash -x -s") : var.worker_startup_url
   secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url
+  mm_startup_url        = var.sap_deployment_debug ? replace(var.majority_maker_startup_url, "bash -s", "bash -x -s") : var.majority_maker_startup_url
+
+  # HA Scaleout features
+  mm_partially_defined = (var.majority_maker_instance_name != "") || (var.majority_maker_machine_type != "") || (var.majority_maker_zone != "")
+  mm_fully_defined = (var.majority_maker_instance_name != "") && (var.majority_maker_machine_type != "") && (var.majority_maker_zone != "")
+  mm_zone_split = split("-", var.majority_maker_zone)
+  mm_region = length(local.mm_zone_split) < 3 ? "" : join("-", [local.mm_zone_split[0], local.mm_zone_split[1]])
+}
+
+data "assert_test" "scaleout_needs_mm" {
+  test = (local.mm_partially_defined && var.sap_hana_scaleout_nodes > 0) || (!local.mm_partially_defined && var.sap_hana_scaleout_nodes == 0)
+  throw = "sap_hana_scaleout_nodes and all majority_maker variables must be specified together: majority_maker_instance_name, majority_maker_machine_type, majority_maker_zone"
+}
+
+data "assert_test" "fully_specify_mm" {
+  test = !local.mm_partially_defined || local.mm_fully_defined
+  throw = "majority_maker_instance_name, majority_maker_machine_type, and majority_maker_zone must all be specified together"
+}
+
+data "assert_test" "mm_region_check" {
+  test = !local.mm_fully_defined || local.mm_region == local.region
+  throw = "Majority maker must be in the same region as the primary and secondary instances"
+}
+
+resource "validation_warning" "mm_zone_warning" {
+  condition = (var.majority_maker_zone == var.primary_zone) || (var.majority_maker_zone == var.secondary_zone)
+  summary = "It is recommended that the Majority Maker exist in a separate zone but same region from the primary and secondary instances."
+}
+
+data "assert_test" "no_rhel_with_scaleout" {
+  test = var.sap_hana_scaleout_nodes == 0  || ! can(regex("rhel", var.linux_image_project))
+  throw = "HANA HA Scaleout deployment is currently only supported on SLES operating systems."
 }
 
 ################################################################################
@@ -231,6 +264,18 @@ resource "google_compute_address" "sap_hana_ha_vm_ip" {
   address      = count.index == 0 ? var.primary_static_ip : var.secondary_static_ip
 }
 
+resource "google_compute_address" "sap_hana_ha_worker_vm_ip" {
+  count = var.sap_hana_scaleout_nodes * 2
+  name = (count.index % 2) == 0 ? "${var.primary_instance_name}w${floor(count.index / 2) + 1}-vm-ip" : "${var.secondary_instance_name}w${floor(count.index / 2) + 1}-vm-ip"
+  subnetwork = local.subnetwork_uri
+  address_type = "INTERNAL"
+  region = local.region
+  project = var.project_id
+  # The worker node IPs are all in one list, alternating between primary and secondary
+  address = (count.index % 2) == 0 ? (
+    length(var.primary_worker_static_ips) > floor(count.index / 2) ? var.primary_worker_static_ips[floor(count.index / 2)] : "") : (
+    length(var.secondary_worker_static_ips) > floor(count.index / 2) ? var.secondary_worker_static_ips[floor(count.index / 2)] : "")
+}
 
 ################################################################################
 # Primary Instance
@@ -238,8 +283,9 @@ resource "google_compute_address" "sap_hana_ha_vm_ip" {
 ################################################################################
 # disks
 ################################################################################
-resource "google_compute_disk" "sap_hana_ha_primary_boot_disk" {
-  name    = "${var.primary_instance_name}-boot"
+resource "google_compute_disk" "sap_hana_ha_primary_boot_disks" {
+  count   = var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.primary_instance_name}-boot" : "${var.primary_instance_name}w${count.index}-boot"
   type    = "pd-balanced"
   zone    = var.primary_zone
   size    = local.default_boot_size
@@ -254,38 +300,38 @@ resource "google_compute_disk" "sap_hana_ha_primary_boot_disk" {
   }
 }
 resource "google_compute_disk" "sap_hana_ha_primary_unified_disks" {
-  count   = var.use_single_shared_data_log_disk ?  1 : 0
-  name    = "${var.primary_instance_name}-hana"
+  count   = var.use_single_shared_data_log_disk ?  var.sap_hana_scaleout_nodes + 1 : 0
+  name    = count.index == 0 ? "${var.primary_instance_name}-hana" : "${var.primary_instance_name}w${count.index}-hana"
   type    = var.disk_type
   zone    = var.primary_zone
   size    = local.unified_pd_size
   project = var.project_id
   provisioned_iops = local.final_unified_iops
-
 }
 
 # Split data/log/sap disks
 resource "google_compute_disk" "sap_hana_ha_primary_data_disks" {
-  count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.primary_instance_name}-data")
+  count   = var.use_single_shared_data_log_disk ? 0 : var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.primary_instance_name}-data" : "${var.primary_instance_name}w${count.index}-data"
   type    = local.final_data_disk_type
   zone    = var.primary_zone
   size    = local.data_pd_size
   project = var.project_id
   provisioned_iops = local.final_data_iops
 }
+
 resource "google_compute_disk" "sap_hana_ha_primary_log_disks" {
-  count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.primary_instance_name}-log")
+  count   = var.use_single_shared_data_log_disk ? 0 : var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.primary_instance_name}-log" : "${var.primary_instance_name}w${count.index}-log"
   type    = local.final_log_disk_type
   zone    = var.primary_zone
   size    = local.log_pd_size
   project = var.project_id
   provisioned_iops = local.final_log_iops
 }
-resource "google_compute_disk" "sap_hana_ha_primary_shared_disks" {
+resource "google_compute_disk" "sap_hana_ha_primary_shared_disk" {
   count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.primary_instance_name}-shared")
+  name    = "${var.primary_instance_name}-shared"
   type    = local.final_shared_disk_type
   zone    = var.primary_zone
   size    = local.shared_pd_size
@@ -293,15 +339,15 @@ resource "google_compute_disk" "sap_hana_ha_primary_shared_disks" {
   provisioned_iops = local.final_shared_iops
 }
 resource "google_compute_disk" "sap_hana_ha_primary_usrsap_disks" {
-  count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.primary_instance_name}-usrsap")
+  count   = var.use_single_shared_data_log_disk ? 0 : var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.primary_instance_name}-usrsap" : "${var.primary_instance_name}w${count.index}-usrsap"
   type    = local.final_usrsap_disk_type
   zone    = var.primary_zone
   size    = local.usrsap_pd_size
   project = var.project_id
   provisioned_iops = local.final_usrsap_iops
 }
-resource "google_compute_disk" "sap_hana_ha_primary_backup_disks" {
+resource "google_compute_disk" "sap_hana_ha_primary_backup_disk" {
   count = var.include_backup_disk ? 1 : 0
   name    = "${var.primary_instance_name}-backup"
   type    = var.backup_disk_type
@@ -314,6 +360,7 @@ resource "google_compute_disk" "sap_hana_ha_primary_backup_disks" {
 ################################################################################
 # instance
 ################################################################################
+
 resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   name         = var.primary_instance_name
   machine_type = var.machine_type
@@ -325,7 +372,7 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source      = google_compute_disk.sap_hana_ha_primary_boot_disk.self_link
+    source      = google_compute_disk.sap_hana_ha_primary_boot_disks[0].self_link
   }
 
   dynamic attached_disk {
@@ -352,8 +399,8 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   dynamic attached_disk {
     for_each = var.use_single_shared_data_log_disk ? [] : [1]
     content {
-      device_name = google_compute_disk.sap_hana_ha_primary_shared_disks[0].name
-      source      = google_compute_disk.sap_hana_ha_primary_shared_disks[0].self_link
+      device_name = google_compute_disk.sap_hana_ha_primary_shared_disk[0].name
+      source      = google_compute_disk.sap_hana_ha_primary_shared_disk[0].self_link
     }
   }
   dynamic attached_disk {
@@ -367,8 +414,8 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   dynamic attached_disk {
     for_each = var.include_backup_disk ? [1] : []
     content {
-      device_name = google_compute_disk.sap_hana_ha_primary_backup_disks[0].name
-      source      = google_compute_disk.sap_hana_ha_primary_backup_disks[0].self_link
+      device_name = google_compute_disk.sap_hana_ha_primary_backup_disk[0].name
+      source      = google_compute_disk.sap_hana_ha_primary_backup_disk[0].self_link
     }
   }
   can_ip_forward = var.can_ip_forward
@@ -435,6 +482,8 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
       use_single_shared_data_log_disk = var.use_single_shared_data_log_disk
       sap_hana_backup_disk            = var.include_backup_disk
       sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
+      sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
+      majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
       sap_hana_data_disk_type         = local.final_data_disk_type
       template-type                   = "TERRAFORM"
     },
@@ -447,14 +496,137 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
   }
 }
 
+resource "google_compute_instance" "sap_hana_ha_primary_workers" {
+  count        = var.sap_hana_scaleout_nodes
+  name         = "${var.primary_instance_name}w${count.index + 1}"
+  machine_type = var.machine_type
+  zone         = var.primary_zone
+  project      = var.project_id
+
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
+
+  boot_disk {
+    auto_delete = true
+    device_name = "boot"
+    source      = google_compute_disk.sap_hana_ha_primary_boot_disks[count.index+1].self_link
+  }
+
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [1] : []
+    content {
+      device_name = google_compute_disk.sap_hana_ha_primary_unified_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_primary_unified_disks[count.index+1].self_link
+    }
+  }
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [] : [1]
+    content {
+      device_name = google_compute_disk.sap_hana_ha_primary_data_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_primary_data_disks[count.index+1].self_link
+    }
+  }
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [] : [1]
+    content {
+      device_name = google_compute_disk.sap_hana_ha_primary_log_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_primary_log_disks[count.index+1].self_link
+    }
+  }
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [] : [1]
+    content {
+      device_name = google_compute_disk.sap_hana_ha_primary_usrsap_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_primary_usrsap_disks[count.index+1].self_link
+    }
+  }
+  can_ip_forward = var.can_ip_forward
+
+  network_interface {
+    subnetwork = local.subnetwork_uri
+    # The worker node IPs are all in one list, alternating between primary and secondary
+    network_ip = google_compute_address.sap_hana_ha_worker_vm_ip[count.index * 2].address
+
+    nic_type = var.nic_type == "" ? null : var.nic_type
+    # we only include access_config if public_ip is true, an empty access_config
+    # will create an ephemeral public ip
+    dynamic "access_config" {
+      for_each = var.public_ip ? [1] : []
+      content {
+      }
+    }
+  }
+
+  tags = local.network_tags
+
+  service_account {
+    # The default empty service account string will use the projects default compute engine service account
+    email = var.service_account
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+  }
+
+  dynamic "reservation_affinity" {
+    for_each = length(var.primary_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key    = "compute.googleapis.com/reservation-name"
+        values = [var.primary_reservation_name]
+      }
+    }
+  }
+
+  labels = local.wlm_labels
+
+  metadata = merge(
+    {
+      startup-script                  = local.worker_startup_url
+      post_deployment_script          = var.post_deployment_script
+      sap_deployment_debug            = var.sap_deployment_debug
+      sap_hana_deployment_bucket      = var.sap_hana_deployment_bucket
+      sap_hana_sid                    = var.sap_hana_sid
+      sap_hana_instance_number        = var.sap_hana_instance_number
+      sap_hana_sidadm_password        = var.sap_hana_sidadm_password
+      sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
+      # wording on system_password may be inconsitent with DM
+      sap_hana_system_password        = var.sap_hana_system_password
+      sap_hana_system_password_secret = var.sap_hana_system_password_secret
+      sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
+      sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
+      sap_vip                         = var.sap_vip
+      sap_vip_solution                = local.sap_vip_solution
+      sap_hc_port                     = local.sap_hc_port
+      sap_primary_instance            = var.primary_instance_name
+      sap_secondary_instance          = var.secondary_instance_name
+      sap_primary_zone                = var.primary_zone
+      sap_secondary_zone              = var.secondary_zone
+      use_single_shared_data_log_disk = var.use_single_shared_data_log_disk
+      sap_hana_backup_disk            = var.include_backup_disk
+      sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
+      sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
+      majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
+      template-type                   = "TERRAFORM"
+    },
+    local.wlm_metadata
+  )
+
+  lifecycle {
+    # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
+    ignore_changes = [metadata]
+  }
+}
+
+
 ################################################################################
 # Secondary Instance
 ################################################################################
 ################################################################################
 # disks
 ################################################################################
-resource "google_compute_disk" "sap_hana_ha_secondary_boot_disk" {
-  name    = "${var.secondary_instance_name}-boot"
+resource "google_compute_disk" "sap_hana_ha_secondary_boot_disks" {
+  count   = var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.secondary_instance_name}-boot" : "${var.secondary_instance_name}w${count.index}-boot"
   type    = "pd-balanced"
   zone    = var.secondary_zone
   size    = local.default_boot_size
@@ -469,8 +641,8 @@ resource "google_compute_disk" "sap_hana_ha_secondary_boot_disk" {
   }
 }
 resource "google_compute_disk" "sap_hana_ha_secondary_unified_disks" {
-  count   = var.use_single_shared_data_log_disk ? 1 : 0
-  name    = "${var.secondary_instance_name}-hana"
+  count   = var.use_single_shared_data_log_disk ? var.sap_hana_scaleout_nodes + 1 : 0
+  name    = count.index == 0 ? "${var.secondary_instance_name}-hana" : "${var.secondary_instance_name}w${count.index}-hana"
   type    = var.disk_type
   zone    = var.secondary_zone
   size    = local.unified_pd_size
@@ -480,8 +652,8 @@ resource "google_compute_disk" "sap_hana_ha_secondary_unified_disks" {
 
 # Split data/log/sap disks
 resource "google_compute_disk" "sap_hana_ha_secondary_data_disks" {
-  count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.secondary_instance_name}-data")
+  count   = var.use_single_shared_data_log_disk ? 0 : var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.secondary_instance_name}-data" : "${var.secondary_instance_name}w${count.index}-data"
   type    = local.final_data_disk_type
   zone    = var.secondary_zone
   size    = local.data_pd_size
@@ -489,17 +661,17 @@ resource "google_compute_disk" "sap_hana_ha_secondary_data_disks" {
   provisioned_iops = local.final_data_iops
 }
 resource "google_compute_disk" "sap_hana_ha_secondary_log_disks" {
-  count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.secondary_instance_name}-log")
+  count   = var.use_single_shared_data_log_disk ? 0 : var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.secondary_instance_name}-log" : "${var.secondary_instance_name}w${count.index}-log"
   type    = local.final_log_disk_type
   zone    = var.secondary_zone
   size    = local.log_pd_size
   project = var.project_id
   provisioned_iops = local.final_log_iops
 }
-resource "google_compute_disk" "sap_hana_ha_secondary_shared_disks" {
+resource "google_compute_disk" "sap_hana_ha_secondary_shared_disk" {
   count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.secondary_instance_name}-shared")
+  name    = "${var.secondary_instance_name}-shared"
   type    = local.final_shared_disk_type
   zone    = var.secondary_zone
   size    = local.shared_pd_size
@@ -507,8 +679,8 @@ resource "google_compute_disk" "sap_hana_ha_secondary_shared_disks" {
   provisioned_iops = local.final_shared_iops
 }
 resource "google_compute_disk" "sap_hana_ha_secondary_usrsap_disks" {
-  count   = var.use_single_shared_data_log_disk ? 0 : 1
-  name    = format("${var.secondary_instance_name}-usrsap")
+  count   = var.use_single_shared_data_log_disk ? 0 : var.sap_hana_scaleout_nodes + 1
+  name    = count.index == 0 ? "${var.secondary_instance_name}-usrsap" : "${var.secondary_instance_name}w${count.index}-usrsap"
   type    = local.final_usrsap_disk_type
   zone    = var.secondary_zone
   size    = local.usrsap_pd_size
@@ -516,7 +688,7 @@ resource "google_compute_disk" "sap_hana_ha_secondary_usrsap_disks" {
   provisioned_iops = local.final_usrsap_iops
 }
 
-resource "google_compute_disk" "sap_hana_ha_secondary_backup_disks" {
+resource "google_compute_disk" "sap_hana_ha_secondary_backup_disk" {
   count = var.include_backup_disk ? 1 : 0
   name    = "${var.secondary_instance_name}-backup"
   type    = var.backup_disk_type
@@ -540,7 +712,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   boot_disk {
     auto_delete = true
     device_name = "boot"
-    source      = google_compute_disk.sap_hana_ha_secondary_boot_disk.self_link
+    source      = google_compute_disk.sap_hana_ha_secondary_boot_disks[0].self_link
   }
 
   dynamic attached_disk {
@@ -567,8 +739,8 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   dynamic attached_disk {
     for_each = var.use_single_shared_data_log_disk ? [] : [1]
     content {
-      device_name = google_compute_disk.sap_hana_ha_secondary_shared_disks[0].name
-      source      = google_compute_disk.sap_hana_ha_secondary_shared_disks[0].self_link
+      device_name = google_compute_disk.sap_hana_ha_secondary_shared_disk[0].name
+      source      = google_compute_disk.sap_hana_ha_secondary_shared_disk[0].self_link
     }
   }
   dynamic attached_disk {
@@ -582,8 +754,8 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   dynamic attached_disk {
     for_each = var.include_backup_disk ? [1] : []
     content {
-      device_name = google_compute_disk.sap_hana_ha_secondary_backup_disks[0].name
-      source      = google_compute_disk.sap_hana_ha_secondary_backup_disks[0].self_link
+      device_name = google_compute_disk.sap_hana_ha_secondary_backup_disk[0].name
+      source      = google_compute_disk.sap_hana_ha_secondary_backup_disk[0].self_link
     }
   }
 
@@ -650,6 +822,8 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
       use_single_shared_data_log_disk = var.use_single_shared_data_log_disk
       sap_hana_backup_disk            = var.include_backup_disk
       sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
+      sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
+      majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
       template-type                   = "TERRAFORM"
     },
     local.wlm_metadata
@@ -661,6 +835,126 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
   }
 }
 
+resource "google_compute_instance" "sap_hana_ha_secondary_workers" {
+  count = var.sap_hana_scaleout_nodes
+  name         = "${var.secondary_instance_name}w${count.index + 1}"
+  machine_type = var.machine_type
+  zone         = var.secondary_zone
+  project      = var.project_id
+
+  min_cpu_platform = lookup(local.cpu_platform_map, var.machine_type, "Automatic")
+
+  boot_disk {
+    auto_delete = true
+    device_name = "boot"
+    source      = google_compute_disk.sap_hana_ha_secondary_boot_disks[count.index+1].self_link
+  }
+
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [1] : []
+    content {
+      device_name = google_compute_disk.sap_hana_ha_secondary_unified_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_secondary_unified_disks[count.index+1].self_link
+    }
+  }
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [] : [1]
+    content {
+      device_name = google_compute_disk.sap_hana_ha_secondary_data_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_secondary_data_disks[count.index+1].self_link
+    }
+  }
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [] : [1]
+    content {
+      device_name = google_compute_disk.sap_hana_ha_secondary_log_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_secondary_log_disks[count.index+1].self_link
+    }
+  }
+  dynamic attached_disk {
+    for_each = var.use_single_shared_data_log_disk ? [] : [1]
+    content {
+      device_name = google_compute_disk.sap_hana_ha_secondary_usrsap_disks[count.index+1].name
+      source      = google_compute_disk.sap_hana_ha_secondary_usrsap_disks[count.index+1].self_link
+    }
+  }
+
+  can_ip_forward = var.can_ip_forward
+
+  network_interface {
+    subnetwork = local.subnetwork_uri
+    # The worker node IPs are all in one list, alternating between primary and secondary
+    network_ip = google_compute_address.sap_hana_ha_worker_vm_ip[count.index * 2 + 1].address
+    nic_type = var.nic_type == "" ? null : var.nic_type
+    # we only include access_config if public_ip is true, an empty access_config
+    # will create an ephemeral public ip
+    dynamic "access_config" {
+      for_each = var.public_ip ? [1] : []
+      content {
+      }
+    }
+  }
+
+  tags = local.network_tags
+
+  service_account {
+    # An empty string service account will default to the projects default compute engine service account
+    email = var.service_account
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+  }
+
+  dynamic "reservation_affinity" {
+    for_each = length(var.secondary_reservation_name) > 1 ? [1] : []
+    content {
+      type = "SPECIFIC_RESERVATION"
+      specific_reservation {
+        key    = "compute.googleapis.com/reservation-name"
+        values = [var.secondary_reservation_name]
+      }
+    }
+  }
+
+  labels = local.wlm_labels
+
+  metadata = merge(
+    {
+      startup-script                  = local.worker_startup_url
+      post_deployment_script          = var.post_deployment_script
+      sap_deployment_debug            = var.sap_deployment_debug
+      sap_hana_deployment_bucket      = var.sap_hana_deployment_bucket
+      sap_hana_sid                    = var.sap_hana_sid
+      sap_hana_instance_number        = var.sap_hana_instance_number
+      sap_hana_sidadm_password        = var.sap_hana_sidadm_password
+      sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
+      # wording on system_password may be inconsitent with DM
+      sap_hana_system_password        = var.sap_hana_system_password
+      sap_hana_system_password_secret = var.sap_hana_system_password_secret
+      sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
+      sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
+      sap_vip                         = var.sap_vip
+      sap_vip_solution                = local.sap_vip_solution
+      sap_hc_port                     = local.sap_hc_port
+      sap_primary_instance            = var.primary_instance_name
+      sap_secondary_instance          = var.secondary_instance_name
+      sap_primary_zone                = var.primary_zone
+      sap_secondary_zone              = var.secondary_zone
+      use_single_shared_data_log_disk = var.use_single_shared_data_log_disk
+      sap_hana_backup_disk            = var.include_backup_disk
+      sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
+      sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
+      majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
+      template-type                   = "TERRAFORM"
+    },
+    local.wlm_metadata
+  )
+
+  lifecycle {
+    # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
+    ignore_changes = [metadata]
+  }
+}
 
 ################################################################################
 # Optional ILB for VIP
@@ -750,4 +1044,111 @@ resource "google_compute_firewall" "sap_hana_ha_vpc_firewall" {
     ports    = ["${local.sap_hc_port}"]
   }
 }
+
+################################################################################
+# Local variables
+################################################################################
+
+resource "google_compute_disk" "sap_majority_maker_boot_disk" {
+ count = local.mm_fully_defined ? 1 : 0
+  name    = "${var.majority_maker_instance_name}-boot"
+  type    = "pd-balanced"
+  zone    = var.majority_maker_zone
+  size    = local.default_boot_size
+  project = var.project_id
+  image   = local.os_full_name
+  lifecycle {
+    # Ignores newer versions of the OS image. Removing this lifecycle
+    # and re-applying will cause the current disk to be deleted.
+    # All existing data will be lost.
+    ignore_changes = [image]
+  }
+}
+
+resource "google_compute_address" "sap_hana_majority_maker_vm_ip" {
+  count        = local.mm_fully_defined ? 1 : 0
+  name         = "${var.majority_maker_instance_name}-ip"
+  subnetwork   = local.subnetwork_uri
+  address_type = "INTERNAL"
+  region       = local.region
+  project      = var.project_id
+}
+
+resource "google_compute_instance" "sap_majority_maker_instance" {
+  count = local.mm_fully_defined ? 1 : 0
+  name = var.majority_maker_instance_name
+  machine_type = var.majority_maker_machine_type
+  zone = var.majority_maker_zone
+  project = var.project_id
+
+  min_cpu_platform = lookup(local.cpu_platform_map, var.majority_maker_machine_type, "Automatic")
+  boot_disk {
+    auto_delete = true
+    device_name = "boot"
+    source      = google_compute_disk.sap_majority_maker_boot_disk[0].self_link
+  }
+
+  can_ip_forward = var.can_ip_forward
+  network_interface {
+    subnetwork = local.subnetwork_uri
+    network_ip = google_compute_address.sap_hana_majority_maker_vm_ip.0.address
+    nic_type = var.nic_type == "" ? null : var.nic_type
+    # we only include access_config if public_ip is true, an empty access_config
+    # will create an ephemeral public ip
+    dynamic "access_config" {
+      for_each = var.public_ip ? [1] : []
+      content {
+      }
+    }
+  }
+  tags = local.network_tags
+  service_account {
+    # The default empty service account string will use the projects default compute engine service account
+    email = var.service_account
+    scopes = [
+      "https://www.googleapis.com/auth/cloud-platform"
+    ]
+  }
+
+  metadata = merge(
+    {
+      startup-script                  = local.mm_startup_url
+      sap_deployment_debug            = var.sap_deployment_debug
+      primary                         = var.primary_instance_name
+      secondary                       = var.secondary_instance_name
+      post_deployment_script          = var.post_deployment_script
+      sap_hana_deployment_bucket      = var.sap_hana_deployment_bucket
+      sap_hana_sid                    = var.sap_hana_sid
+      sap_hana_instance_number        = var.sap_hana_instance_number
+      sap_hana_sidadm_password        = var.sap_hana_sidadm_password
+      sap_hana_sidadm_password_secret = var.sap_hana_sidadm_password_secret
+      # wording on system_password may be inconsitent with DM
+      sap_hana_system_password        = var.sap_hana_system_password
+      sap_hana_system_password_secret = var.sap_hana_system_password_secret
+      sap_hana_sidadm_uid             = var.sap_hana_sidadm_uid
+      sap_hana_sapsys_gid             = var.sap_hana_sapsys_gid
+      sap_vip                         = var.sap_vip
+      sap_vip_solution                = local.sap_vip_solution
+      sap_hc_port                     = local.sap_hc_port
+      sap_primary_instance            = var.primary_instance_name
+      sap_secondary_instance          = var.secondary_instance_name
+      sap_primary_zone                = var.primary_zone
+      sap_secondary_zone              = var.secondary_zone
+      use_single_shared_data_log_disk = var.use_single_shared_data_log_disk
+      sap_hana_backup_disk            = var.include_backup_disk
+      sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
+      sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
+      majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
+      template-type                   = "TERRAFORM"
+    },
+    local.wlm_metadata
+    )
+
+  lifecycle {
+    # Ignore changes in the instance metadata, since it is modified by the SAP startup script.
+    ignore_changes = [metadata]
+  }
+}
+
+
 

@@ -66,28 +66,31 @@ hdb::create_backup_volume
 main::install_monitoring_agent
 
 ## Install SAP HANA
+hdb::config_nfs
 hdb::create_install_cfg
 hdb::download_media
 hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
+hdb::install_scaleout_nodes
 
 ## Setup HA
 ha::check_settings
-ha::install_primary_sshkeys
+ha::host_file_entries
 ha::download_scripts
+ha::pacemaker_scaleout_package_installation
 ha::create_hdb_user
 ha::hdbuserstore
 hdb::backup pre_ha_config
-ha::wait_for_primary
-ha::copy_hdb_ssfs_keys
 hdb::stop
+main::wait_for_metadata "${VM_METADATA[sap_primary_instance]}" status ready-for-ha-secondary
+ha::copy_hdb_ssfs_keys
 ha::config_hsr
-hdb::start_nowait
 ha::enable_hdb_hadr_provider_hook
+hdb::start_nowait
 ha::setup_haproxy  # RHEL only
-ha::config_pacemaker_secondary
+ha::join_pacemaker_cluster "${VM_METADATA[sap_primary_instance]}"
 
 ## Post deployment & installation cleanup
 main::complete

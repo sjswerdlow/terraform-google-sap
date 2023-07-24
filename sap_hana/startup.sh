@@ -61,13 +61,10 @@ hdb::calculate_volume_sizes
 hdb::create_shared_volume
 hdb::create_sap_data_log_volumes
 hdb::create_backup_volume
+hdb::config_nfs
 
 ## Install monitoring agent
 main::install_monitoring_agent
-
-## scaleout config
-hdb::install_worker_sshkeys
-hdb::config_nfs
 
 ## Install SAP HANA
 hdb::create_install_cfg

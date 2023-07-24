@@ -74,9 +74,7 @@ main::errhandle_log_error() {
   echo "ERROR - Deployment Exited - ${log_entry}"
   if [[ -n "${GCLOUD}" ]]; then
     ${GCLOUD}	--quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"${log_entry}\"" --severity=ERROR
-    ${GCLOUD} --quiet logging write "${HOSTNAME}" "${HOSTNAME} Deployment \"ERROR - Deployment Exited\"" --severity=ERROR
   fi
-
 
   main::complete error
 }
@@ -102,20 +100,63 @@ main::config_ssh() {
   service sshd restart
   cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
   /usr/sbin/rcgoogle-accounts-daemon restart ||  /usr/sbin/rcgoogle-guest-agent restart
+
+  ## Allow self ssh with keys
+  cat /root/.ssh/id_rsa.pub >> /root/.ssh/authorized_keys
 }
 
-
-main::install_ssh_key(){
+main::exchange_sshpubkey_with(){
   local host=${1}
-  local host_zone
+  local host_zone=${2}
 
-  host_zone=$(${GCLOUD} compute instances list --filter="name=('${host}')" --format "value(zone)")
-  main::errhandle_log_info "Installing ${HOSTNAME} SSH key on ${host}"
+  if [[ -z "${host_zone}" ]]; then
+    host_zone=$(${GCLOUD} --quiet compute instances list --filter="name=('${host}')" --format "value(zone)")
+  fi
 
+  main::install_sshpubkey_to "${host}" "${host_zone}"
+  main::install_sshpubkey_from "${host}"
+}
+
+main::install_sshpubkey_from(){
+  local host=${1}
+  local key
+  local count=0
+  local max_count=10
+  local tmp_file="/root/${host}_id_rsa.pub"
+
+  main::errhandle_log_info "Installing public ssh key from ${host}"
+
+  # retrieve public key from host
+  while ! scp -q -o StrictHostKeyChecking=no "${host}":/root/.ssh/id_rsa.pub "${tmp_file}"; do
+    count=$((count +1))
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "Failed to retrieve ssh public key from ${host}, aborting installation."
+    else
+      main::errhandle_log_info "Failed to retrieve ssh public key from ${host}. Attempt ${count}/${max_count}"
+      sleep 5s
+    fi
+  done
+
+  # check public key doesn't already exist in authorized_keys then add it
+  key=$(cat "${tmp_file}")
+  if ! grep "${key}" /root/.ssh/authorized_keys; then
+    echo "${key}" >> /root/.ssh/authorized_keys
+  fi
+  rm -f "${tmp_file}"
+}
+
+main::install_sshpubkey_to(){
+  local host=${1}
+  local host_zone=${2}
   local count=0
   local max_count=10
 
-  while ! ${GCLOUD} --quiet compute instances add-metadata "${host}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)" --zone "${host_zone}"; do
+  if [[ -z "${host_zone}" ]]; then
+    host_zone=$(${GCLOUD} --quiet compute instances list --filter="name=('${host}')" --format "value(zone)")
+  fi
+
+  main::errhandle_log_info "Installing ${HOSTNAME} SSH key on ${host}"
+  while ! "${GCLOUD}" --quiet compute instances add-metadata "${host}" --zone "${host_zone}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)"; do
     count=$((count +1))
     if [ ${count} -gt ${max_count} ]; then
       main::errhandle_log_error "Failed to install ${HOSTNAME} SSH key on ${host}, aborting installation."
@@ -124,8 +165,10 @@ main::install_ssh_key(){
       sleep 5s
     fi
   done
-}
 
+  main::wait_for_host "${host}"
+  main::errhandle_log_info "Successfully installed ${HOSTNAME} SSH key on ${host}"
+}
 
 main::install_packages() {
   main::errhandle_log_info 'Installing required operating system packages'
@@ -153,7 +196,7 @@ main::install_packages() {
   fi
 
   ## packages to install
-  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune nvme-cli"
+  local sles_packages="libssh2-1 libopenssl0_9_8 libopenssl1_0_0 tuned krb5-32bit unrar SAPHanaSR SAPHanaSR-doc pacemaker numactl csh python-pip python-pyasn1-modules ndctl python-oauth2client python-oauth2client-gce python-httplib2 python3-httplib2 python3-google-api-python-client python-requests python-google-api-python-client libgcc_s1 libstdc++6 libatomic1 sapconf saptune nvme-cli socat"
   local rhel_packages="unar.x86_64 tuned-profiles-sap-hana tuned-profiles-sap-hana-2.7.1-3.el7_3.3 resource-agents-sap-hana.x86_64 compat-sap-c++-6 numactl-libs.x86_64 libtool-ltdl.x86_64 nfs-utils.x86_64 pacemaker pcs lvm2.x86_64 compat-sap-c++-5.x86_64 csh autofs ndctl compat-sap-c++-9 compat-sap-c++-10 compat-sap-c++-11 libatomic unzip libsss_autofs python2-pip langpacks-en langpacks-de glibc-all-langpacks libnsl libssh2 wget lsof jq chkconfig"
 
 
@@ -161,10 +204,10 @@ main::install_packages() {
   if [[ ${LINUX_DISTRO} = "SLES" ]]; then
     for package in ${sles_packages}; do # Bash only splits unquoted.
         local count=0;
-        local max_count=3;
+        local max_count=2;
         while ! sudo ZYPP_LOCK_TIMEOUT=60 zypper in -y "${package}"; do
           count=$((count +1))
-          sleep 3
+          sleep 1
           if [[ ${count} -gt ${max_count} ]]; then
             main::errhandle_log_warning "Failed to install ${package}, continuing installation."
             break
@@ -529,6 +572,56 @@ main::check_default() {
   fi
 }
 
+main::get_host_zone(){
+  local host=${1}
+  local i
+  local host_zone
+
+  ## Check host was passed
+  if [[ -z "${host}" ]]; then
+     main::errhandle_log_error "Unable to retreive zone as host was not supplied."
+  fi
+
+  # Retreive host zone, retrying if the API call fails
+  for (( i = 0; i < 5; i++ )); do
+    host_zone=$("${GCLOUD}" --quiet compute instances list --filter="name=(""${host}"")" --format "value(zone)")
+    if [[ $? -eq 0 ]]; then
+      echo "${host_zone}"
+      return
+    fi
+    sleep 10
+  done
+
+  main::errhandle_log_error "Unable to get zone for host ${host}.."
+}
+
+main::get_ip() {
+  local host="${1}"
+
+  local host_zone
+  local ip
+  local count=0
+  local max_count=10
+
+  ## Check host was passed
+  if [[ -z "${host}" ]]; then
+     main::errhandle_log_error "Unable to retreive IP address as host was not supplied."
+  fi
+
+  ## Get zone of host
+  host_zone=$(main::get_host_zone "${host}")
+
+  for (( i = 0; i < 5; i++ )); do
+    ip=$("${GCLOUD}" --quiet compute instances describe "${host}" --format="value(networkInterfaces[0].networkIP)" --zone="${host_zone}")
+    if [[ $? -eq 0 ]]; then
+      echo "${ip}"
+      return
+    fi
+    sleep 10
+  done
+
+  main::errhandle_log_error "Unable to get IP for host ${host}.."
+}
 
 main::get_metadata() {
   local key=${1}
@@ -540,27 +633,80 @@ main::get_metadata() {
   else
     value=$(curl --fail -sH'Metadata-Flavor: Google' http://169.254.169.254/computeMetadata/v1/instance/attributes/"${key}")
   fi
+
+  ## Return value
   echo "${value}"
 }
 
+main::set_metadata() {
+  local key="${1}"
+  local value="${2}"
 
-main::update-metadata() {
-    local key="${1}"
-    local value="${2}"
+  local count=0
+  local max_count=2
 
-    local count=0
-    local max_count=10
+  while ! ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "${key}=${value}" --zone "${CLOUDSDK_COMPUTE_ZONE}"; do
+    count=$((count +1))
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "Failed to update metadata key=${key}, value=${value}, continuing."
+    else
+      main::errhandle_log_info "Failed to update metadata key=${key}, value=${value}, trying again in 5 seconds. [Attempt ${count}/${max_count}"
+      sleep 30s
+    fi
+  done
+}
 
-    while ! ${GCLOUD} --quiet compute instances add-metadata "${HOSTNAME}" --metadata "${key}=${value}" --zone "${CLOUDSDK_COMPUTE_ZONE}"; do
-      count=$((count +1))
-      if [ ${count} -gt ${max_count} ]; then
-        main::errhandle_log_info "Failed to update metadata key=${key}, value=${value}, continuing."
-        break
-      else
-        main::errhandle_log_info "Failed to update metadata key=${key}, value=${value}, trying again in 5 seconds. [Attempt ${count}/${max_count}"
-        sleep 5s
-      fi
-    done
+main::wait_for_host() {
+  local host="${1}"
+  local count=0
+
+  ## Check host was passed
+  if [[ -z "${host}" ]]; then
+     main::errhandle_log_error "Unable to check host is available as host was not supplied."
+  fi
+
+  ## Wait until host is contactable via sftp
+  while ! sftp -o StrictHostKeyChecking=no "${host}":/proc/uptime /dev/null >/dev/null; do
+    count=$((count +1))
+    main::errhandle_log_info "--- ${host} is not accessible via SSH - sleeping for 10 seconds and trying again"
+    sleep 10
+    if [ $count -gt 60 ]; then
+      main::errhandle_log_error "${host} not available after waiting 600 seconds"
+    fi
+  done
+}
+
+main::wait_for_metadata() {
+  local host="${1}"
+  local key="${2}"
+  local value="${3}"
+
+  local count=0
+  local max_count=60
+  local set_value
+  local host_zone
+
+  host_zone=$(main::get_host_zone "${host}")
+
+  while [[ ! "${set_value}" == "${value}" ]]; do
+    main::errhandle_log_info "Waiting for '${key}' to be set to '${value}' on '${host}' before continuing. Attempt ${count}/${max_count}"
+    set_value=$(${GCLOUD} --quiet compute instances describe ${host} --format="value[](metadata.items.${key})" --zone=${host_zone})
+
+    ## error out if the metadata is set to a complete/error code
+    if [[ "${set_value}" == "completed" ]] || [[ "${set_value}" == "completed_with_warnings" ]] || [[ "${set_value}" == "failed_or_error" ]]; then
+      main::errhandle_log_error "Host ${host} completed its deployment before '${key}' was set to '${value}'"
+    fi
+
+    ## error out if max number of retries hit
+    if [ ${count} -gt ${max_count} ]; then
+      main::errhandle_log_error "'${key}' wasn't set to '${value}' on '${host}' within an acceptable time."
+    fi
+
+    count=$((count +1))
+    sleep 60
+  done
+
+  main::errhandle_log_info "'${key}' is set to '${value}' on '${host}'. Continuing"
 }
 
 main::complete() {
@@ -568,15 +714,15 @@ main::complete() {
 
   ## update instance metadata with status
   if [[ -n "${on_error}" ]]; then
-    main::update-metadata "status" "failed_or_error"
+    main::set_metadata "status" "failed_or_error"
     metrics::send_metric -s "ERROR"  -e "1" > /dev/null 2>&1
   elif [[ -n "${deployment_warnings}" ]]; then
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
-    main::update-metadata "status" "completed_with_warnings"
+    main::set_metadata "status" "completed_with_warnings"
     metrics::send_metric -s "ERROR"  -e "2" > /dev/null 2>&1
   else
     main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
-    main::update-metadata "status" "completed"
+    main::set_metadata "status" "completed"
     metrics::send_metric -s "CONFIGURED" > /dev/null 2>&1
   fi
 
@@ -614,10 +760,10 @@ main::complete() {
   fi
 
   ## exit sending right error code
-  if [[ -z "${on_error}" ]]; then
-      exit 0
-    else
+  if [[ -n "${on_error}" ]]; then
     exit 1
+  else
+    exit 0
   fi
 }
 

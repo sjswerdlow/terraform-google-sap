@@ -288,6 +288,30 @@ variable "include_backup_disk" {
   default     = true
 }
 
+variable "sap_hana_scaleout_nodes" {
+  type = number
+  description = "Optional - Specify to add scaleout nodes to both HA instances."
+  default = 0
+}
+
+variable "majority_maker_instance_name" {
+  type = string
+  description = "Optional - Name to use for the Majority Maker instance. Must be provided if scaleout_nodes > 0."
+  default = ""
+}
+
+variable "majority_maker_machine_type" {
+  type = string
+  description = "Optional - The machine type to use for the Majority Maker instance. Must be provided if scaleout_nodes > 0."
+  default = ""
+}
+
+variable "majority_maker_zone" {
+  type = string
+  description = "Optional - The zone in which the Majority Maker instance will be deployed. Must be provided if scaleout_nodes > 0. It is recommended for this to be different from the zones the primary and secondary instance are deployed in."
+  default = ""
+}
+
 variable "primary_static_ip" {
   type        = string
   description = "Optional - Defines an internal static IP for the primary VM."
@@ -307,6 +331,31 @@ variable "secondary_static_ip" {
   }
   default     = ""
 }
+
+variable "primary_worker_static_ips" {
+  type        = list(string)
+  description = "Optional - Defines internal static IP addresses for the primary worker nodes."
+  validation {
+    condition = alltrue([
+      for ip in var.primary_worker_static_ips : ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", ip))
+    ])
+    error_message = "All primary_worker_static_ips must be valid IP addresses."
+  }
+  default     = []
+}
+
+variable "secondary_worker_static_ips" {
+  type        = list(string)
+  description = "Optional - Defines internal static IP addresses for the secondary worker nodes."
+  validation {
+    condition = alltrue([
+      for ip in var.secondary_worker_static_ips : ip == "" || can(regex("^(\\b25[0-5]|\\b2[0-4][0-9]|\\b[01]?[0-9][0-9]?)(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$", ip))
+    ])
+    error_message = "All secondary_worker_static_ips must be valid IP addresses."
+  }
+  default     = []
+}
+
 
 variable "backup_disk_type" {
   type        = string
@@ -426,14 +475,26 @@ variable "primary_startup_url" {
   default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -s BUILD.TERRA_SH_URL"
 }
 
+variable "worker_startup_url" {
+  type        = string
+  description = "Startup script to be executed when the worker VM boots, should not be overridden."
+  default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_worker.sh | bash -s BUILD.TERRA_SH_URL"
+}
+
 variable "secondary_startup_url" {
   type        = string
   default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_secondary.sh | bash -s BUILD.TERRA_SH_URL"
   description = "DO NOT USE"
 }
 
+variable "majority_maker_startup_url" {
+  type        = string
+  default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_majority_maker.sh | bash -s BUILD.TERRA_SH_URL"
+  description = "DO NOT USE"
+}
 variable "can_ip_forward" {
   type        = bool
   description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
   default     = true
 }
+

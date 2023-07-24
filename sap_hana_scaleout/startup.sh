@@ -64,7 +64,6 @@ hdbso::calculate_volume_sizes
 hdbso::create_data_log_volumes
 hdbso::gcestorageclient_install
 hdbso::gcestorageclient_gcloud_config
-hdb::install_worker_sshkeys
 
 ## Install monitoring agent
 main::install_monitoring_agent

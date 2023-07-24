@@ -289,62 +289,6 @@ EOF
   main::errhandle_log_info "Cluster on primary node created."
 }
 
-
-nw-ha::pacemaker_join_secondary() {
-  main::errhandle_log_info "Joining secondary VM to the cluster."
-  if [[ ${LINUX_DISTRO} = "SLES" ]]; then
-    # Workaround of wrapping 'ha-cluster-join' into ssh calls to own host:
-    # Without it, 'ha-cluster-join' commands block commands/functions
-    # executed after this function (caused by ssh calls inside 'ha-cluster-join')
-    ssh -o StrictHostKeyChecking=no $(hostname) << EOF
-ha-cluster-join --cluster-node "${VM_METADATA[sap_primary_instance]}" --yes --interface eth0 csync2
-EOF
-    ssh $(hostname) << EOF
-ha-cluster-join --cluster-node "${VM_METADATA[sap_primary_instance]}" --yes ssh_merge
-EOF
-    ssh $(hostname) << EOF
-ha-cluster-join --cluster-node "${VM_METADATA[sap_primary_instance]}" --yes cluster
-EOF
-  fi
-
-  if [[ ${LINUX_DISTRO} = "RHEL" ]]; then
-    # RHEL secondary would be triggered from primary
-    # validate that cluster is online
-    firewall-cmd --permanent --add-service=high-availability
-    firewall-cmd --reload
-    systemctl start pcsd.service
-    systemctl enable pcsd.service
-    pcs cluster sync
-    sleep 10
-    systemctl restart corosync
-    nw-ha::setup_haproxy
-  fi
-
-  echo "ready" > /root/.deploy/."${HOSTNAME}".ready
-
-  main::errhandle_log_info "Enable and start Pacemaker."
-  systemctl enable pacemaker
-  #Retry startup in case there's still initialization
-  local retrycount=5
-  while [[ retrycount -gt 0 ]]; do
-    if systemctl start pacemaker; then
-      main::errhandle_log_info "Pacemaker started on secondary."
-      break
-    else
-      let retrycount-=1
-      if [[ retrycount -gt 0 ]]; then
-        main::errhandle_log_warning "Pacemaker could not be started on secondary yet. Retrying."
-        sleep 30
-      else
-        main::errhandle_log_error "Pacemaker could not be started on secondary. Aborting."
-        # Error routine will handle exit
-      fi
-    fi
-  done
-  main::errhandle_log_info "Secondary VM joined the cluster."
-}
-
-
 nw-ha::create_fencing_resources() {
   local pri_suffix
   local sec_suffix

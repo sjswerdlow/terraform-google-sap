@@ -288,6 +288,16 @@ variable "include_backup_disk" {
   default     = true
 }
 
+variable "backup_disk_type" {
+  type        = string
+  description = "Optional - The default is pd-balanced, only used if a backup disk is needed."
+  default     = "pd-balanced"
+  validation {
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-extreme"], var.backup_disk_type)
+    error_message = "The disk_type must be either pd-ssd, pd-balanced, pd-standard, pd-extreme, or hyperdisk-extreme."
+  }
+}
+
 variable "vm_static_ip" {
   type        = string
   description = "Optional - Defines an internal static IP for the VM."
@@ -308,16 +318,6 @@ variable "worker_static_ips" {
     error_message = "All worker_static_ips must be valid IP addresses."
   }
   default     = []
-}
-
-variable "backup_disk_type" {
-  type        = string
-  description = "Optional - The default is pd-balanced, only used if a backup disk is needed."
-  default     = "pd-balanced"
-  validation {
-    condition     = contains(["pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-extreme"], var.backup_disk_type)
-    error_message = "The disk_type must be either pd-ssd, pd-balanced, pd-standard, pd-extreme, or hyperdisk-extreme."
-  }
 }
 
 #

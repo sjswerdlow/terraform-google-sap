@@ -489,12 +489,15 @@ hdb::check_settings() {
   main::errhandle_log_info "Determining device names for HANA deployment"
 
   local vm_name=$(main::get_metadata "http://169.254.169.254/computeMetadata/v1/instance/name")
-  # Adopting VM name used in disks for worker nodes
-  if [[ -n "${VM_METADATA[sap_hana_original_role]}" && \
-        "${VM_METADATA[sap_hana_original_role]}" = "worker" || \
-        "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
-    vm_name=$(echo ${vm_name} | awk '{split($0,a,"w[0-9]"); print a[1]}')
+
+  # Adopting VM name used in disks for worker nodes (sap_hana and sap_hana_scaleout tf templates)
+  if [[ -n "${VM_METADATA[sap_hana_original_role]}" && "${VM_METADATA[sap_hana_original_role]}" = "worker" || "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
+    # If majority maker is present (sap_hana_ha in scale-out mode) then do not change the vm name
+    if [[ -z "${VM_METADATA[majority_maker_instance_name]}" ]]; then
+      vm_name=$(echo "${vm_name}" | awk '{split($0,a,"w[0-9]"); print a[1]}')
+    fi
   fi
+
   local name_single_pd="${vm_name}".*-hana
   local name_data="${vm_name}"-data
   local name_log="${vm_name}"-log
@@ -593,7 +596,10 @@ hdb::config_nfs() {
     local worker
     for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
       echo "/hana/shared ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
-      echo "/hanabackup ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
+      ## Backup volume is only created if the deployment was configured to include a backup disk
+      if [[ "${VM_METADATA[sap_hana_backup_disk]}" = "true" ]]; then
+        echo "/hanabackup ${HOSTNAME}w${worker}(rw,no_root_squash,sync,no_subtree_check)" >>/etc/exports
+      fi
     done
 
     ## manually exporting file systems
@@ -604,37 +610,21 @@ hdb::config_nfs() {
 
 hdb::install_scaleout_nodes() {
   if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+    local worker
+
     main::errhandle_log_info "Installing ${VM_METADATA[sap_hana_scaleout_nodes]} additional worker nodes"
+    cd /hana/shared/"${VM_METADATA[sap_hana_sid]}"/hdblcm || main::errhandle_log_error "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
 
     ## Set basepath
     hdb::set_parameters global.ini persistence basepath_shared no
 
-    ## Check each host is online and ssh'able before contining
-    local worker
-    local count=0
-
     for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
-      while ! ssh -o StrictHostKeyChecking=no "${HOSTNAME}"w"${worker}" "echo 1"; do
-        count=$((count +1))
-        main::errhandle_log_info "--- ${HOSTNAME}w${worker} is not accessible via SSH - sleeping for 10 seconds and trying again"
-        sleep 10
-        if [ $count -gt 60 ]; then
-          main::errhandle_log_error "Unable to add additional HANA hosts. Couldn't connect to additional ${HOSTNAME}w${worker} via SSH"
-        fi
-      done
-    done
-
-    cd /hana/shared/"${VM_METADATA[sap_hana_sid]}"/hdblcm || main::errhandle_log_info "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
-
-    for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
+      main::exchange_sshpubkey_with "${HOSTNAME}w${worker}" "${CLOUDSDK_COMPUTE_ZONE}"
       main::errhandle_log_info "--- Adding node ${HOSTNAME}w${worker}"
       if ! echo $(hdb::build_pw_xml) | ./hdblcm --action=add_hosts --addhosts="${HOSTNAME}"w"${worker}" --root_user=root --listen_interface=global --read_password_from_stdin=xml -b; then
         main::errhandle_log_error "Unable to access hdblcm. The server deployment is complete but SAP HANA is not deployed. Manual SAP HANA installation will be required."
       fi
     done
-
-    ## Post deployment & installation cleanup
-    main::complete
   fi
 }
 
@@ -677,10 +667,10 @@ hdb::backup() {
 }
 
 
-
 hdb::stop() {
   main::errhandle_log_info "Stopping SAP HANA"
-  su - "${VM_METADATA[sap_hana_sid],,}"adm -c "HDB stop"
+  /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function StopSystem HDB
+  /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function WaitforStopped 400 2 HDB
 }
 
 
@@ -694,7 +684,7 @@ hdb::restart_nowait(){
 
 hdb::start() {
   main::errhandle_log_info "Starting SAP HANA"
-  su - "${VM_METADATA[sap_hana_sid],,}"adm -c "HDB start"
+  /usr/sap/hostctrl/exe/sapcontrol -nr "${VM_METADATA[sap_hana_instance_number]}" -function StartSystem HDB
 }
 
 
@@ -707,7 +697,6 @@ hdb::install_backint() {
   main::errhandle_log_info "Installing SAP HANA Backint for Google Cloud Storage"
   su - "${VM_METADATA[sap_hana_sid],,}"adm -c "curl https://storage.googleapis.com/cloudsapdeploy/backint-gcs/install.sh | bash"
 }
-
 
 hdb::config_backint() {
   local backup_bucket="${1}"
@@ -756,25 +745,4 @@ hdb::config_backint() {
 
   ## Set catalog location
   hdb::set_parameters global.ini persistence 'basepath_catalogbackup' /hanabackup/log/"${VM_METADATA[sap_hana_sid]}"
-}
-
-
-hdb::install_worker_sshkeys() {
-  if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
-    main::errhandle_log_info "Installing SSH keys"
-    local worker
-    local count=0
-    for worker in $(seq 1 "${VM_METADATA[sap_hana_scaleout_nodes]}"); do
-      while ! ${GCLOUD} --quiet compute instances add-metadata "${hana_master_node}"w"${worker}" --metadata "ssh-keys=root:$(cat ~/.ssh/id_rsa.pub)"; do
-          ## if gcloud returns an error, keep trying.
-          count=$((count +1))
-          main::errhandle_log_info "--- Unable to add keys to ${hana_master_node}w${worker}. Waiting 10 seconds then trying again"
-          sleep 10s
-          ## if more than 60 failures, give up
-          if [ $count -gt 60 ]; then
-            main::errhandle_log_error "Unable to add SSH keys to all scale-out worker hosts"
-          fi
-      done
-    done
-  fi
 }

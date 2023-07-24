@@ -9,6 +9,3 @@ ase::create_filesystems() {
   main::create_filesystem /sybasebackup asebackup xfs optional
 
 }
-
-
-

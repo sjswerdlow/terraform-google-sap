@@ -61,13 +61,16 @@ main::install_monitoring_agent
 
 ## Setup HA
 nw-ha::create_deploy_directory
-ha::install_primary_sshkeys
 nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
 nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
-ha::wait_for_primary "nw_ha"
-nw-ha::pacemaker_join_secondary
+ha::host_file_entries
+ha::wait_for_metadata "${VM_METADATA[sap_primary_primary]}" status ready-for-secondary-join
+ha::join_pacemaker_cluster "${VM_METADATA[sap_primary_primary]}"
+main::set_metadata status ready-for-ha-config
 
 ## Post deployment & installation cleanup
 main::complete
+
+
