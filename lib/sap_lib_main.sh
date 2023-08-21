@@ -654,6 +654,7 @@ main::set_metadata() {
       sleep 30s
     fi
   done
+  main::errhandle_log_info "Set metadata ${key}=${value} for ${HOSTNAME}."
 }
 
 main::wait_for_host() {
@@ -689,9 +690,11 @@ main::wait_for_metadata() {
   host_zone=$(main::get_host_zone "${host}")
 
   while [[ ! "${set_value}" == "${value}" ]]; do
+    count=$((count +1))
     main::errhandle_log_info "Waiting for '${key}' to be set to '${value}' on '${host}' before continuing. Attempt ${count}/${max_count}"
     set_value=$(${GCLOUD} --quiet compute instances describe ${host} --format="value[](metadata.items.${key})" --zone=${host_zone})
 
+    main::errhandle_log_info "Retrieved '${set_value}' for '${key}' from '${host}'. Attempt ${count}/${max_count}"
     ## error out if the metadata is set to a complete/error code
     if [[ "${set_value}" == "completed" ]] || [[ "${set_value}" == "completed_with_warnings" ]] || [[ "${set_value}" == "failed_or_error" ]]; then
       main::errhandle_log_error "Host ${host} completed its deployment before '${key}' was set to '${value}'"
@@ -702,7 +705,6 @@ main::wait_for_metadata() {
       main::errhandle_log_error "'${key}' wasn't set to '${value}' on '${host}' within an acceptable time."
     fi
 
-    count=$((count +1))
     sleep 60
   done
 

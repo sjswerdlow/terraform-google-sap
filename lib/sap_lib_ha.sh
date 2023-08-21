@@ -302,7 +302,12 @@ ha::pacemaker_maintenance() {
     crm configure property maintenance-mode="${mode}"
     crm resource cleanup
   fi
-  # not needed for RHEL during setup - might have to implement it later if needed
+
+  if [ "${LINUX_DISTRO}" = "RHEL" ]; then
+    main::errhandle_log_info "Setting cluster maintenance mode to ${mode}"
+    pcs property set maintenance-mode="${mode}"
+    pcs resource cleanup
+  fi
 }
 
 
@@ -324,8 +329,9 @@ ha::host_file_entries(){
   fi
 
   # Scale-Out Specific Entries
-  if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+  if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
     # Add majority maker entry
+    main::errhandle_log_info "Adding scale-out node configuration to /etc/hosts"
     ip=$(main::get_ip "${VM_METADATA[majority_maker_instance_name]}")
     echo "${ip} ${VM_METADATA[majority_maker_instance_name]}" >> /etc/hosts
     # Add  worker node entries
@@ -468,7 +474,7 @@ ha::pacemaker_scaleout_package_installation(){
   local max_count=10
   local package
 
-  if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" -a  ${LINUX_DISTRO} = "SLES" ]; then
+  if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 && "${LINUX_DISTRO}" = "SLES" ]]; then
     local remove_packages="SAPHanaSR SAPHanaSR-doc yast2-sap-ha"
     local install_packages="SAPHanaSR-ScaleOut SAPHanaSR-ScaleOut-doc"
 
@@ -515,7 +521,7 @@ ha::pacemaker_add_stonith() {
     crm configure location LOC_STONITH_"${VM_METADATA[sap_primary_instance]}" STONITH-"${VM_METADATA[sap_primary_instance]}" -inf: "${VM_METADATA[sap_primary_instance]}"
     crm configure location LOC_STONITH_"${VM_METADATA[sap_secondary_instance]}" STONITH-"${VM_METADATA[sap_secondary_instance]}" -inf: "${VM_METADATA[sap_secondary_instance]}"
     # Scale-out worker & majority mm node
-    if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+    if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
       # mm
       crm configure primitive STONITH-"${VM_METADATA[majority_maker_instance_name]}w${worker}" stonith:external/gcpstonith \
         op monitor interval="300s" timeout="120s" \
@@ -568,7 +574,7 @@ ha::pacemaker_add_vip() {
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       crm configure primitive rsc_vip_hc-primary anything params binfile="/usr/bin/socat" cmdline_options="-U TCP-LISTEN:"${VM_METADATA[sap_hc_port]}",backlog=10,fork,reuseaddr /dev/null" op monitor timeout=20s interval=10s op_params depth=0
       crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=3600s timeout=60s
-      if [ "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+      if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary
       else
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary meta resource-stickiness=0
@@ -610,7 +616,7 @@ ha::pacemaker_config_bootstrap_hdb() {
     crm configure rsc_defaults migration-threshold="5000"
     crm configure op_defaults timeout="600"
     # enable concurrent fencing if scale-out environment
-    if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+    if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
       crm configure property concurrent-fencing=true
     fi
   fi
@@ -809,7 +815,7 @@ ha::enable_hdb_hadr_provider_hook() {
         echo "${VM_METADATA[sap_hana_sid],,}adm ALL=(ALL) NOPASSWD: /usr/sbin/crm_attribute -n hana_${VM_METADATA[sap_hana_sid],,}_gsh -v *"
       } >> /etc/sudoers.d/20-saphana
 
-      if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+      if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
         # Scale-out
         if [ "${HANA_MAJOR_VERSION}" -ge 2 -a "${HANA_MINOR_VERSION}" -ge 40 ]; then
           {

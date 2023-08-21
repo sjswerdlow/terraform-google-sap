@@ -555,7 +555,7 @@ hdb::check_settings() {
 
 
 hdb::config_nfs() {
-  if [[ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" \
+  if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 \
         && -z ${VM_METADATA[sap_hana_shared_nfs]} ]]; then
 
     main::errhandle_log_info "Configuring NFS for scale-out"
@@ -609,7 +609,7 @@ hdb::config_nfs() {
 
 
 hdb::install_scaleout_nodes() {
-  if [ ! "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]; then
+  if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
     local worker
 
     main::errhandle_log_info "Installing ${VM_METADATA[sap_hana_scaleout_nodes]} additional worker nodes"

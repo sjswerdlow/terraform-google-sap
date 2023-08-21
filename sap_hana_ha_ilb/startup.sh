@@ -67,32 +67,39 @@ hdb::create_backup_volume
 main::install_monitoring_agent
 
 ## Install SAP HANA
+hdb::config_nfs
 hdb::create_install_cfg
 hdb::download_media
 hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
+hdb::config_hdx_parameters
+hdb::install_scaleout_nodes
 
-## Setup HA
+## Base HA Setup
 ha::check_settings
-ha::install_secondary_sshkeys
+ha::host_file_entries
 ha::download_scripts
+ha::pacemaker_scaleout_package_installation
 ha::create_hdb_user
 ha::hdbuserstore
-hdb::backup /hanabackup/data/pre_ha_config
+hdb::backup pre_ha_config
+main::exchange_sshpubkey_with "${VM_METADATA[sap_secondary_instance]}" "${VM_METADATA[sap_secondary_zone]}"
 ha::enable_hsr
-ha::ready
 ha::setup_haproxy  # RHEL only
 ha::config_pacemaker_primary
+
+## Additional HA setup
 ha::check_cluster
+ha::check_hdb_replication
 ha::pacemaker_maintenance true
 ha::pacemaker_add_stonith
 ha::pacemaker_add_vip
 ha::pacemaker_config_bootstrap_hdb
 ha::pacemaker_add_hana
-ha::check_hdb_replication
 ha::pacemaker_maintenance false
+
 ## Allow Pacemaker to reconcile replication status before enabling hook
 ha::check_hdb_replication
 ha::pacemaker_maintenance true
