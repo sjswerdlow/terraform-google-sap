@@ -574,7 +574,7 @@ ha::pacemaker_add_vip() {
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       crm configure primitive rsc_vip_hc-primary anything params binfile="/usr/bin/socat" cmdline_options="-U TCP-LISTEN:"${VM_METADATA[sap_hc_port]}",backlog=10,fork,reuseaddr /dev/null" op monitor timeout=20s interval=10s op_params depth=0
       crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=3600s timeout=60s
-      if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
+      if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]]; then
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary
       else
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary meta resource-stickiness=0
