@@ -485,6 +485,7 @@ resource "google_compute_instance" "sap_hana_ha_primary_instance" {
       sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
       majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
       sap_hana_data_disk_type         = local.final_data_disk_type
+      enable_fast_restart             = var.enable_fast_restart
       template-type                   = "TERRAFORM"
     },
     local.wlm_metadata
@@ -606,6 +607,7 @@ resource "google_compute_instance" "sap_hana_ha_primary_workers" {
       sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
       sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
       majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
+      enable_fast_restart             = var.enable_fast_restart
       template-type                   = "TERRAFORM"
     },
     local.wlm_metadata
@@ -824,6 +826,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_instance" {
       sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
       sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
       majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
+      enable_fast_restart             = var.enable_fast_restart
       template-type                   = "TERRAFORM"
     },
     local.wlm_metadata
@@ -945,6 +948,7 @@ resource "google_compute_instance" "sap_hana_ha_secondary_workers" {
       sap_hana_shared_disk            = !var.use_single_shared_data_log_disk
       sap_hana_scaleout_nodes         = var.sap_hana_scaleout_nodes
       majority_maker_instance_name    = local.mm_fully_defined ? var.majority_maker_instance_name : ""
+      enable_fast_restart             = var.enable_fast_restart
       template-type                   = "TERRAFORM"
     },
     local.wlm_metadata

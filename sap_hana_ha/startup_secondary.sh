@@ -40,6 +40,7 @@ SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
 SAP_LIB_HA_SH
 SAP_LIB_METRICS
+SAP_LIB_HDBFR
 
 ##########################################################################
 ## End includes
@@ -73,6 +74,12 @@ hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
+hdb::config_hdx_parameters
+if [[ "${VM_METADATA[enable_fast_restart]}" = "true" ]]; then
+  hdb_fr::setup_fast_restart "${VM_METADATA[sap_hana_sid]}" "${VM_METADATA[sap_hana_system_password]}"
+  hdb::stop
+  hdb::start
+fi
 hdb::install_scaleout_nodes
 
 ## Setup HA

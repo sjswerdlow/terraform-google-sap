@@ -91,5 +91,5 @@ module "sap_hana_ha" {
   # use_single_shared_data_log_disk = true_or_false         # default is false
   # include_backup_disk             = true_or_false         # default is true
   # backup_disk_type                = "DISK_TYPE"           # default is "pd-balanced", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-extreme".
-
+  # enable_fast_restart             = true_or_false         # default is true, whether to enable HANA Fast Restart
 }

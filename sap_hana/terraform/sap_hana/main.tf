@@ -434,6 +434,7 @@ resource "google_compute_instance" "sap_hana_primary_instance" {
     sap_hana_backup_disk            = local.use_backup_disk
     sap_hana_shared_disk            = local.make_shared_disk
     sap_hana_data_disk_type         = local.final_data_disk_type
+    enable_fast_restart             = var.enable_fast_restart
     template-type                   = "TERRAFORM"
   }
 
@@ -543,6 +544,7 @@ resource "google_compute_instance" "sap_hana_worker_instances" {
     use_single_shared_data_log_disk = var.use_single_shared_data_log_disk
     sap_hana_backup_disk            = false
     sap_hana_shared_disk            = false
+    enable_fast_restart             = var.enable_fast_restart
     template-type                   = "TERRAFORM"
   }
 

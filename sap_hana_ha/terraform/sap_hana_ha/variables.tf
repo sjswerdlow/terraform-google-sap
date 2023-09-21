@@ -367,6 +367,12 @@ variable "backup_disk_type" {
   }
 }
 
+variable "enable_fast_restart" {
+  type        = bool
+  description = "Optional - The default is true. If set enables HANA Fast Restart."
+  default     = true
+}
+
 #
 # DO NOT MODIFY unless you know what you are doing
 #

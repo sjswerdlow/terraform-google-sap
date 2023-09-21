@@ -90,8 +90,9 @@ hdb_fr::cleanup_fast_restart() {
 # Main function to set up HANA Fast Restart
 #
 # Input parameters:
-#    - HANA SID      - 3-character HANA system identifier
-#    - HANA Password - Password for SYSTEM user of tenantDB
+#    - HANA SID           - 3-character HANA system identifier
+#    - HANA Password      - Password for SYSTEM user of tenantDB
+#    - Update HANA Config - optional; if "false" then HANA config is not updated
 ################################################################################
 hdb_fr::setup_fast_restart() {
   local hana_major_version
@@ -103,6 +104,7 @@ hdb_fr::setup_fast_restart() {
 
   HANA_SID="${1^^}"
   HANA_PWD="${2}"
+  UPDATE_HANA_CONFIG="${3}"
   HANA_NO=$(ls /usr/sap/${HANA_SID^^}/ | grep HDB | grep -o -E '[0-9]+')
   numa_nodes=$(numactl -H | grep 'available:' | awk '{print $2}')
   num_tmpfs_dirs=$(ls -d /hana/tmpfs* | wc | awk '{print $1}')
@@ -147,6 +149,11 @@ hdb_fr::setup_fast_restart() {
   for (( i=0; i < ${numa_nodes}; i++ )) do
     echo "tmpfs${HANA_SID}${i} /hana/tmpfs${i}/${HANA_SID} tmpfs rw,relatime,mpol=prefer:${i} 0 0" >> /etc/fstab
   done
+
+  if [[ ${UPDATE_HANA_CONFIG} = "false" ]]; then
+    hdb_fr::log_info "Skipping update of HANA configuration for Fast Restart."
+    return
+  fi
 
   hdb_fr::log_info "Updating the HANA configuration."
   for dir in $(ls -d /hana/tmpfs*/*); do

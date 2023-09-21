@@ -167,7 +167,7 @@ ha::check_cluster(){
     ## If cluster isn't healthy, wait and try again
     if ! [ ${finished} -eq 0 ]; then
       count=$((count +1))
-      main::errhandle_log_info "--- Cluster is not yet healthy. Waiting ${sleep_time} seconds then trying again (attempt ${count}/${max_attempts})"
+      main::errhandle_log_info "--- Cluster is not yet online. Waiting ${sleep_time} seconds then trying again (attempt number ${count} of max ${max_attempts})"
       sleep ${sleep_time}s
       if [ ${count} -gt ${max_attempts} ]; then
         main::errhandle_log_error "Not all pacemaker cluster nodes have come online. Please check network connectivity and firewall rules"

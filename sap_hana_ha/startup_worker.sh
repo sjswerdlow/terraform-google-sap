@@ -40,6 +40,7 @@ SAP_LIB_MAIN_SH
 SAP_LIB_HDB_SH
 SAP_LIB_HA_SH
 SAP_LIB_METRICS
+SAP_LIB_HDBFR
 
 ##########################################################################
 ## End includes
@@ -63,6 +64,9 @@ hdb::set_kernel_parameters
 hdb::mount_nfs
 hdb::calculate_volume_sizes worker
 hdb::create_sap_data_log_volumes
+if [[ "${VM_METADATA[enable_fast_restart]}" = "true" ]]; then
+  hdb_fr::setup_fast_restart "${VM_METADATA[sap_hana_sid]}" "${VM_METADATA[sap_hana_system_password]}" "false"
+fi
 
 ## Install monitoring agents
 main::install_monitoring_agent
