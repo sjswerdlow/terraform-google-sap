@@ -538,8 +538,9 @@ main::install_gsdk() {
         echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/environment
       fi
     fi
-    curl -s https://dl.google.com/dl/cloudsdk/channels/rapid/install_google_cloud_sdk.bash > install.sh
-    bash install.sh --disable-prompts --install-dir="${install_location}" 1> /var/log/google-cloud-sdk-install.log 2>&1
+    curl -o /tmp/google-cloud-sdk.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-453.0.0-linux-x86_64.tar.gz
+    tar -xzf /tmp/google-cloud-sdk.tar.gz -C ${install_location}
+    bash ${install_location}/google-cloud-sdk/install.sh --quiet 1> /var/log/google-cloud-sdk-install.log 2>&1
     rc=$?
     if [[ "${rc}" -eq 0 ]]; then
       main::errhandle_log_info "Installed Google SDK in ${install_location}"
