@@ -66,9 +66,10 @@ nw-ha::enable_ilb_backend_communication
 nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
 ha::host_file_entries
-ha::wait_for_metadata "${VM_METADATA[sap_primary_primary]}" status ready-for-secondary-join
-ha::join_pacemaker_cluster "${VM_METADATA[sap_primary_primary]}"
+main::wait_for_metadata "${VM_METADATA[sap_primary_instance]}" status ready-for-secondary-join
+nw-ha::pacemaker_join_secondary
 main::set_metadata status ready-for-ha-config
+main::wait_for_metadata "${VM_METADATA[sap_primary_instance]}" status cluster-setup-complete
 
 ## Post deployment & installation cleanup
 main::complete

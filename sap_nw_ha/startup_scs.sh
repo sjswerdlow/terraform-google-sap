@@ -71,7 +71,7 @@ nw-ha::install_ha_packages
 ha::host_file_entries
 nw-ha::pacemaker_create_cluster_primary
 main::set_metadata status ready-for-secondary-join
-ha::wait_for_metadata "${VM_METADATA[sap_primary_-secondary]}" status ready-for-ha-config
+main::wait_for_metadata "${VM_METADATA[sap_secondary_instance]}" status ready-for-ha-config
 ha::pacemaker_maintenance true
 nw-ha::create_fencing_resources
 nw-ha::create_file_system_resources
@@ -79,6 +79,7 @@ nw-ha::create_health_check_resources
 nw-ha::create_vip_resources
 ha::pacemaker_maintenance false
 ha::check_cluster
+main::set_metadata status cluster-setup-complete
 
 ## Post deployment & installation cleanup
 main::complete
