@@ -527,17 +527,18 @@ main::install_gsdk() {
       ln -s /usr/bin/gcloud /usr/local/google-cloud-sdk/bin/gcloud
     fi
   elif [[ ! -d "${install_location}/google-cloud-sdk" ]]; then
+    # commenting out this block since we are using the bundled python to install
     # b/189154450 - on SLES 12 use Python 3.6 w/ gcloud (default 3.4 is no longer supported by gcloud)
-    if [[ "${LINUX_DISTRO}" = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
-      zypper install -y python36
-      export CLOUDSDK_PYTHON=/usr/bin/python3.6
-      if ! grep -q CLOUDSDK_PYTHON /etc/profile; then
-        echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/profile
-      fi
-      if ! grep -q CLOUDSDK_PYTHON /etc/environment; then
-        echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/environment
-      fi
-    fi
+    # if [[ "${LINUX_DISTRO}" = "SLES" && "${LINUX_MAJOR_VERSION}" = "12" ]]; then
+    #   zypper install -y python36
+    #   export CLOUDSDK_PYTHON=/usr/bin/python3.6
+    #   if ! grep -q CLOUDSDK_PYTHON /etc/profile; then
+    #     echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/profile
+    #   fi
+    #   if ! grep -q CLOUDSDK_PYTHON /etc/environment; then
+    #     echo "export CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/environment
+    #   fi
+    # fi
     curl -o /tmp/google-cloud-sdk.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-453.0.0-linux-x86_64.tar.gz
     tar -xzf /tmp/google-cloud-sdk.tar.gz -C ${install_location}
     bash ${install_location}/google-cloud-sdk/install.sh --quiet 1> /var/log/google-cloud-sdk-install.log 2>&1
@@ -715,44 +716,50 @@ main::wait_for_metadata() {
 main::complete() {
   local on_error=${1}
 
-  ## update instance metadata with status
-  if [[ -n "${on_error}" ]]; then
-    main::set_metadata "status" "failed_or_error"
-    metrics::send_metric -s "ERROR"  -e "1" > /dev/null 2>&1
-  elif [[ -n "${deployment_warnings}" ]]; then
-    main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
-    main::set_metadata "status" "completed_with_warnings"
-    metrics::send_metric -s "ERROR"  -e "2" > /dev/null 2>&1
-  else
-    main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
-    main::set_metadata "status" "completed"
-    metrics::send_metric -s "CONFIGURED" > /dev/null 2>&1
-  fi
+  # we only want to run gcloud commands if it's defined
+  if [[ -n "${GCLOUD}" ]]; then
+    ## update instance metadata with status
+    if [[ -n "${on_error}" ]]; then
+      main::set_metadata "status" "failed_or_error"
+      metrics::send_metric -s "ERROR"  -e "1" > /dev/null 2>&1
+    elif [[ -n "${deployment_warnings}" ]]; then
+      main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
+      main::set_metadata "status" "completed_with_warnings"
+      metrics::send_metric -s "ERROR"  -e "2" > /dev/null 2>&1
+    else
+      main::errhandle_log_info "INSTANCE DEPLOYMENT COMPLETE"
+      main::set_metadata "status" "completed"
+      metrics::send_metric -s "CONFIGURED" > /dev/null 2>&1
+    fi
 
-  ## prepare advanced logs
-  if [[ "${VM_METADATA[sap_deployment_debug]}" = "True" ]]; then
-    mkdir -p /root/.deploy
-    main::errhandle_log_info "--- Debug mode is turned on. Preparing additional logs"
-    env > /root/.deploy/"${HOSTNAME}"_debug_env.log
-    grep startup /var/log/messages > /root/.deploy/"${HOSTNAME}"_debug_startup_script_output.log
-    tar -czvf /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz -C /root/.deploy/ .
-    main::errhandle_log_info "--- Debug logs stored in /root/.deploy/"
-  ## Upload logs to GCS bucket & display complete message
-    if [ -n "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
-      main::errhandle_log_info "--- Uploading logs to Google Cloud Storage bucket"
-      ${GSUTIL} -q cp /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz  gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/logs/
+    ## prepare advanced logs
+    if [[ "${VM_METADATA[sap_deployment_debug]}" = "True" ]]; then
+      mkdir -p /root/.deploy
+      main::errhandle_log_info "--- Debug mode is turned on. Preparing additional logs"
+      env > /root/.deploy/"${HOSTNAME}"_debug_env.log
+      grep startup /var/log/messages > /root/.deploy/"${HOSTNAME}"_debug_startup_script_output.log
+      tar -czvf /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz -C /root/.deploy/ .
+      main::errhandle_log_info "--- Debug logs stored in /root/.deploy/"
+      ## Upload logs to GCS bucket & display complete message
+      if [ -n "${VM_METADATA[sap_hana_deployment_bucket]}" ]; then
+        main::errhandle_log_info "--- Uploading logs to Google Cloud Storage bucket"
+        ${GSUTIL} -q cp /root/.deploy/"${HOSTNAME}"_deployment_debug.tar.gz  gs://"${VM_METADATA[sap_hana_deployment_bucket]}"/logs/
+      fi
     fi
   fi
 
-  ## Run custom post deployment script
-  if [[ -n "${VM_METADATA[post_deployment_script]}" ]]; then
-      main::errhandle_log_info "--- Running custom post deployment script - ${VM_METADATA[post_deployment_script]}"
-    if [[ "${VM_METADATA[post_deployment_script]:0:8}" = "https://" ]] || [[ "${VM_METADATA[post_deployment_script]:0:7}" = "http://" ]]; then
-      source /dev/stdin <<< "$(curl -s "${VM_METADATA[post_deployment_script]}")"
-    elif [[ "${VM_METADATA[post_deployment_script]:0:5}" = "gs://" ]]; then
-      source /dev/stdin <<< "$("${GSUTIL}" cat "${VM_METADATA[post_deployment_script]}")"
-    else
-      main::errhandle_log_warning "--- Unknown post deployment script. URL must begin with https:// http:// or gs://"
+  # only run post deployment script if this is not an error
+  if [[ -z "${on_error}" ]]; then
+    ## Run custom post deployment script
+    if [[ -n "${VM_METADATA[post_deployment_script]}" ]]; then
+        main::errhandle_log_info "--- Running custom post deployment script - ${VM_METADATA[post_deployment_script]}"
+      if [[ "${VM_METADATA[post_deployment_script]:0:8}" = "https://" ]] || [[ "${VM_METADATA[post_deployment_script]:0:7}" = "http://" ]]; then
+        source /dev/stdin <<< "$(curl -s "${VM_METADATA[post_deployment_script]}")"
+      elif [[ "${VM_METADATA[post_deployment_script]:0:5}" = "gs://" ]]; then
+        source /dev/stdin <<< "$("${GSUTIL}" cat "${VM_METADATA[post_deployment_script]}")"
+      else
+        main::errhandle_log_warning "--- Unknown post deployment script. URL must begin with https:// http:// or gs://"
+      fi
     fi
   fi
 
