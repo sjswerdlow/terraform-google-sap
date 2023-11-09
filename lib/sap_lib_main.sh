@@ -797,27 +797,18 @@ main::install_monitoring_agent() {
 
   main::errhandle_log_info "Installing Agent for SAP"
 
-  systemctl status google-cloud-sap-agent > /dev/null
   if [[ "${LINUX_DISTRO}" = "SLES" ]] && [[ -e /usr/lib/systemd/system/google-cloud-sap-agent.service ]]; then
-    main::errhandle_log_info "Agent for SAP is already installed"
-      # the agent already exists but may be in a bad state, will attempt to fix
-      sed -i 's~ /usr/sap~ -/usr/sap~g' /usr/lib/systemd/system/google-cloud-sap-agent.service
-      systemctl daemon-reload
-      systemctl restart google-cloud-sap-agent
-    return
-  fi
-  if [[ "${status}" = "0" ]]; then
-    main::errhandle_log_info "Agent for SAP is already installed"
-    return
+      # remove the existing agent so we install the latest from the google repo
+      zypper remove -y google-cloud-sap-agent
   fi
 
   if [ "${LINUX_DISTRO}" = "SLES" ]; then
     main::errhandle_log_info "Installing agent for SLES"
     # SLES
-    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles$(grep "VERSION_ID=" /etc/os-release | cut -d = -f 2 | tr -d '"' | cut -d . -f 1)-\$basearch google-cloud-sap-agent
-    rpm --import https://packages.cloud.google.com/yum/doc/yum-key.gpg
+    zypper addrepo --refresh https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-sles$(grep "VERSION_ID=" /etc/os-release | cut -d = -f 2 | tr -d '"' | cut -d . -f 1)-\$basearch google-cloud-sap-agent
+    zypper mr --priority 90 google-cloud-sap-agent
 
-    if timeout 300 zypper -n --no-gpg-checks install "google-cloud-sap-agent"; then
+    if timeout 300 zypper --gpg-auto-import-keys install -y "google-cloud-sap-agent"; then
       main::errhandle_log_info "Finished installation Agent for SAP"
     else
       local msg1="Agent for SAP did not install correctly."
@@ -833,8 +824,8 @@ main::install_monitoring_agent() {
 name=Google Cloud Agent for SAP
 baseurl=https://packages.cloud.google.com/yum/repos/google-cloud-sap-agent-el$(cat /etc/redhat-release | cut -d . -f 1 | tr -d -c 0-9)-\$basearch
 enabled=1
-gpgcheck=0
-repo_gpgcheck=0
+gpgcheck=1
+repo_gpgcheck=1
 gpgkey=https://packages.cloud.google.com/yum/doc/yum-key.gpg https://packages.cloud.google.com/yum/doc/rpm-package-key.gpg
 EOM
 
