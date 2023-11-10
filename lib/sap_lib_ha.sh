@@ -27,10 +27,6 @@ ha::download_scripts() {
     chmod +x /usr/lib/ocf/resource.d/gcp/alias
     chmod +x /usr/lib/ocf/resource.d/gcp/route
     chmod +x /usr/lib64/stonith/plugins/external/gcpstonith
-    # b/189944327, b/189154450 - to avoid that gcpstonith fails when using Python3.4 on SLES12
-    if [[ "${LINUX_MAJOR_VERSION}" = "12" ]]; then
-      echo "CLOUDSDK_PYTHON=/usr/bin/python3.6" | tee -a /etc/sysconfig/pacemaker
-    fi
   fi
 }
 

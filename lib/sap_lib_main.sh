@@ -559,7 +559,7 @@ main::install_gsdk() {
   readonly GSUTIL="/usr/bin/gsutil"
 
   ## run an instances list to ensure the software is up to date
-  ${GCLOUD} --quiet beta compute instances list >/dev/null
+  ${GCLOUD} --quiet beta compute instances list --limit=1 >/dev/null
 }
 
 
