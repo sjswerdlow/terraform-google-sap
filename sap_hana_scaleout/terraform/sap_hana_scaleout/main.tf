@@ -96,13 +96,14 @@ locals {
     "pd-ssd" = 550
     "pd-balanced" = 943
     "pd-extreme" = 0
+    "hyperdisk-balanced" = 0
     "hyperdisk-extreme" = 0
   }
 
   min_total_disk = local.min_total_disk_map[var.disk_type]
 
   mem_size             = lookup(local.mem_size_map, var.machine_type, 320)
-  hana_log_size    = ceil(min(512, max(64, local.mem_size / 2)))
+  hana_log_size        = ceil(min(512, max(64, local.mem_size / 2)))
   hana_data_size_min   = ceil(local.mem_size * 12 / 10)
 
   hana_data_size = max(local.hana_data_size_min, local.min_total_disk - local.hana_log_size  )
@@ -115,6 +116,7 @@ locals {
   data_pd_size = var.data_disk_size_override == null ? local.hana_data_size : var.data_disk_size_override
   log_pd_size = var.log_disk_size_override == null ? local.hana_log_size : var.log_disk_size_override
 
+  # IOPS
   hdx_iops_map = {
     "data" = max(10000, local.data_pd_size*2)
     "log" = max(10000, local.log_pd_size*2)
@@ -122,6 +124,14 @@ locals {
     "usrsap" = null
     "unified" = max(10000, local.data_pd_size*2) + max(10000, local.log_pd_size*2)
     "worker" = max(10000, local.data_pd_size*2) + max(10000, local.log_pd_size*2)
+  }
+  hdb_iops_map = {
+    "data" = 3000
+    "log" = 3000
+    "shared" = null
+    "usrsap" = null
+    "unified" = 3000
+    "worker" = 3000
   }
   null_iops_map = {
     "data" = null
@@ -135,12 +145,36 @@ locals {
     "pd-ssd" = local.null_iops_map
     "pd-balanced" = local.null_iops_map
     "pd-extreme" = local.hdx_iops_map
+    "hyperdisk-balanced" = local.hdb_iops_map
     "hyperdisk-extreme" = local.hdx_iops_map
   }
 
   final_data_iops = var.data_disk_iops_override == null ? local.iops_map[local.final_data_disk_type]["data"] : var.data_disk_iops_override
   final_log_iops = var.log_disk_iops_override == null ? local.iops_map[local.final_log_disk_type]["log"] : var.log_disk_iops_override
   final_unified_iops = var.unified_disk_iops_override == null ? local.iops_map[var.disk_type]["unified"] : var.unified_disk_iops_override
+
+  # THROUGHPUT
+  hdb_throughput_map = {
+    "data" = 2400
+    "log" = 2400
+    "unified" = 2400
+  }
+  null_throughput_map = {
+    "data" = null
+    "log" = null
+    "unified" = null
+  }
+  throughput_map = {
+    "pd-ssd" = local.null_throughput_map
+    "pd-balanced" = local.null_throughput_map
+    "pd-extreme" = local.null_throughput_map
+    "hyperdisk-balanced" = local.hdb_throughput_map
+    "hyperdisk-extreme" = local.null_throughput_map
+  }
+
+  final_data_throughput = local.throughput_map[local.final_data_disk_type]["data"]
+  final_log_throughput = local.throughput_map[local.final_log_disk_type]["log"]
+  final_unified_throughput = local.throughput_map[var.disk_type]["unified"]
 
   primary_startup_url   = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
   secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url
@@ -183,6 +217,7 @@ resource "google_compute_disk" "sap_hana_scaleout_disks" {
   size    = local.unified_pd_size
   project = var.project_id
   provisioned_iops = local.final_unified_iops
+  provisioned_throughput = local.final_unified_throughput
 }
 
 resource "google_compute_disk" "sap_hana_data_disks" {
@@ -193,6 +228,7 @@ resource "google_compute_disk" "sap_hana_data_disks" {
   size    = local.data_pd_size
   project = var.project_id
   provisioned_iops = local.final_data_iops
+  provisioned_throughput = local.final_data_throughput
 }
 
 resource "google_compute_disk" "sap_hana_log_disks" {
@@ -203,6 +239,7 @@ resource "google_compute_disk" "sap_hana_log_disks" {
   size    = local.log_pd_size
   project = var.project_id
   provisioned_iops = local.final_log_iops
+  provisioned_throughput = local.final_log_throughput
 }
 
 ################################################################################

@@ -79,7 +79,7 @@ hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
-hdb::config_hdx_parameters
+hdb::config_hyperdisk_parameters
 if [[ "${VM_METADATA[enable_fast_restart]}" = "true" ]]; then
   hdb_fr::setup_fast_restart "${VM_METADATA[sap_hana_sid]}" "${VM_METADATA[sap_hana_system_password]}"
   hdb::stop

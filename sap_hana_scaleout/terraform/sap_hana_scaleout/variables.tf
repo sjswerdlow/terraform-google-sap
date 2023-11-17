@@ -237,8 +237,8 @@ variable "disk_type" {
   type = string
   description = "Optional - The default disk type to use on all disks deployed. Extreme disks are not supported on all machine types. See https://cloud.google.com/compute/docs/disks/ for details."
   validation {
-    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme"], var.disk_type)
-    error_message = "The disk_type must be either ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme"], var.disk_type)
+    error_message = "The disk_type must be either pd-ssd, pd-balanced, pd-extreme, hyperdisk-balanced, or hyperdisk-extreme."
   }
   default = "pd-ssd"
 }
@@ -290,8 +290,8 @@ variable "data_disk_type_override" {
   type = string
   description = "Warning, do not use unless you know what you are doing. Override the 'default_disk_type' for the data disk."
   validation {
-    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme", ""], var.data_disk_type_override)
-    error_message = "The data_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme", ""], var.data_disk_type_override)
+    error_message = "The data_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, hyperdisk-balanced, or hyperdisk-extreme."
   }
   default = ""
 }
@@ -299,8 +299,8 @@ variable "log_disk_type_override" {
   type = string
   description = "Warning, do not use unless you know what you are doing. Override the 'default_disk_type' for the log disk."
   validation {
-    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme", ""], var.log_disk_type_override)
-    error_message = "The log_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, or hyperdisk-extreme."
+    condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme", ""], var.log_disk_type_override)
+    error_message = "The log_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, hyperdisk-balanced, or hyperdisk-extreme."
   }
   default = ""
 }

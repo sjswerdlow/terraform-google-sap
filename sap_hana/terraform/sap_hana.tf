@@ -72,9 +72,9 @@ module "sap_hana" {
   # vm_static_ip                    = ""                    # default is an empty string, example: "10.0.0.1"
   # worker_static_ips               = [ "IP1", "IP2" ]      # default is an empty list, example: ["10.0.0.2", "10.0.0.3"]
 
-  # disk_type                       = "DISK_TYPE"           # default is "pd-ssd", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-extreme".
+  # disk_type                       = "DISK_TYPE"           # default is "pd-ssd", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme".
   # use_single_shared_data_log_disk = true_or_false         # default is false
   # include_backup_disk             = true_or_false         # default is true
-  # backup_disk_type                = "DISK_TYPE"           # default is "pd-balanced", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-extreme".
+  # backup_disk_type                = "DISK_TYPE"           # default is "pd-balanced", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme".
   # enable_fast_restart             = true_or_false         # default is true, whether to enable HANA Fast Restart
 }

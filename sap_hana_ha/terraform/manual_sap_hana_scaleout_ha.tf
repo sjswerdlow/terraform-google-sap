@@ -112,7 +112,7 @@ resource "google_compute_instance" "majority_maker" {
   name         = "MAJORITY-MAKER" # example: "majority-maker". Must conform to [a-zA-Z][a-zA-Z0-9]{2}.
 
   # majority_maker_instance_type
-  machine_type = "MACHINE_TYPE" # example: n2-standard-2
+  machine_type = "MACHINE_TYPE" # example: n1-standard-8
 
   # majority_maker_zone
   zone         = "ZONE-C" # Should be a different zone than primary and secondary site

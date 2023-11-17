@@ -74,7 +74,6 @@ hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
-hdb::config_hdx_parameters
 hdb::install_scaleout_nodes
 
 ## Base HA Setup

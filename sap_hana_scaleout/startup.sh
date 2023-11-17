@@ -77,7 +77,7 @@ hdb::extract_media
 hdb::install
 hdb::upgrade
 hdb::config_backup
-hdb::config_hdx_parameters
+hdb::config_hyperdisk_parameters
 hdbso::install_scaleout_nodes
 
 ## Post deployment & installation cleanup
