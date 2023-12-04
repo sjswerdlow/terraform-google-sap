@@ -153,11 +153,11 @@ locals {
   final_log_iops = var.log_disk_iops_override == null ? local.iops_map[local.final_log_disk_type]["log"] : var.log_disk_iops_override
   final_unified_iops = var.unified_disk_iops_override == null ? local.iops_map[var.disk_type]["unified"] : var.unified_disk_iops_override
 
-  # THROUGHPUT
+  # THROUGHPUT (MB/s)
   hdb_throughput_map = {
-    "data" = 2400
-    "log" = 2400
-    "unified" = 2400
+    "data" = 750
+    "log" = 750
+    "unified" = 750
   }
   null_throughput_map = {
     "data" = null
