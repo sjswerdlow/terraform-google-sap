@@ -126,12 +126,12 @@ locals {
     "worker" = max(10000, local.data_pd_size*2) + max(10000, local.log_pd_size*2)
   }
   hdb_iops_map = {
-    "data" = 3000
-    "log" = 3000
+    "data" = var.hyperdisk_balanced_iops_default
+    "log" = var.hyperdisk_balanced_iops_default
     "shared" = null
     "usrsap" = null
-    "unified" = 3000
-    "worker" = 3000
+    "unified" = var.hyperdisk_balanced_iops_default
+    "worker" = var.hyperdisk_balanced_iops_default
   }
   null_iops_map = {
     "data" = null
@@ -153,11 +153,11 @@ locals {
   final_log_iops = var.log_disk_iops_override == null ? local.iops_map[local.final_log_disk_type]["log"] : var.log_disk_iops_override
   final_unified_iops = var.unified_disk_iops_override == null ? local.iops_map[var.disk_type]["unified"] : var.unified_disk_iops_override
 
-  # THROUGHPUT (MB/s)
+  # THROUGHPUT
   hdb_throughput_map = {
-    "data" = 750
-    "log" = 750
-    "unified" = 750
+    "data" = var.hyperdisk_balanced_throughput_default
+    "log" = var.hyperdisk_balanced_throughput_default
+    "unified" = var.hyperdisk_balanced_throughput_default
   }
   null_throughput_map = {
     "data" = null
@@ -172,9 +172,9 @@ locals {
     "hyperdisk-extreme" = local.null_throughput_map
   }
 
-  final_data_throughput = local.throughput_map[local.final_data_disk_type]["data"]
-  final_log_throughput = local.throughput_map[local.final_log_disk_type]["log"]
-  final_unified_throughput = local.throughput_map[var.disk_type]["unified"]
+  final_data_throughput = var.data_disk_throughput_override == null ? local.throughput_map[local.final_data_disk_type]["data"] : var.data_disk_throughput_override
+  final_log_throughput = var.log_disk_throughput_override == null ? local.throughput_map[local.final_log_disk_type]["log"] : var.log_disk_throughput_override
+  final_unified_throughput = var.unified_disk_throughput_override == null ? local.throughput_map[var.disk_type]["unified"] : var.unified_disk_throughput_override
 
   primary_startup_url   = var.sap_deployment_debug ? replace(var.primary_startup_url, "bash -s", "bash -x -s") : var.primary_startup_url
   secondary_startup_url = var.sap_deployment_debug ? replace(var.secondary_startup_url, "bash -s", "bash -x -s") : var.secondary_startup_url

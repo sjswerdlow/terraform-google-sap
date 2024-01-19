@@ -144,13 +144,13 @@ locals {
     "backup" = max(10000, 2 * local.backup_pd_size)
   }
   hdb_iops_map = {
-    "data" = 3000
-    "log" = 3000
+    "data" = var.hyperdisk_balanced_iops_default
+    "log" = var.hyperdisk_balanced_iops_default
     "shared" = null
     "usrsap" = null
-    "unified" = 3000
-    "worker" = 3000
-    "backup" = 3000
+    "unified" = var.hyperdisk_balanced_iops_default
+    "worker" = var.hyperdisk_balanced_iops_default
+    "backup" = var.hyperdisk_balanced_iops_default
   }
   null_iops_map = {
     "data" = null
@@ -174,17 +174,17 @@ locals {
   final_shared_iops = var.shared_disk_iops_override == null ? local.iops_map[local.final_shared_disk_type]["shared"] : var.shared_disk_iops_override
   final_usrsap_iops = var.usrsap_disk_iops_override == null ? local.iops_map[local.final_usrsap_disk_type]["usrsap"] : var.usrsap_disk_iops_override
   final_unified_iops = var.unified_disk_iops_override == null ? local.iops_map[var.disk_type]["unified"] : var.unified_disk_iops_override
-  final_backup_iops = local.iops_map[var.backup_disk_type]["backup"]
+  final_backup_iops = var.backup_disk_iops_override == null ? local.iops_map[var.backup_disk_type]["backup"] : var.backup_disk_iops_override
 
-  # THROUGHPUT (MB/s)
+  # THROUGHPUT
   hdb_throughput_map = {
-    "data" = 750
-    "log" = 750
+    "data" = var.hyperdisk_balanced_throughput_default
+    "log" = var.hyperdisk_balanced_throughput_default
     "shared" = null
     "usrsap" = null
-    "unified" = 750
-    "worker" = 750
-    "backup" = 750
+    "unified" = var.hyperdisk_balanced_throughput_default
+    "worker" = var.hyperdisk_balanced_throughput_default
+    "backup" = var.hyperdisk_balanced_throughput_default
   }
   null_throughput_map = {
     "data" = null
@@ -203,12 +203,12 @@ locals {
     "hyperdisk-extreme" = local.null_throughput_map
   }
 
-  final_data_throughput = local.throughput_map[local.final_data_disk_type]["data"]
-  final_log_throughput = local.throughput_map[local.final_log_disk_type]["log"]
-  final_shared_throughput = local.throughput_map[local.final_shared_disk_type]["shared"]
-  final_usrsap_throughput = local.throughput_map[local.final_usrsap_disk_type]["usrsap"]
-  final_unified_throughput = local.throughput_map[var.disk_type]["unified"]
-  final_backup_throughput = local.throughput_map[var.backup_disk_type]["backup"]
+  final_data_throughput = var.data_disk_throughput_override == null ? local.throughput_map[local.final_data_disk_type]["data"] : var.data_disk_throughput_override
+  final_log_throughput = var.log_disk_throughput_override == null ? local.throughput_map[local.final_log_disk_type]["log"] : var.log_disk_throughput_override
+  final_shared_throughput = var.shared_disk_throughput_override == null ? local.throughput_map[local.final_shared_disk_type]["shared"] : var.shared_disk_throughput_override
+  final_usrsap_throughput = var.usrsap_disk_throughput_override == null ? local.throughput_map[local.final_usrsap_disk_type]["usrsap"] : var.usrsap_disk_throughput_override
+  final_unified_throughput = var.unified_disk_throughput_override == null ? local.throughput_map[var.disk_type]["unified"] : var.unified_disk_throughput_override
+  final_backup_throughput = var.backup_disk_throughput_override == null ? local.throughput_map[var.backup_disk_type]["backup"] : var.backup_disk_throughput_override
 
   sap_vip_solution = "ILB"
   sap_hc_port      = 60000 + var.sap_hana_instance_number

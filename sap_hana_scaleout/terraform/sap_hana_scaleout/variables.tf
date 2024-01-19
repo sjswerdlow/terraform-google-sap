@@ -249,6 +249,18 @@ variable "use_single_data_log_disk" {
   default = false
 }
 
+variable "hyperdisk_balanced_iops_default" {
+  type = number
+  description = "Optional - default is 3000. Number of IOPS that is set for each disk of type Hyperdisk-balanced (except for boot disk)."
+  default = 3000
+}
+
+variable "hyperdisk_balanced_throughput_default" {
+  type = number
+  description = "Optional - default is 750. Throughput in MB/s that is set for each disk of type Hyperdisk-balanced (except for boot disk)."
+  default = 750
+}
+
 variable "vm_static_ip" {
   type        = string
   description = "Optional - Defines an internal static IP for the VM."
@@ -284,11 +296,11 @@ variable "standby_static_ips" {
 }
 
 #
-# DO NOT MODIFY unless you know what you are doing
+# DO NOT MODIFY unless instructed or aware of the implications of using those settings
 #
 variable "data_disk_type_override" {
   type = string
-  description = "Warning, do not use unless you know what you are doing. Override the 'default_disk_type' for the data disk."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Override the 'default_disk_type' for the data disk."
   validation {
     condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme", ""], var.data_disk_type_override)
     error_message = "The data_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, hyperdisk-balanced, or hyperdisk-extreme."
@@ -297,7 +309,7 @@ variable "data_disk_type_override" {
 }
 variable "log_disk_type_override" {
   type = string
-  description = "Warning, do not use unless you know what you are doing. Override the 'default_disk_type' for the log disk."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Override the 'default_disk_type' for the log disk."
   validation {
     condition     = contains(["pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme", ""], var.log_disk_type_override)
     error_message = "The log_disk_type_override must be either pd-ssd, pd-balanced, pd-extreme, hyperdisk-balanced, or hyperdisk-extreme."
@@ -306,32 +318,47 @@ variable "log_disk_type_override" {
 }
 variable "unified_disk_size_override" {
   type = number
-  description = "Warning, do not use unless you know what you are doing. Overrides the default size for the primary's unified disk, that is based off of the machine_type."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Overrides the default size for the primary's unified disk, that is based off of the machine_type."
   default = null
 }
 variable "data_disk_size_override" {
   type = number
-  description = "Warning, do not use unless you know what you are doing. Overrides the default size for the data disk(s), that is based off of the machine_type."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Overrides the default size for the data disk(s), that is based off of the machine_type."
   default = null
 }
 variable "log_disk_size_override" {
   type = number
-  description = "Warning, do not use unless you know what you are doing. Overrides the default size for the log disk(s), that is based off of the machine_type."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Overrides the default size for the log disk(s), that is based off of the machine_type."
   default = null
 }
 variable "unified_disk_iops_override" {
   type = number
-  description = "Warning, do not use unless you know what you are doing. Direclty sets the number of IOPS that the primary's unified disk will use. Has no effect if not using a disk type that supports it."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Directly sets the number of IOPS that the primary's unified disk will use. Has no effect if not using a disk type that supports it."
   default = null
 }
 variable "data_disk_iops_override" {
   type = number
-  description = "Warning, do not use unless you know what you are doing. Direclty sets the number of IOPS that the data disk(s) will use. Has no effect if not using a disk type that supports it."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Directly sets the number of IOPS that the data disk(s) will use. Has no effect if not using a disk type that supports it."
   default = null
 }
 variable "log_disk_iops_override" {
   type = number
-  description = "Warning, do not use unless you know what you are doing. Direclty sets the number of IOPS that the log disk(s) will use. Has no effect if not using a disk type that supports it."
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Directly sets the number of IOPS that the log disk(s) will use. Has no effect if not using a disk type that supports it."
+  default = null
+}
+variable "unified_disk_throughput_override" {
+  type = number
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Directly sets the throughput in MB/s that the primary's unified disk will use. Has no effect if not using a disk type that supports it."
+  default = null
+}
+variable "data_disk_throughput_override" {
+  type = number
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Directly sets the throughput in MB/s that the data disk(s) will use. Has no effect if not using a disk type that supports it."
+  default = null
+}
+variable "log_disk_throughput_override" {
+  type = number
+  description = "Warning, do not use unless instructed or aware of the implications of using this setting. Directly sets the throughput in MB/s that the log disk(s) will use. Has no effect if not using a disk type that supports it."
   default = null
 }
 variable "primary_startup_url" {
