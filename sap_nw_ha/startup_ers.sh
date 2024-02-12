@@ -63,9 +63,9 @@ main::install_monitoring_agent
 nw-ha::create_deploy_directory
 nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
+ha::host_file_entries
 nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
-ha::host_file_entries
 main::wait_for_metadata "${VM_METADATA[sap_primary_instance]}" status ready-for-secondary-join
 nw-ha::pacemaker_join_secondary
 main::set_metadata status ready-for-ha-config

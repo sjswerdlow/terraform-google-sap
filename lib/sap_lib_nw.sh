@@ -134,20 +134,14 @@ nw-ha::configure_shared_file_system() {
 
 
 nw-ha::update_etc_hosts() {
-  local primary_node_ip
-  local secondary_node_ip
+  # Add virtual IPs as simple short VIP names
+  main::errhandle_log_info "Updating /etc/hosts with virtual IPs."
+  echo "${VM_METADATA[scs_vip_address]}" \
+     "${VM_METADATA[scs_vip_name]}" | tee -a /etc/hosts
+  echo "${VM_METADATA[ers_vip_address]}" \
+     "${VM_METADATA[ers_vip_name]}" | tee -a /etc/hosts
 
-  main::errhandle_log_info "Updating /etc/hosts."
-
-  primary_node_ip=$(ping "${VM_METADATA[sap_primary_instance]}" -c 1 | head -1 | awk  '{ print $3 }' | sed 's/(//' | sed 's/)//')
-  secondary_node_ip=$(ping "${VM_METADATA[sap_secondary_instance]}" -c 1 | head -1 | awk  '{ print $3 }' | sed 's/(//' | sed 's/)//')
-
-  echo "$primary_node_ip ${VM_METADATA[sap_primary_instance]}.$(hostname -d) ${VM_METADATA[sap_primary_instance]}" | tee -a /etc/hosts
-  echo "$secondary_node_ip ${VM_METADATA[sap_secondary_instance]}.$(hostname -d) ${VM_METADATA[sap_secondary_instance]}" | tee -a /etc/hosts
-  echo "${VM_METADATA[scs_vip_address]} ${VM_METADATA[scs_vip_name]}.$(hostname -d) ${VM_METADATA[scs_vip_name]}" | tee -a /etc/hosts
-  echo "${VM_METADATA[ers_vip_address]} ${VM_METADATA[ers_vip_name]}.$(hostname -d) ${VM_METADATA[ers_vip_name]}" | tee -a /etc/hosts
-
-  main::errhandle_log_info "/etc/hosts updated."
+  main::errhandle_log_info "/etc/hosts updated with virtual IPs for NetWeaver HA."
 }
 
 

@@ -66,9 +66,9 @@ main::exchange_sshpubkey_with "${VM_METADATA[sap_secondary_instance]}" "${VM_MET
 nw-ha::create_nfs_directories
 nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
+ha::host_file_entries
 nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
-ha::host_file_entries
 nw-ha::pacemaker_create_cluster_primary
 main::set_metadata status ready-for-secondary-join
 main::wait_for_metadata "${VM_METADATA[sap_secondary_instance]}" status ready-for-ha-config
