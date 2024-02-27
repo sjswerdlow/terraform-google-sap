@@ -2,8 +2,8 @@
 ha::check_settings() {
 
   # Set additional global constants
-  readonly PRIMARY_NODE_IP=$(ping "${VM_METADATA[sap_primary_instance]}" -c 1 | head -1 | awk  '{ print $3 }' | sed 's/(//' | sed 's/)//')
-  readonly SECONDARY_NODE_IP=$(ping "${VM_METADATA[sap_secondary_instance]}" -c 1 | head -1 | awk  '{ print $3 }' | sed 's/(//' | sed 's/)//')
+  readonly PRIMARY_NODE_IP=$(main::get_ip "${VM_METADATA[sap_primary_instance]}")
+  readonly SECONDARY_NODE_IP=$(main::get_ip "${VM_METADATA[sap_secondary_instance]}")
 
   ## check required parameters are present
   if [ -z "${VM_METADATA[sap_vip]}" ] || [ -z "${VM_METADATA[sap_primary_instance]}" ] || [ -z "${PRIMARY_NODE_IP}" ] || [ -z "${VM_METADATA[sap_primary_zone]}" ] || [ -z "${VM_METADATA[sap_secondary_instance]}" ] || [ -z "${SECONDARY_NODE_IP}" ]; then

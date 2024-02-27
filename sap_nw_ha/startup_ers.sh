@@ -50,8 +50,14 @@ main::get_os_version
 main::install_gsdk /usr/local
 main::set_boot_parameters
 main::install_packages
-main::config_ssh
 main::get_settings
+
+## Add local host entries
+ha::host_file_entries
+nw-ha::update_etc_hosts
+
+## Base configuration - continued
+main::config_ssh
 main::send_start_metrics
 main::create_static_ip
 
@@ -63,8 +69,6 @@ main::install_monitoring_agent
 nw-ha::create_deploy_directory
 nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
-ha::host_file_entries
-nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
 main::wait_for_metadata "${VM_METADATA[sap_primary_instance]}" status ready-for-secondary-join
 nw-ha::pacemaker_join_secondary

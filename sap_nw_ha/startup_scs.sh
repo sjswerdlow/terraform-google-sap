@@ -51,8 +51,14 @@ main::get_os_version
 main::install_gsdk /usr/local
 main::set_boot_parameters
 main::install_packages
-main::config_ssh
 main::get_settings
+
+## Add local host entries
+ha::host_file_entries
+nw-ha::update_etc_hosts
+
+## Base configuration - continued
+main::config_ssh
 main::send_start_metrics
 main::create_static_ip
 
@@ -66,8 +72,6 @@ main::exchange_sshpubkey_with "${VM_METADATA[sap_secondary_instance]}" "${VM_MET
 nw-ha::create_nfs_directories
 nw-ha::configure_shared_file_system
 nw-ha::enable_ilb_backend_communication
-ha::host_file_entries
-nw-ha::update_etc_hosts
 nw-ha::install_ha_packages
 nw-ha::pacemaker_create_cluster_primary
 main::set_metadata status ready-for-secondary-join
