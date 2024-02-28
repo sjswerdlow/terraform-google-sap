@@ -67,4 +67,4 @@ spec:
   - key: sap_secondary_zone
     value: SECONDARY-ZONE
   - key: startup-script
-    value: curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -s BUILD.TERRA_SH_URL
+    value: curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana_ha/startup.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform

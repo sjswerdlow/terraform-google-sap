@@ -1,15 +1,15 @@
 #
-# Version:    BUILD.VERSION
-# Build Hash: BUILD.HASH
+# Version:    2.0.202402230649
+# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
 #
 module "sap_maxdb_win" {
-  source = "TERRAFORM_PREFIXTERRAFORM_URL_LATEST/terraform/sap_maxdb-win/sap_maxdb_win_module.zip"
+  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_maxdb-win/sap_maxdb_win_module.zip"
   #
   # By default, this source file uses the latest release of the terraform module
   # for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
-  # source = "TERRAFORM_PREFIXTERRAFORM_URL/terraform/sap_maxdb-win/sap_maxdb_win_module.zip"
+  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_maxdb-win/sap_maxdb_win_module.zip"
   #
   # Fill in the information below
   #

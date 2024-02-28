@@ -17,8 +17,8 @@
 # Terraform SAP HANA Scaleout for Google Cloud
 #
 #
-# Version:    BUILD.VERSION
-# Build Hash: BUILD.HASH
+# Version:    2.0.202402230649
+# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
 #
 
 ################################################################################

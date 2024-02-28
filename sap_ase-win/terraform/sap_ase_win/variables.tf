@@ -174,7 +174,7 @@ variable "post_deployment_script" {
 variable "primary_startup_url" {
   type = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default = "BUILD.TERRA_SH_URL/sap_ase-win/startup.ps1"
+  default = "https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_ase-win/startup.ps1"
 }
 
 variable "can_ip_forward" {

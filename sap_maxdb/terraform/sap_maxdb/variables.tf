@@ -136,7 +136,7 @@ variable "post_deployment_script" {
 variable "primary_startup_url" {
   description = "Startup script to be executed when the VM boots, should not be overridden"
   type = string
-  default = "curl -s BUILD.SH_URL/sap_maxdb/startup.sh | bash -x -s BUILD.SH_URL"
+  default = "curl -s gs://core-connect-dm-templates/202402230649/dm-templates/sap_maxdb/startup.sh | bash -x -s gs://core-connect-dm-templates/202402230649/dm-templates"
 }
 
 variable "service_account" {

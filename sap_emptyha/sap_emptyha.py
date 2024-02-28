@@ -14,8 +14,8 @@
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
 #
-# Version:    BUILD.VERSION
-# Build Hash: BUILD.HASH
+# Version:    2.0.202402230649
+# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
 #
 # ------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ def GenerateConfig(context):
   region = context.properties['primaryZone'][:context.properties['primaryZone'].rfind('-')]
   linux_image_project = context.properties['linuxImageProject']
   linux_image = GlobalComputeUrl(linux_image_project, 'images', context.properties['linuxImage'])
-  deployment_script_location = str(context.properties.get('deployment_script_location', 'BUILD.SH_URL'))
+  deployment_script_location = str(context.properties.get('deployment_script_location', 'gs://core-connect-dm-templates/202402230649/dm-templates'))
   primary_startup_url = str(context.properties.get('primary_startup_url', "curl -s " + deployment_script_location + "/sap_emptyha/startup.sh | bash -s " + deployment_script_location))
   secondary_startup_url = str(context.properties.get('secondary_startup_url', "curl -s " + deployment_script_location + "/sap_emptyha/startup_secondary.sh | bash -s " + deployment_script_location))
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))

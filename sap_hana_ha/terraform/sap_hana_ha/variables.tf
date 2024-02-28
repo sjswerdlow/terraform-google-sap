@@ -527,24 +527,24 @@ variable "is_work_load_management_deployment" {
 variable "primary_startup_url" {
   type        = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup.sh | bash -s BUILD.TERRA_SH_URL"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana_ha/startup.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
 }
 
 variable "worker_startup_url" {
   type        = string
   description = "Startup script to be executed when the worker VM boots, should not be overridden."
-  default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_worker.sh | bash -s BUILD.TERRA_SH_URL"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana_ha/startup_worker.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
 }
 
 variable "secondary_startup_url" {
   type        = string
-  default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_secondary.sh | bash -s BUILD.TERRA_SH_URL"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana_ha/startup_secondary.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
   description = "DO NOT USE"
 }
 
 variable "majority_maker_startup_url" {
   type        = string
-  default     = "curl -s BUILD.TERRA_SH_URL/sap_hana_ha/startup_majority_maker.sh | bash -s BUILD.TERRA_SH_URL"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana_ha/startup_majority_maker.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
   description = "DO NOT USE"
 }
 variable "can_ip_forward" {

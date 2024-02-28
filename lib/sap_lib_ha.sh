@@ -21,9 +21,9 @@ ha::download_scripts() {
     main::errhandle_log_info "Downloading pacemaker-gcp"
     mkdir -p /usr/lib/ocf/resource.d/gcp
     mkdir -p /usr/lib64/stonith/plugins/external
-    PACEMAKER_ALIAS_COPY /usr/lib/ocf/resource.d/gcp/alias
-    PACEMAKER_ROUTE_COPY /usr/lib/ocf/resource.d/gcp/route
-    PACEMAKER_STONITH_COPY /usr/lib64/stonith/plugins/external/gcpstonith
+    gsutil cp gs://core-connect-dm-templates/202402230649/pacemaker-gcp/alias /usr/lib/ocf/resource.d/gcp/alias
+    gsutil cp gs://core-connect-dm-templates/202402230649/pacemaker-gcp/route /usr/lib/ocf/resource.d/gcp/route
+    gsutil cp gs://core-connect-dm-templates/202402230649/pacemaker-gcp/gcpstonith /usr/lib64/stonith/plugins/external/gcpstonith
     chmod +x /usr/lib/ocf/resource.d/gcp/alias
     chmod +x /usr/lib/ocf/resource.d/gcp/route
     chmod +x /usr/lib64/stonith/plugins/external/gcpstonith

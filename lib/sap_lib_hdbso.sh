@@ -188,7 +188,7 @@ hdbso::gcestorageclient_install() {
 
   main::errhandle_log_info "Installing gceStorageClient"
   if [[ ${LINUX_DISTRO} = "SLES" ]]; then
-    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-sapgcestorageclient-sles$(grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"' | cut -f1 -d.)-\$basearchGCE_STORAGE_REPO_SUFFIX google-sapgcestorageclientGCE_STORAGE_REPO_SUFFIX
+    zypper addrepo --gpgcheck-allow-unsigned-package --refresh https://packages.cloud.google.com/yum/repos/google-sapgcestorageclient-sles$(grep -oP '(?<=^VERSION_ID=).+' /etc/os-release | tr -d '"' | cut -f1 -d.)-\$basearch google-sapgcestorageclient
     zypper --no-gpg-checks install -y google-sapgcestorageclient
   else
     # RHEL
@@ -196,10 +196,10 @@ hdbso::gcestorageclient_install() {
     if [[ "${RHEL_VERSION}" == "p" ]]; then
       RHEL_VERSION=`rpm -q --queryformat '%{VERSION}' redhat-release | cut -f1 -d. | cut -c1-1`
     fi
-    tee /etc/yum.repos.d/google-sapgcestorageclientGCE_STORAGE_REPO_SUFFIX.repo << EOM
-[google-sapgcestorageclientGCE_STORAGE_REPO_SUFFIX]
+    tee /etc/yum.repos.d/google-sapgcestorageclient.repo << EOM
+[google-sapgcestorageclient]
 name=Google SAP GCE Storage Client
-baseurl=https://packages.cloud.google.com/yum/repos/google-sapgcestorageclient-el${RHEL_VERSION}-\$basearchGCE_STORAGE_REPO_SUFFIX
+baseurl=https://packages.cloud.google.com/yum/repos/google-sapgcestorageclient-el${RHEL_VERSION}-\$basearch
 enabled=1
 gpgcheck=0
 repo_gpgcheck=1

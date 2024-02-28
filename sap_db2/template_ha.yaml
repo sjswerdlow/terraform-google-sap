@@ -1,16 +1,16 @@
 #
-# Version:    BUILD.VERSION
-# Build Hash: BUILD.HASH
+# Version:    2.0.202402230649
+# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
 #
 resources:
 - name: sap_db2_primary
-  type: BUILD.SH_URL_LATEST/sap_db2/sap_db2.py
+  type: gs://core-connect-dm-templates/202402230649/dm-templates/sap_db2/sap_db2.py
   #
   # By default, this configuration file uses the latest release of the deployment
   # scripts for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the scripts, comment out the type property above and uncomment the type property below.
   #
-  # type: BUILD.SH_URL/sap_db2/sap_db2.py
+  # type: gs://core-connect-dm-templates/202402230649/dm-templates/sap_db2/sap_db2.py
   #
   properties:
     instanceName: [VM_NAME]
@@ -68,13 +68,13 @@ resources:
     #    instance you will need to add a check at the top of your script.
     #
 - name: sap_db2_secondary
-  type: BUILD.SH_URL_LATEST/sap_db2/sap_db2.py
+  type: gs://core-connect-dm-templates/202402230649/dm-templates/sap_db2/sap_db2.py
   #
   # By default, this configuration file uses the latest release of the deployment
   # scripts for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the scripts, comment out the type property above and uncomment the type property below.
   #
-  # type: BUILD.SH_URL/sap_db2/sap_db2.py
+  # type: gs://core-connect-dm-templates/202402230649/dm-templates/sap_db2/sap_db2.py
   #
   properties:
     instanceName: [VM_NAME]
