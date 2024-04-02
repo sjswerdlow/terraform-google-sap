@@ -15,8 +15,8 @@
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
 #
-# Version:    2.0.202402230649
-# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
+# Version:    2.0.202403040702
+# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
 #
 # ------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
-  readonly DEPLOY_URL="gs://core-connect-dm-templates/202402230649/dm-templates"
+  readonly DEPLOY_URL="gs://core-connect-dm-templates/202403040702/dm-templates"
 fi
 
 ##########################################################################

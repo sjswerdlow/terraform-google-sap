@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 #
-# Version:    2.0.202402230649
-# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
+# Version:    2.0.202403040702
+# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
 #
 module "sap_db2" {
-  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_db2/sap_db2_module.zip"
+  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_db2/sap_db2_module.zip"
   #
   # By default, this source file uses the latest release of the terraform module
   # for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
-  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_db2/sap_db2_module.zip"
+  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_db2/sap_db2_module.zip"
   #
   # Fill in the information below
   #

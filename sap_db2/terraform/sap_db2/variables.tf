@@ -229,7 +229,7 @@ variable "post_deployment_script" {
 variable "primary_startup_url" {
   type        = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_db2/startup.sh | bash -x -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_db2/startup.sh | bash -x -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform"
 }
 
 variable "can_ip_forward" {

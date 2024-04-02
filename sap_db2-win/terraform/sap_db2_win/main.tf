@@ -1,8 +1,8 @@
 #
 # Terraform SAP DB2 Windows for Google Cloud
 #
-# Version:    2.0.202402230649
-# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
+# Version:    2.0.202403040702
+# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
 #
 
 ################################################################################

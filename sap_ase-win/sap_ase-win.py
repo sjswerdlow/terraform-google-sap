@@ -15,8 +15,8 @@
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
 #
-# Version:    2.0.202402230649
-# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
+# Version:    2.0.202403040702
+# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
 #
 # ------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ def GenerateConfig(context):
   windows_image_project = context.properties['windowsImageProject']
   windows_image = GlobalComputeUrl(windows_image_project, 'images', context.properties['windowsImage'])
   networkTag = str(context.properties.get('networkTag', ''))
-  primary_startup_url = "https://storage.googleapis.com/gs://core-connect-dm-templates/202402230649/dm-templates/sap_ase-win/startup.ps1"
+  primary_startup_url = "https://storage.googleapis.com/gs://core-connect-dm-templates/202403040702/dm-templates/sap_ase-win/startup.ps1"
   network_tags = { "items": str(context.properties.get('networkTag', '')).split(',') if len(str(context.properties.get('networkTag', ''))) else [] }
   service_account = str(context.properties.get('serviceAccount', context.env['project_number'] + '-compute@developer.gserviceaccount.com'))
 

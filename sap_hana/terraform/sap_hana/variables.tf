@@ -483,12 +483,12 @@ variable "backup_disk_throughput_override" {
 variable "primary_startup_url" {
   type        = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana/startup.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_hana/startup.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform"
 }
 
 variable "secondary_startup_url" {
   type        = string
-  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform/sap_hana/startup_secondary.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202402230649/terraform"
+  default     = "curl -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_hana/startup_secondary.sh | bash -s https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform"
   description = "DO NOT USE"
 }
 

@@ -14,15 +14,15 @@
 # limitations under the License.
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
-# Version:   2.0.202402230649
-# Build Hash:   c745a89b214d491fa9b641e2fff78abfe9965016
+# Version:   2.0.202403040702
+# Build Hash:   14cfd7eff165f31048fdcdad85843c67e0790bef
 # ------------------------------------------------------------------------
 
 ## Check to see if a custom script path was provieded by the template
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
-  readonly DEPLOY_URL="gs://core-connect-dm-templates/202402230649/dm-templates"
+  readonly DEPLOY_URL="gs://core-connect-dm-templates/202403040702/dm-templates"
 fi
 
 ##########################################################################
@@ -2022,22 +2022,22 @@ metrics::send_metric() {(  #Exits will only exit the sub-shell.
     local template_id="${VM_METADATA[template-type]}-${TEMPLATE_NAME}"
     case $status in
     RUNNING|STARTED|STOPPED|CONFIGURED|MISCONFIGURED|INSTALLED|UNINSTALLED)
-        user_agent="sap-core-eng/accelerator-template/2.0.202402230649/${VM_IMAGE}/${status}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}"
         ;;
     ERROR)
         metrics::validate "${error_id}" "'ERROR' statuses require the error message (-e) argument."
-        user_agent="sap-core-eng/accelerator-template/2.0.202402230649/${VM_IMAGE}/${status}/${error_id}-${template_id}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}/${error_id}-${template_id}"
         ;;
     UPDATED)
         metrics::validate "${updated_version}" "'UPDATED' statuses require the updated version (-u) argument."
-        user_agent="sap-core-eng/accelerator-template/2.0.202402230649/${VM_IMAGE}/${status}/${updated_version}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}/${updated_version}"
         ;;
     ACTION)
         metrics::validate "${action_id}" "'ACTION' statuses require the action id (-c) argument."
-        user_agent="sap-core-eng/accelerator-template/2.0.202402230649/${VM_IMAGE}/${status}/${action_id}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}/${action_id}"
         ;;
     TEMPLATEID)
-        user_agent="sap-core-eng/accelerator-template/2.0.202402230649/${VM_IMAGE}/ACTION/${template_id}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/ACTION/${template_id}"
         ;;
     *)
         echo "Error, valid status must be provided."
