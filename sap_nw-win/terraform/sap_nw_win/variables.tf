@@ -1,88 +1,88 @@
 variable "project_id" {
-  type = string
+  type        = string
   description = "Project id where the instances will be created."
 }
 
 variable "zone" {
-  type = string
+  type        = string
   description = "Zone where the instances will be created."
 }
 
 variable "machine_type" {
-  type = string
+  type        = string
   description = "Machine type for the instances."
 }
 
 variable "subnetwork" {
-  type = string
+  type        = string
   description = "The sub network to deploy the instance in."
 }
 
 variable "windows_image" {
-  type = string
+  type        = string
   description = "Windows image name to use."
 }
 
 variable "windows_image_project" {
-  type = string
+  type        = string
   description = "The project which the Windows image belongs to."
 }
 
 variable "instance_name" {
-  type = string
+  type        = string
   description = "Hostname of the GCE instance."
   validation {
-    condition = can(regex("^[a-z0-9\\-]+$", var.instance_name))
+    condition     = can(regex("^[a-z0-9\\-]+$", var.instance_name))
     error_message = "The instance_name must consist of lowercase letters (a-z), numbers, and hyphens."
   }
 }
 
 variable "usr_sap_size" {
-  type = number
+  type        = number
   description = "Size in GB of S:\\ (Sap)"
-  default = 20
+  default     = 20
   validation {
-    condition = var.usr_sap_size >= 20
+    condition     = var.usr_sap_size >= 20
     error_message = "The usr_sap_size must be 20 or larger."
   }
 }
 
 variable "swap_size" {
-  type = number
+  type        = number
   description = "Size in GB of P:\\ (Pagefile)"
-  default = 20
+  default     = 20
   validation {
-    condition = var.swap_size >= 20
+    condition     = var.swap_size >= 20
     error_message = "The swap_size must be 20 or larger."
   }
 }
 
 variable "network_tags" {
-  type = list(string)
+  type        = list(string)
   description = "OPTIONAL - Network tags can be associated to your instance on deployment. This can be used for firewalling or routing purposes."
-  default = []
+  default     = []
 }
 
 variable "public_ip" {
-  type = bool
+  type        = bool
   description = "OPTIONAL - Defines whether a public IP address should be added to your VM. By default this is set to Yes. Note that if you set this to No without appropriate network nat and tags in place, there will be no route to the internet and thus the installation will fail."
-  default = true
+  default     = true
 }
 
 variable "service_account" {
-  type = string
+  type        = string
   description = "OPTIONAL - Ability to define a custom service account instead of using the default project service account."
-  default = ""
+  default     = ""
 }
 
 variable "sap_deployment_debug" {
-  type = bool
+  type        = bool
   description = "OPTIONAL - If this value is set to true, the deployment will generates verbose deployment logs. Only turn this setting on if a Google support engineer asks you to enable debugging."
-  default = false
+  default     = false
 }
 
 variable "reservation_name" {
-  type = string
+  type        = string
   description = <<-EOT
   Use a reservation specified by RESERVATION_NAME.
   By default ANY_RESERVATION is used when this variable is empty.
@@ -97,26 +97,26 @@ variable "reservation_name" {
   m1-megamem-96 : Intel Skylake
   All other instance types can have automatic Min CPU Platform"
   EOT
-  default = ""
+  default     = ""
 }
 
 variable "post_deployment_script" {
-  type = string
+  type        = string
   description = "OPTIONAL - gs:// or https:// location of a script to execute on the created VM's post deployment."
-  default = ""
+  default     = ""
 }
 
 #
 # DO NOT MODIFY unless you know what you are doing
 #
 variable "primary_startup_url" {
-  type = string
+  type        = string
   description = "Startup script to be executed when the VM boots, should not be overridden."
-  default = "https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_nw-win/startup.ps1"
+  default     = "https://www.googleapis.com/storage/v1/core-connect-dm-templates/202404101403/terraform/sap_nw-win/startup.ps1"
 }
 
 variable "can_ip_forward" {
-  type = bool
+  type        = bool
   description = "Whether sending and receiving of packets with non-matching source or destination IPs is allowed."
-  default = true
+  default     = true
 }

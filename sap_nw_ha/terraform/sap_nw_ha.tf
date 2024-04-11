@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 #
-# Version:    2.0.202403040702
-# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
+# Version:    2.0.202404101403
+# Build Hash: 4d5e66e2ca20a6d498491377677dcc2f3579ebd7
 #
 module "sap_nw_ha" {
-  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_nw_ha/sap_nw_ha_module.zip"
+  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202404101403/terraform/sap_nw_ha/sap_nw_ha_module.zip"
   #
   # By default, this source file uses the latest release of the terraform module
   # for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
-  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_nw_ha/sap_nw_ha_module.zip"
+  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202404101403/terraform/sap_nw_ha/sap_nw_ha_module.zip"
   #
   # Fill in the information below
   #
@@ -32,22 +32,22 @@ module "sap_nw_ha" {
   ## MANDATORY SETTINGS
   ##############################################################################
   # General settings
-  project_id                 = "PROJECT_ID"           # example: my-project-x
-  machine_type               = "MACHINE_TYPE"         # example: n1-highmem-32
-  network                    = "NETWORK"              # example: default
-  subnetwork                 = "SUBNETWORK"           # example: default-subnet1
-  linux_image                = "LINUX_IMAGE"          # example: sles-15-sp2-sap
-  linux_image_project        = "LINUX_IMAGE_PROJECT"  # example: suse-sap-cloud
+  project_id          = "PROJECT_ID"          # example: my-project-x
+  machine_type        = "MACHINE_TYPE"        # example: n1-highmem-32
+  network             = "NETWORK"             # example: default
+  subnetwork          = "SUBNETWORK"          # example: default-subnet1
+  linux_image         = "LINUX_IMAGE"         # example: sles-15-sp2-sap
+  linux_image_project = "LINUX_IMAGE_PROJECT" # example: suse-sap-cloud
 
-  sap_primary_instance       = "PRIMARY_INSTANCE"     # example: prd-nw1
-  sap_primary_zone           = "PRIMARY_ZONE"         # example: us-central1-b
+  sap_primary_instance = "PRIMARY_INSTANCE" # example: prd-nw1
+  sap_primary_zone     = "PRIMARY_ZONE"     # example: us-central1-b
 
-  sap_secondary_instance     = "SECONDARY_INSTANCE"   # example: prd-nw2
-  sap_secondary_zone         = "SECONDARY_ZONE"       # example: us-central1-c
+  sap_secondary_instance = "SECONDARY_INSTANCE" # example: prd-nw2
+  sap_secondary_zone     = "SECONDARY_ZONE"     # example: us-central1-c
 
-  nfs_path                   = "NFS_PATH"             # example: 1.2.3.4:/my_path
+  nfs_path = "NFS_PATH" # example: 1.2.3.4:/my_path
 
-  sap_sid                    = "SID"                  # example: PE1
+  sap_sid = "SID" # example: PE1
 
   ##############################################################################
   ## OPTIONAL SETTINGS

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 #
-# Version:    2.0.202403040702
-# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
+# Version:    2.0.202404101403
+# Build Hash: 4d5e66e2ca20a6d498491377677dcc2f3579ebd7
 #
 module "sap_hana" {
-  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_hana/sap_hana_module.zip"
+  source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202404101403/terraform/sap_hana/sap_hana_module.zip"
   #
   # By default, this source file uses the latest release of the terraform module
   # for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the module, comment out the source property above and uncomment the source property below.
   #
-  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202403040702/terraform/sap_hana/sap_hana_module.zip"
+  # source = "gcs::https://www.googleapis.com/storage/v1/core-connect-dm-templates/202404101403/terraform/sap_hana/sap_hana_module.zip"
   #
   # Fill in the information below
   #
@@ -32,15 +32,15 @@ module "sap_hana" {
   ## MANDATORY SETTINGS
   ##############################################################################
   # General settings
-  project_id                     = "PROJECT_ID"          # example: my-project-x
-  zone                           = "ZONE"                # example: us-east1-b
-  machine_type                   = "MACHINE_TYPE"        # example: n1-highmem-32
-  subnetwork                     = "SUBNETWORK"          # example: default
-  linux_image                    = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
-  linux_image_project            = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
+  project_id          = "PROJECT_ID"          # example: my-project-x
+  zone                = "ZONE"                # example: us-east1-b
+  machine_type        = "MACHINE_TYPE"        # example: n1-highmem-32
+  subnetwork          = "SUBNETWORK"          # example: default
+  linux_image         = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
+  linux_image_project = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  instance_name                  = "VM_NAME"             # example: hana_instance
-  sap_hana_sid                   = "SID"                 # example: ABC, Must conform to [a-zA-Z][a-zA-Z0-9]{2}
+  instance_name = "VM_NAME" # example: hana_instance
+  sap_hana_sid  = "SID"     # example: ABC, Must conform to [a-zA-Z][a-zA-Z0-9]{2}
 
   ##############################################################################
   ## OPTIONAL SETTINGS
@@ -72,9 +72,9 @@ module "sap_hana" {
   # vm_static_ip                    = ""                    # default is an empty string, example: "10.0.0.1"
   # worker_static_ips               = [ "IP1", "IP2" ]      # default is an empty list, example: ["10.0.0.2", "10.0.0.3"]
 
-  # disk_type                       = "DISK_TYPE"           # default is "pd-ssd", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme".
+  # disk_type                       = "DISK_TYPE"           # default is hyperdisk-extreme for native bare metal machines and pd-ssd otherwise. The default disk type to use for disk(s) containing log and data volumes. Valid types are "pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme".
   # use_single_shared_data_log_disk = true_or_false         # default is false
   # include_backup_disk             = true_or_false         # default is true
-  # backup_disk_type                = "DISK_TYPE"           # default is "pd-balanced", sets what type of disk to use on all VMs. Valid types are "pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme".
+  # backup_disk_type                = "DISK_TYPE"           # default is hyperdisk-balanced for native bare metal machines and pd-balanced otherwise. Valid types are "pd-ssd", "pd-balanced", "pd-standard", "pd-extreme", "hyperdisk-balanced", "hyperdisk-extreme".
   # enable_fast_restart             = true_or_false         # default is true, whether to enable HANA Fast Restart
 }

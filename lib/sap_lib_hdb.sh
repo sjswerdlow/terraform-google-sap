@@ -640,20 +640,8 @@ hdb::mount_nfs() {
     ## mount file systems
     mount -a
   fi
-  ## check /hana/shared is mounted before continuing
-  local count=0
-  while ! grep -q '/hana/shared' /etc/mtab ; do
-    count=$((count +1))
-    main::errhandle_log_info "--- /hana/shared is not mounted. Waiting 10 seconds and trying again. [Attempt ${count}/100]"
-    sleep 10s
-    mount -a
-    if [ ${count} -gt 100 ]; then
-      main::errhandle_log_error "/hana/shared is not mounted - Unable to continue"
-    fi
-  done
-  main::errhandle_log_info "--- /hana/shared successfully mounted."
+  main::wait_for_mount "/hana/shared"
 }
-
 
 hdb::backup() {
   local backup_name=${1}

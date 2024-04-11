@@ -15,8 +15,8 @@
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
 #
-# Version:    2.0.202403040702
-# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
+# Version:    2.0.202404101403
+# Build Hash: 4d5e66e2ca20a6d498491377677dcc2f3579ebd7
 #
 # ------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
-  readonly DEPLOY_URL="gs://core-connect-dm-templates/202403040702/dm-templates"
+  readonly DEPLOY_URL="gs://core-connect-dm-templates/202404101403/dm-templates"
 fi
 
 ##########################################################################
@@ -35,7 +35,8 @@ fi
 set +e
 
 main::set_boot_parameters() {
-  main::errhandle_log_info 'Checking boot paramaters'
+
+  main::errhandle_log_info 'Checking boot parameters'
 
   ## disable selinux
   if [[ -e /etc/sysconfig/selinux ]]; then
@@ -47,7 +48,7 @@ main::set_boot_parameters() {
     main::errhandle_log_info "--- Disabling SELinux"
     sed -ie 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
   fi
-  ## work around for LVM boot where LVM volues are not started on certain SLES/RHEL versions
+  ## work around for LVM boot where LVM volumes are not started on certain SLES/RHEL versions
   if [[ -e /etc/sysconfig/lvm ]]; then
     sed -ie 's/LVM_ACTIVATED_ON_DISCOVERED="disable"/LVM_ACTIVATED_ON_DISCOVERED="enable"/g' /etc/sysconfig/lvm
   fi
@@ -372,6 +373,32 @@ main::create_filesystem() {
 
 }
 
+main::wait_for_mount() {
+  local mount_name=${1}
+  local only_warn=${2}
+
+  local failed_to_mount="false"
+
+  local count=0
+  while ! grep -q "${mount_name}" /etc/mtab ; do
+    count=$((count +1))
+    main::errhandle_log_info "--- ${mount_name} is not mounted. Waiting 10 seconds and trying again. [Attempt ${count}/100]"
+    sleep 10s
+    mount -a
+    if [ ${count} -gt 100 ] && [ -z ${only_warn} ]; then
+      main::errhandle_log_error "${mount_name} is not mounted - Unable to continue"
+    elif [ ${count} -gt 100 ]; then
+      failed_to_mount="true"
+      break
+    fi
+  done
+
+  if [[ "${failed_to_mount}" == "true" ]]; then
+    main::errhandle_log_warning "--- ${mount_name} failed to mount."
+  else
+    main::errhandle_log_info "--- ${mount_name} successfully mounted."
+  fi
+}
 
 main::check_mount() {
   local mount_point=${1}
@@ -614,10 +641,10 @@ main::get_host_zone(){
 
   ## Check host was passed
   if [[ -z "${host}" ]]; then
-     main::errhandle_log_error "Unable to retreive zone as host was not supplied."
+     main::errhandle_log_error "Unable to retrieve zone as host was not supplied."
   fi
 
-  # Retreive host zone, retrying if the API call fails
+  # Retrieve host zone, retrying if the API call fails
   for (( i = 0; i < 5; i++ )); do
     host_zone=$("${GCLOUD}" --quiet compute instances list --filter="name=(""${host}"")" --format "value(zone)")
     if [[ $? -eq 0 ]]; then
@@ -895,9 +922,9 @@ ha::download_scripts() {
     main::errhandle_log_info "Downloading pacemaker-gcp"
     mkdir -p /usr/lib/ocf/resource.d/gcp
     mkdir -p /usr/lib64/stonith/plugins/external
-    gsutil cp gs://core-connect-dm-templates/202403040702/pacemaker-gcp/alias /usr/lib/ocf/resource.d/gcp/alias
-    gsutil cp gs://core-connect-dm-templates/202403040702/pacemaker-gcp/route /usr/lib/ocf/resource.d/gcp/route
-    gsutil cp gs://core-connect-dm-templates/202403040702/pacemaker-gcp/gcpstonith /usr/lib64/stonith/plugins/external/gcpstonith
+    gsutil cp gs://core-connect-dm-templates/202404101403/pacemaker-gcp/alias /usr/lib/ocf/resource.d/gcp/alias
+    gsutil cp gs://core-connect-dm-templates/202404101403/pacemaker-gcp/route /usr/lib/ocf/resource.d/gcp/route
+    gsutil cp gs://core-connect-dm-templates/202404101403/pacemaker-gcp/gcpstonith /usr/lib64/stonith/plugins/external/gcpstonith
     chmod +x /usr/lib/ocf/resource.d/gcp/alias
     chmod +x /usr/lib/ocf/resource.d/gcp/route
     chmod +x /usr/lib64/stonith/plugins/external/gcpstonith
@@ -1444,7 +1471,7 @@ ha::pacemaker_add_vip() {
     if [ "${LINUX_DISTRO}" = "SLES" ]; then
       crm configure primitive rsc_vip_hc-primary anything params binfile="/usr/bin/socat" cmdline_options="-U TCP-LISTEN:"${VM_METADATA[sap_hc_port]}",backlog=10,fork,reuseaddr /dev/null" op monitor timeout=20s interval=10s op_params depth=0
       crm configure primitive rsc_vip_int-primary IPaddr2 params ip="${VM_METADATA[sap_vip]}" cidr_netmask=32 nic="eth0" op monitor interval=3600s timeout=60s
-      if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" = "0" ]]; then
+      if [[ "${VM_METADATA[sap_hana_scaleout_nodes]}" -gt 0 ]]; then
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary
       else
         crm configure group g-primary rsc_vip_int-primary rsc_vip_hc-primary meta resource-stickiness=0

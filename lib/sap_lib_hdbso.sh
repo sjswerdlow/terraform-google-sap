@@ -157,13 +157,12 @@ hdbso::mount_nfs_vols() {
   systemctl enable autofs
   /sbin/service autofs restart
 
-  ## list directories to force mount
-  ls /hana/shared
-  ls /hanabackup
+  ## mount file systems
+  mount -a
 
-  ## check mounts have worked
-  main::check_mount /hana/shared
-  main::check_mount /hanabackup warning
+  ## Wait for mounts to finish
+  main::wait_for_mount /hana/shared
+  main::wait_for_mount /hanabackup warning
 
   ## set permissions correctly. Workaround for some NFS servers
   chmod 775 /hana/shared

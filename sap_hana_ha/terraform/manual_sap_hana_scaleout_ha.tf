@@ -5,15 +5,15 @@ module "sap_hana_primary" {
   ## MANDATORY SETTINGS
   ##############################################################################
   # General settings
-  project_id                     = "PROJECT_ID"          # example: my-project-x
-  zone                           = "ZONE-A"              # example: us-east1-a
-  machine_type                   = "MACHINE_TYPE"        # example: n1-highmem-32
-  subnetwork                     = "SUBNETWORK"          # example: default
-  linux_image                    = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
-  linux_image_project            = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
+  project_id          = "PROJECT_ID"          # example: my-project-x
+  zone                = "ZONE-A"              # example: us-east1-a
+  machine_type        = "MACHINE_TYPE"        # example: n1-highmem-32
+  subnetwork          = "SUBNETWORK"          # example: default
+  linux_image         = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
+  linux_image_project = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  instance_name                  = "VM_NAME"             # example: hana_instance
-  sap_hana_sid                   = "SID"                 # example: ABC, Must conform to [a-zA-Z][a-zA-Z0-9]{2}
+  instance_name = "VM_NAME" # example: hana_instance
+  sap_hana_sid  = "SID"     # example: ABC, Must conform to [a-zA-Z][a-zA-Z0-9]{2}
 
   ##############################################################################
   ## OPTIONAL SETTINGS
@@ -58,15 +58,15 @@ module "sap_hana_secondary" {
   ## MANDATORY SETTINGS
   ##############################################################################
   # General settings
-  project_id                     = "PROJECT_ID"          # example: my-project-x
-  zone                           = "ZONE-B"              # example: us-east1-b
-  machine_type                   = "MACHINE_TYPE"        # example: n1-highmem-32
-  subnetwork                     = "SUBNETWORK"          # example: default
-  linux_image                    = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
-  linux_image_project            = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
+  project_id          = "PROJECT_ID"          # example: my-project-x
+  zone                = "ZONE-B"              # example: us-east1-b
+  machine_type        = "MACHINE_TYPE"        # example: n1-highmem-32
+  subnetwork          = "SUBNETWORK"          # example: default
+  linux_image         = "LINUX_IMAGE"         # example: rhel-8-4-sap-ha
+  linux_image_project = "LINUX_IMAGE_PROJECT" # example: rhel-sap-cloud
 
-  instance_name                  = "VM_NAME"             # example: hana_instance
-  sap_hana_sid                   = "SID"                 # example: ABC, Must conform to [a-zA-Z][a-zA-Z0-9]{2}
+  instance_name = "VM_NAME" # example: hana_instance
+  sap_hana_sid  = "SID"     # example: ABC, Must conform to [a-zA-Z][a-zA-Z0-9]{2}
 
   ##############################################################################
   ## OPTIONAL SETTINGS
@@ -106,16 +106,16 @@ module "sap_hana_secondary" {
 
 resource "google_compute_instance" "majority_maker" {
 
-  project      = "PROJECT_ID"          # example: my-project-x
+  project = "PROJECT_ID" # example: my-project-x
 
   # majority_maker_instance_name
-  name         = "MAJORITY-MAKER" # example: "majority-maker". Must conform to [a-zA-Z][a-zA-Z0-9]{2}.
+  name = "MAJORITY-MAKER" # example: "majority-maker". Must conform to [a-zA-Z][a-zA-Z0-9]{2}.
 
   # majority_maker_instance_type
   machine_type = "MACHINE_TYPE" # example: n1-standard-8
 
   # majority_maker_zone
-  zone         = "ZONE-C" # Should be a different zone than primary and secondary site
+  zone = "ZONE-C" # Should be a different zone than primary and secondary site
 
   boot_disk {
     initialize_params {
@@ -129,7 +129,7 @@ resource "google_compute_instance" "majority_maker" {
     network = "NETWORK"
   }
 
-    service_account {
+  service_account {
     # service_account (OPTIONAL)
     # email  = svc-acct-name@project-id.iam.gserviceaccount.com.
 

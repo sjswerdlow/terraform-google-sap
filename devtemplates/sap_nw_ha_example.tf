@@ -4,68 +4,68 @@ module "sap_nw_ha" {
   ## MANDATORY SETTINGS
   ##############################################################################
   # General settings
-  project_id                 = "sap-certification-env"
-  machine_type               = "n2-standard-8"
-  network                    = "sapcertificationnetwork"
-  subnetwork                 = "sapcertificationnetwork"
+  project_id   = "sap-certification-env"
+  machine_type = "n2-standard-8"
+  network      = "sapcertificationnetwork"
+  subnetwork   = "sapcertificationnetwork"
   #linux_image                = "sles-15-sp2-sap"
-  linux_image                = "sles-12-sp5-sap"
-  linux_image_project        = "suse-sap-cloud"
+  linux_image         = "sles-12-sp5-sap"
+  linux_image_project = "suse-sap-cloud"
 
-  sap_primary_instance       = "fl-tf-nw1"
-  sap_primary_zone           = "us-central1-b"
+  sap_primary_instance = "fl-tf-nw1"
+  sap_primary_zone     = "us-central1-b"
 
-  sap_secondary_instance     = "fl-tf-nw2"
-  sap_secondary_zone         = "us-central1-c"
+  sap_secondary_instance = "fl-tf-nw2"
+  sap_secondary_zone     = "us-central1-c"
 
-  nfs_path                   = "10.132.59.122:/fl_tf_nw_hdd"
+  nfs_path = "10.132.59.122:/fl_tf_nw_hdd"
 
-  sap_sid                    = "FL1"
+  sap_sid = "FL1"
 
   ##############################################################################
   ## OPTIONAL SETTINGS
   ##   - can be omitted - default values will be determined/calculated
   ##############################################################################
-  hc_firewall_rule_name      = ""
-  hc_network_tag             = []
+  hc_firewall_rule_name = ""
+  hc_network_tag        = []
 
-  scs_inst_group_name        = ""
-  scs_hc_name                = ""
-  scs_hc_port                = ""
-  scs_vip_name               = ""
-  scs_vip_address            = "10.128.0.162"
-  scs_backend_svc_name       = ""
-  scs_forw_rule_name         = ""
+  scs_inst_group_name  = ""
+  scs_hc_name          = ""
+  scs_hc_port          = ""
+  scs_vip_name         = ""
+  scs_vip_address      = "10.128.0.162"
+  scs_backend_svc_name = ""
+  scs_forw_rule_name   = ""
 
-  ers_inst_group_name        = ""
-  ers_hc_name                = ""
-  ers_hc_port                = ""
-  ers_vip_name               = ""
-  ers_vip_address            = "10.128.0.213"
-  ers_backend_svc_name       = ""
-  ers_forw_rule_name         = ""
+  ers_inst_group_name  = ""
+  ers_hc_name          = ""
+  ers_hc_port          = ""
+  ers_vip_name         = ""
+  ers_vip_address      = "10.128.0.213"
+  ers_backend_svc_name = ""
+  ers_forw_rule_name   = ""
 
-  usr_sap_size               = 8
-  sap_mnt_size               = 8
-  swap_size                  = 8
+  usr_sap_size = 8
+  sap_mnt_size = 8
+  swap_size    = 8
 
-  sap_scs_instance_number    = ""
-  sap_ers_instance_number    = ""
-  sap_nw_abap                = true
+  sap_scs_instance_number = ""
+  sap_ers_instance_number = ""
+  sap_nw_abap             = true
 
-  pacemaker_cluster_name     = ""
+  pacemaker_cluster_name = ""
 
-  public_ip                  = true
-  service_account            = ""
-  network_tags               = []
-  sap_deployment_debug       = true
-  post_deployment_script     = ""
-  reservation_name           = ""
+  public_ip              = true
+  service_account        = ""
+  network_tags           = []
+  sap_deployment_debug   = true
+  post_deployment_script = ""
+  reservation_name       = ""
 
   #
   # Dev scripts at DATE_TIME_STAMP, use when developing changes to the bash scripts
   #
-  primary_startup_url = <<-EOT
+  primary_startup_url   = <<-EOT
 if grep SLES /etc/os-release; then
   readonly LINUX_DISTRO="SLES";
 elif grep -q "Red Hat" /etc/os-release; then

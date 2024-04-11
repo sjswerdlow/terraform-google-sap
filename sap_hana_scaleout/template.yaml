@@ -1,16 +1,16 @@
 #
-# Version:    2.0.202402230649
-# Build Hash: c745a89b214d491fa9b641e2fff78abfe9965016
+# Version:    2.0.202404101403
+# Build Hash: 4d5e66e2ca20a6d498491377677dcc2f3579ebd7
 #
 resources:
 - name: sap_hana
-  type: gs://core-connect-dm-templates/202402230649/dm-templates/sap_hana_scaleout/sap_hana_scaleout.py
+  type: gs://core-connect-dm-templates/202404101403/dm-templates/sap_hana_scaleout/sap_hana_scaleout.py
   #
   # By default, this configuration file uses the latest release of the deployment
   # scripts for SAP on Google Cloud.  To fix your deployments to a specific release
   # of the scripts, comment out the type property above and uncomment the type property below.
   #
-  # type: gs://core-connect-dm-templates/202402230649/dm-templates/sap_hana_scaleout/sap_hana_scaleout.py
+  # type: gs://core-connect-dm-templates/202404101403/dm-templates/sap_hana_scaleout/sap_hana_scaleout.py
   #
   properties:
     instanceName: [VM_NAME]

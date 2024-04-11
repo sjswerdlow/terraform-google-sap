@@ -17,6 +17,9 @@
 terraform {
   required_version = ">=0.12.6" # Uses "for_each"
   required_providers {
-    google = {}
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 4.0.0, < 6"
+    }
   }
 }

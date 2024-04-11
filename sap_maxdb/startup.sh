@@ -15,8 +15,8 @@
 #
 # Description:  Google Cloud Platform - SAP Deployment Functions
 #
-# Version:    2.0.202403040702
-# Build Hash: 14cfd7eff165f31048fdcdad85843c67e0790bef
+# Version:    2.0.202404101403
+# Build Hash: 4d5e66e2ca20a6d498491377677dcc2f3579ebd7
 #
 # ------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@
 if [[ "${1}" ]]; then
   readonly DEPLOY_URL="${1}"
 else
-  readonly DEPLOY_URL="gs://core-connect-dm-templates/202403040702/dm-templates"
+  readonly DEPLOY_URL="gs://core-connect-dm-templates/202404101403/dm-templates"
 fi
 
 ##########################################################################
@@ -40,7 +40,8 @@ TEMPLATE_NAME="sap_maxdb"
 set +e
 
 main::set_boot_parameters() {
-  main::errhandle_log_info 'Checking boot paramaters'
+
+  main::errhandle_log_info 'Checking boot parameters'
 
   ## disable selinux
   if [[ -e /etc/sysconfig/selinux ]]; then
@@ -52,7 +53,7 @@ main::set_boot_parameters() {
     main::errhandle_log_info "--- Disabling SELinux"
     sed -ie 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
   fi
-  ## work around for LVM boot where LVM volues are not started on certain SLES/RHEL versions
+  ## work around for LVM boot where LVM volumes are not started on certain SLES/RHEL versions
   if [[ -e /etc/sysconfig/lvm ]]; then
     sed -ie 's/LVM_ACTIVATED_ON_DISCOVERED="disable"/LVM_ACTIVATED_ON_DISCOVERED="enable"/g' /etc/sysconfig/lvm
   fi
@@ -377,6 +378,32 @@ main::create_filesystem() {
 
 }
 
+main::wait_for_mount() {
+  local mount_name=${1}
+  local only_warn=${2}
+
+  local failed_to_mount="false"
+
+  local count=0
+  while ! grep -q "${mount_name}" /etc/mtab ; do
+    count=$((count +1))
+    main::errhandle_log_info "--- ${mount_name} is not mounted. Waiting 10 seconds and trying again. [Attempt ${count}/100]"
+    sleep 10s
+    mount -a
+    if [ ${count} -gt 100 ] && [ -z ${only_warn} ]; then
+      main::errhandle_log_error "${mount_name} is not mounted - Unable to continue"
+    elif [ ${count} -gt 100 ]; then
+      failed_to_mount="true"
+      break
+    fi
+  done
+
+  if [[ "${failed_to_mount}" == "true" ]]; then
+    main::errhandle_log_warning "--- ${mount_name} failed to mount."
+  else
+    main::errhandle_log_info "--- ${mount_name} successfully mounted."
+  fi
+}
 
 main::check_mount() {
   local mount_point=${1}
@@ -619,10 +646,10 @@ main::get_host_zone(){
 
   ## Check host was passed
   if [[ -z "${host}" ]]; then
-     main::errhandle_log_error "Unable to retreive zone as host was not supplied."
+     main::errhandle_log_error "Unable to retrieve zone as host was not supplied."
   fi
 
-  # Retreive host zone, retrying if the API call fails
+  # Retrieve host zone, retrying if the API call fails
   for (( i = 0; i < 5; i++ )); do
     host_zone=$("${GCLOUD}" --quiet compute instances list --filter="name=(""${host}"")" --format "value(zone)")
     if [[ $? -eq 0 ]]; then
@@ -1478,22 +1505,22 @@ metrics::send_metric() {(  #Exits will only exit the sub-shell.
     local template_id="${VM_METADATA[template-type]}-${TEMPLATE_NAME}"
     case $status in
     RUNNING|STARTED|STOPPED|CONFIGURED|MISCONFIGURED|INSTALLED|UNINSTALLED)
-        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202404101403/${VM_IMAGE}/${status}"
         ;;
     ERROR)
         metrics::validate "${error_id}" "'ERROR' statuses require the error message (-e) argument."
-        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}/${error_id}-${template_id}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202404101403/${VM_IMAGE}/${status}/${error_id}-${template_id}"
         ;;
     UPDATED)
         metrics::validate "${updated_version}" "'UPDATED' statuses require the updated version (-u) argument."
-        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}/${updated_version}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202404101403/${VM_IMAGE}/${status}/${updated_version}"
         ;;
     ACTION)
         metrics::validate "${action_id}" "'ACTION' statuses require the action id (-c) argument."
-        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/${status}/${action_id}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202404101403/${VM_IMAGE}/${status}/${action_id}"
         ;;
     TEMPLATEID)
-        user_agent="sap-core-eng/accelerator-template/2.0.202403040702/${VM_IMAGE}/ACTION/${template_id}"
+        user_agent="sap-core-eng/accelerator-template/2.0.202404101403/${VM_IMAGE}/ACTION/${template_id}"
         ;;
     *)
         echo "Error, valid status must be provided."
